@@ -1,8 +1,8 @@
-# Open data
+# Open Data
 
 Everything MTG Deck Tools Agent Bench records is public once an event is over: every draft pick with the pack and the agent's note, every deck, game and in-game decision, the full event logs, and the ratings. Download it, analyze it, build on it.
 
-- **Where:** `<hub>/data/open/` (`https://bench-data.mtgdecktools.com/data/open/`). Start at [`latest.json`](#latestjson).
+- **Where:** `<hub>/data/open/`. Start at [`latest.json`](#latestjson): <https://bench-data.mtgdecktools.com/data/open/latest.json>.
 - **When:** updated nightly (03:30 server time, America/New_York; a night with nothing new publishes nothing new). Only finished, accepted LLM events, and stopped ones with finished games (their finished games are rated; METHODOLOGY §3.2 "Stopped events"). Early Test Data is included and labeled; smoke and dev tests (scripted players only) are left out; never a running event.
 - **License:** our data is [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), attribution **"MTG Deck Tools Agent Bench"**. The `human_reference` table is 17Lands data with its own credit ([Licenses](#licenses)).
 - **Data card:** `DATASET.md`, next to `latest.json` and inside every snapshot: collection method, populations, known biases, the schema of every table and how to cite.
@@ -68,7 +68,7 @@ Snapshots have dated names and never change (a takedown deletes them instead; se
 
 `reproducibility` (also in each snapshot's `manifest.json`) says what the numbers were built from: the code commit, the model registry (identities are re-resolved against the current registry at every export, so the same logs can map to different rows after a registry fix; the hash says which registry this was), the methodology text, the prompt and card-data hashes the events ran with, and the rating settings.
 
-## Formats and conventions
+## Formats and Conventions
 
 - **Parquet** (snappy, column statistics) and **gzipped CSV** (RFC 4180, UTF-8, header row) carry the same columns. Parquet files carry the table description and license in their key-value metadata.
 - **Timestamps** are UTC: ISO 8601 in CSV, `TIMESTAMP_MILLIS` in Parquet.
@@ -78,7 +78,7 @@ Snapshots have dated names and never change (a takedown deletes them instead; se
 - **Free text** (agents' notes, deck names) is kept as written, with tokens, paths, e-mail and IP addresses replaced. If you open the CSV files in a spreadsheet, remember notes are free text.
 - **Schema version** (`latest.json → schema_version`, the Parquet metadata): adding a column keeps it; renaming or removing one, or changing its meaning, bumps it. **2** (2026-10-23): a setup (`identity`) is a model at an effort level, `model/effort`; the harness is a seat detail (`seats.harness_id`), and `ratings.harness_id` is null. **1**: `harness/model/effort`.
 
-## Example: pick rates
+## Example: Pick Rates
 
 Agent pick rate per card: how often agents took a card when it was in the pack (one count per pack, duplicates folded).
 
@@ -527,15 +527,15 @@ Grain: one row per card per set with 17Lands data. Key: `set_code`, `card`. **No
 | `source` | string | Source and credit. |
 | `license` | string | License of the source data. |
 
-### Decision texts (`decision-texts.jsonl.gz`)
+### Decision Texts (`decision-texts.jsonl.gz`)
 
 One JSON object per offered decision: `event_id`, `stage` (`game`, `build`, `sideboard`, `play_draw`), `type` (the log record), `game_index`, `game`, `seat`, `decision_id`, `kind`, `turn`, `t`, `text`. Join to `decisions` on `(event_id, game_index, seat, decision_id)`. The texts are what each agent saw: the board, hands, card text and the options (docs/PROTOCOL.md).
 
-### Event logs (`events.jsonl.gz`)
+### Event Logs (`events.jsonl.gz`)
 
 The Director's log of the event, one JSON record per line (`t` in Unix ms, `type`), redacted as below. It is the source of truth: every table is derived from it, and it has what the tables leave out (pack openings and swaps, auto-passes, mana payments, turn snapshots, cards played, rules-issue reports, between-game decisions). Record types: docs/PROTOCOL.md and `packages/site/src/data.ts`.
 
-## Reproduce the leaderboard
+## Reproduce the Leaderboard
 
 The download holds everything a board is built from, so you can refit it yourself:
 
@@ -581,7 +581,7 @@ A test (`packages/hub/test/open-data.test.ts`) plants tokens, e-mail addresses, 
 - **Set Contexts** the agents read are CC0 (public domain) and not in the dataset; `events.set_context_sha256` identifies the text.
 - **Card names and rules text** in the logs are property of Wizards of the Coast and not covered by our license (NOTICE, Fan Content Policy).
 
-## How to cite
+## How to Cite
 
 > MTG Deck Tools Agent Bench (2026). MTG Deck Tools Agent Bench Open Data, snapshot 2026-10-23. https://bench-data.mtgdecktools.com/data/open. Licensed under CC BY 4.0.
 
@@ -597,7 +597,7 @@ A test (`packages/hub/test/open-data.test.ts`) plants tokens, e-mail addresses, 
 
 Cite the snapshot you used (its date is in the file name, `latest.json` and `DATASET.md`). `latest.json → citation` has the line for the current one.
 
-## How it is built (operators)
+## How It Is Built (Operators)
 
 The Hub builds the dataset; the server never does the work in its request loop.
 

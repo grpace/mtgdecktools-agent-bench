@@ -1,8 +1,8 @@
-# @mtgdt/site: report site
+# @mtgdt/site: Report Site
 
 A static site generator for the benchmark's event logs. Plain TypeScript run with `tsx`, emitting HTML, one CSS file and a small vanilla-JS file. No framework and no CDN. The only network requests the pages make are card images, which load from Scryfall on hover.
 
-## Build and serve
+## Build and Serve
 
 ```bash
 npm install                                   # once, at the repo root
@@ -24,13 +24,13 @@ The output uses only relative links, so `dist/` can be deployed to any static ho
 
 `npm run typecheck -w @mtgdt/site` type-checks the generator.
 
-## JSON data export
+## JSON Data Export
 
 ```bash
 npm run site:data      # same inputs and options as `npm run site`; writes packages/site/dist-data/
 ```
 
-Writes lazy-loadable JSON for client apps (the mtgdecktools.com/agent-bench pages): `index.json`, `summary.json`, `events/<id>.json`, `events/<id>/draft-<seat>.json`, `events/<id>/game-<n>.json`, `sets/<SET>.json`, `models/<model_id>.json`, `highlights.json` and `methodology.md`. The schema is versioned (currently 2.14: `schema_version: 2`, `schema_minor: 14`) and documented in [docs/SITE-DATA.md](../../docs/SITE-DATA.md); the TypeScript types live in `src/schema.ts`. Both renderers share `data.ts`, `metrics.ts` and `replay-data.ts`, so the HTML report and the JSON always agree.
+Writes lazy-loadable JSON for client apps (the mtgdecktools.com/agent-bench pages): `index.json`, `summary.json`, `events/<id>.json`, `events/<id>/draft-<seat>.json`, `events/<id>/game-<n>.json`, `sets/<SET>.json`, `models/<model_id>.json`, `highlights.json` and `methodology.md`. The schema is versioned (`schema_version: 2`, `schema_minor` from `SCHEMA_MINOR`; 2.23 at this writing) and documented in [docs/SITE-DATA.md](../../docs/SITE-DATA.md); the TypeScript types live in `src/schema.ts`. Both renderers share `data.ts`, `metrics.ts` and `replay-data.ts`, so the HTML report and the JSON always agree.
 
 ## Pages
 

@@ -2,13 +2,13 @@
 
 The contract between a seat (an agent) and the table. Draft, build, sideboarding and play all use the same envelope. Seat protocol 0.3 (2026-10-22; the MCP server reports it as its version): matches are best of 3 with sideboarding and the loser's play/draw choice (§3.3). The design draws on sagasti/mtg-bench's decision contract and rs-sdk's two-layer API.
 
-## 1. Core idea: legal options by construction
+## 1. Core Idea: Legal Options by Construction
 
 At every decision point the engine lists the legal options and the agent picks from them. The agent never has to build a "move" from rules knowledge, so the benchmark measures **judgment**, not syntax.
 
 The cost is that some choices explode combinatorially (mana payment, splitting damage, choosing big subsets of blockers). We break those into a sequence of small choices, or offer a structured answer with validation (§4).
 
-## 2. Decision envelope
+## 2. Decision Envelope
 
 A seat sees one open decision at a time. Every decision has an id, a stage, a kind, a text and its legal options; the seat answers it with the MCP tool `decide` (§6). What the seat reads is the decision **text** (§3); the shapes below are what that text carries and what an answer may contain (`packages/director/src/seat.ts` `Offer`, the `decide` schema in `mcp.ts`).
 
@@ -51,11 +51,11 @@ There is no per-decision clock, attempt counter or minimum/maximum in the envelo
 
 **Mapping to phase-rs:** the Director reads `waiting_for` + the seat's `legal_actions` from phase-server and turns each `GameAction` into an `Option` with a readable label. A response's option id is turned back into the exact `GameAction`. Attacks and blocks are the exception: they're a structured choice (`attackers: [ids]`, `blocks: [{blocker, attacker}]`), checked by the engine's combat validators, because the engine's own candidate list only offers none / single / all-in.
 
-## 3. The view (what an agent sees)
+## 3. The View (What an Agent Sees)
 
-What a decision shows follows the prompts the event runs with (`packages/director/src/observation.ts`): the current prompts in `prompts/`, or an earlier set from `prompts/archive/vN/` (`--prompts prompts/archive/v3`, or just the folder name; old paths such as `prompts/v3` still resolve, `packages/director/src/prompts.ts`). Events record which set (`event_start.prompt_version`: the name of the archived set whose files match the current prompts, or `current` once they differ from every archived set), a content hash of the files seats read (`prompt_sha256`; `setup.md` is left out) and the Director's commit, so nothing is versioned by hand. The prompts are still refined in place while the benchmark is in development. Events from before 2026-10-22 ran with the earlier format (§3.2) and keep exactly the texts they had.
+What a decision shows follows the prompts the event runs with (`packages/director/src/observation.ts`): the current prompts in `prompts/`, or an earlier set from `prompts/archive/vN/` (`--prompts prompts/archive/v3`, or just the folder name; old paths such as `prompts/v3` still resolve, `packages/director/src/prompts.ts`). Events record which set (`event_start.prompt_version`: the name of the archived set whose files match the current prompts, or `current` once they differ from every archived set), a content hash of the files seats read (`prompt_sha256`; `setup.md` is left out) and the Director's commit, so nothing is versioned by hand. A change to the current prompts starts a new comparability group; released sets are archived and never edited. Events from before 2026-10-22 ran with the earlier format (§3.2) and keep exactly the texts they had.
 
-### 3.1 Current format
+### 3.1 Current Format
 
 Every decision is self-contained. It holds everything a player at a real table would know at that moment, and the printed text of every card in view. The agent never has to remember card text from earlier in the game or look it up.
 
@@ -214,10 +214,10 @@ THIS PACK (one card per line; "n" is the option number):
 DECISION D16 — pick one card. Answer with decide(decision_id="D16", option="<n>", note="<short reason>").
 ```
 
-**Deckbuilding** follows the MTG Deck Tools AI Deck Builder's 40-card Limited path (`packages/director/src/deckbuild-v4.ts`; what it sends and how the bench maps it: `docs/notes/mtgdt-deckbuilder-prompt.md`):
+**Deckbuilding** follows the MTG Deck Tools AI Deck Builder's 40-card Limited path (`packages/director/src/deckbuild-v4.ts`; `deck-parity.test.ts` keeps the two in step):
 1. **`YOUR POOL`:** one line of card JSON per card name, sorted by mana value: `n` (the pool number to submit), `count` (copies drafted, the most you may play), `poolNumbers` (every copy's number, when there are several), `rarity`, the full printed card (`name`, `cost`, `mv`, `colors`, `colorIdentity`, `type`, `pt`, `keywords`, full `text`, every other face in `faces`) and `17lands` (Set Context + Human Stats only). Drafted basic lands aren't listed: basics are unlimited.
 2. **`POOL FACTS`:** JSON the Director counted: cards, creatures and two-drops per color group (copies included, hybrid cards on their own), the copies, non-basic lands and the colors they make, and castable cards per color pair.
-3. **The rules** (`prompts/deckbuilding-guide.md`): comparative analysis, curve and consistency, the Rule of One, splash land math, interaction, enablers and payoffs, composition, the mana base and hybrid audit, the Golden Rule, copies, the 40-card rule, the final check, and how to answer. Set context rules only at the Set Context levels; the hybrid section only when the pool has hybrid costs. No level carries MTG Deck Tools tier scores or the deck builder's Tier Score Guide (prompts v6, owner decision): agents judge card power themselves, with the `17lands` stats at Set Context + Human Stats.
+3. **The rules** (`prompts/deckbuilding-guide.md`): comparative analysis, curve and consistency, the Rule of One, splash land math, interaction, enablers and payoffs, composition, the mana base and hybrid audit, the Golden Rule, copies, the 40-card rule, the final check, and how to answer. Set context rules only at the Set Context levels; the hybrid section only when the pool has hybrid costs. No level carries MTG Deck Tools tier scores or the deck builder's Tier Score Guide: agents judge card power themselves, with the `17lands` stats at Set Context + Human Stats.
 
 The answer is `decide(cards=[pool numbers, one per copy], basics={"Plains": 8, …}, total_count, deck_name, archetype, analysis, note)`. Repeating a pool number takes another copy of the same card, so `[12, 12]` and `[12, 31]` are the same. Rejected (decision stays open, every problem listed): a number outside the pool, more copies than drafted ("You drafted 2 copies of Powerful Broker (pool numbers 12, 31); your deck asks for 3."), an unknown basic land, fewer than 40 cards. A valid deck isn't locked yet: the Director answers with a **`DECK REVIEW`** decision, its exact count as JSON (total, basics, lands, creatures, curve, Deck Mana Colors, cards/pips/sources per color, each card once with its count and pool numbers) and `flags` for every way the deck breaks the rules (more than 40 cards, a wrong `total_count`, uncastable cards, splash land math, off-color lands or basics, land count, two-drops, copies left in the sideboard). The agent confirms (`option="confirm"`) or resubmits once; a resubmitted deck locks at once. `deck_built` logs the resolved `pool_numbers`, the review, every rejected answer and the agent's own fields.
 
@@ -230,7 +230,7 @@ The answer is `decide(cards=[pool numbers, one per copy], basics={"Plains": 8, �
 | Game decision | 575 | 965 | 2,455 | 3,783 |
 | Draft pick | 567 | 934 | 1,146 | 1,736 |
 
-Deckbuilding (built by the deckbuilding work, measured separately): The rebuilt offer (2026-10-22, 9 real pools from FRA, TLA, MSH and HOB, 42 cards each) is 6,844 tokens at No Set Context, 7,048 at Set Context and 8,133 at Set Context + Human Stats on average (largest 8,420), against 5,662 / 5,691 / 6,438 for the first current-format offer; the review adds about 1,100 (18 reviews: mean 1,077, max 1,221). The set context isn't repeated in the offer (6k–14k tokens; every seat has it from the event start and `get_set_context`).
+Deckbuilding, measured separately: the current offer (2026-10-22, 9 real pools from FRA, TLA, MSH and HOB, 42 cards each) is 6,844 tokens at No Set Context, 7,048 at Set Context and 8,133 at Set Context + Human Stats on average (largest 8,420), against 5,662 / 5,691 / 6,438 for the first current-format offer; the review adds about 1,100 (18 reviews: mean 1,077, max 1,221). The set context isn't repeated in the offer (6k–14k tokens; every seat has it from the event start and `get_set_context`).
 
 Where a game decision's tokens go (mean): `cards` 1,361, battlefield 306, decision and options 206, header and answer line 141, graveyards 135, events 132, library contents 127, hand 54. Full card text for graveyard and exile cards, rather than name and type, raised the game decision from about 1,520 to 2,275 tokens in the text layout. Per game seat, scripted games ran about 100 decisions (53k earlier vs 227k current). Real LLM games so far average about 54 decisions, which projects to roughly 31k vs 133k.
 
@@ -244,14 +244,14 @@ Other alternatives:
 - **Send each card's text only the first time in a game** (the earlier format): 37% less. Rejected: decisions would again depend on context from long ago, which harnesses compact away.
 - **Printed data inline in every object:** 5% more than the table, and no extra information.
 
-### 3.2 Earlier format (events before 2026-10-22)
+### 3.2 Earlier Format (Events Before 2026-10-22)
 
 A text board: life and zone counts, each battlefield, the stack, combat, your hand with costs and types, graveyard names, and a "Card reference" block with the rules text of cards **the first time they're seen in the game** (`get_card` afterwards). Draft picks show rules text the first time a card name is seen in the draft. Options are numbered text lines.
 
 - Card ids (`[#12]`) stay the same for the whole game, so agents can refer to cards across turns.
 - The "Since your last decision" section means an agent doesn't have to diff whole states itself. This matters most for agents seeing the board through MCP.
 
-### 3.3 Between games: play or draw, and sideboarding (best of 3)
+### 3.3 Between Games: Play or Draw, and Sideboarding (Best of 3)
 
 Every match is best of 3 (best of 1 was removed on 2026-10-22). Each match starts from the deck the seat registered at deckbuilding (`deck_built`); between games (`sideboard.ts`):
 
@@ -263,7 +263,7 @@ Every match is best of 3 (best of 1 was removed on 2026-10-22). Each match start
 
 Log records: `play_draw_offered { seat, id, match, game_number, text }`; `play_draw { match, game_number, on_play, by: "seed" | "agent" | "forfeit", chooser, choice, note?, latency_ms? }` (one per game, game 1 included; a voided game is replayed with the same choice); `sideboard_offered { seat, id, match, game_number, text }`; `sideboarded { seat, match, game_number, by: "agent" | "forfeit", kept, in: [{name, qty}], out: [{name, qty}], main, sideboard, basics, main_count, note?, rejected?, latency_ms }` (`in`/`out` against the deck played in the previous game; basic land changes included); `game_start.deck_sizes` and `game_start.starter { seat, games_created }`; `event_start.sideboarding: true` and `play_draw: "loser-chooses"`. A resumed event reuses what the log holds and asks only what it doesn't.
 
-## 4. Priority, stops and auto-pass
+## 4. Priority, Stops and Auto-Pass
 
 A naive engine asks for priority dozens of times per turn. That is the biggest cost and latency risk in the whole project.
 
@@ -275,18 +275,18 @@ A naive engine asks for priority dozens of times per turn. That is the biggest c
   - When the mana pool already pays the whole cost (the agent picked its sources as options one at a time, or floated mana), the Director finishes the payment itself (`pay_finish` with `from_pool`, and `by_hand` when the agent's own picks paid it): it counts as a manual payment, never as `auto_tapper`. `auto_tapper` counts only the auto-tapper option chosen while the pool falls short.
   - Activated abilities and prepared copies have no manual payment in the engine, which spends floating mana first. With a plan the Director taps the planned sources into the pool, then activates. Without one the engine's auto-tapper pays: the log says so (`agent_decision.payment: "auto"`), and it counts as `auto_paid` in `game_over.stats`, never as a manual payment. If the engine taps more sources after the plan, the decision is logged `payment: "manual+auto"` with `auto_tapped`. A plan given for an option that costs no mana is refused.
 
-## 5. Clocks and budgets
+## 5. Clocks and Budgets
 
 Magic needs a chess clock. Without one, slow models just win on patience.
 
-**Implemented today (2026-10-22): an inactivity forfeit, not a clock.** A seat with an open decision that has made no MCP request for 10 minutes (`SEAT_TIMEOUT_MS`) has it settled by the Director: a bot-policy pick, the reference deck, between games the current deck kept and play first, or the game conceded (the match continues). Logged as `forfeit` records and counted under reliability (METHODOLOGY §5.5). Headless launchers relaunch a harness session that exits early, and the seat resumes. The plan below (per-decision timeouts, banks, censoring) is not built.
+**What is built: an inactivity forfeit, not a clock.** A seat with an open decision that has made no MCP request for 10 minutes (`SEAT_TIMEOUT_MS`) has it settled by the Director: a bot-policy pick, the reference deck, between games the current deck kept and play first, or the game conceded (the match continues). Logged as `forfeit` records and counted under reliability (METHODOLOGY §5.5). Headless launchers relaunch a harness session that exits early, and the seat resumes. The ideas below (per-decision timeouts, banks, censoring) are not built.
 
 - **Per decision:** soft timeout (default 300 s; harnesses differ a lot in speed, so this is generous). On timeout, the engine's AI decides and it's logged as `forfeit_decision`.
 - **Per match:** a wall-clock bank plus a token bank (whichever runs out first). An empty bank means every later decision is made by the engine's AI. If more than X% of a match's decisions are forfeited, the match is a loss.
 - **Illegal or malformed answers:** (built) the decision stays open with the reason ("Not accepted: …"); an option the engine refused is hidden for the rest of that turn. Every refusal is counted (`rejections`). Nothing is delegated. There is no limit on attempts.
 - If a harness dies or disconnects (crash, rate limit, context exhaustion), the seat is held while the runner or the user restarts the thread; the decision clock pauses up to a reconnect grace period. Infrastructure failures are **never counted as misplays**. If a seat can't come back, the match is censored and replayed, not scored (mtg-bench lesson). Today a silent seat is settled by the inactivity watchdog above instead, and a game it concedes is left out of the rating (METHODOLOGY §5.5).
 
-## 6. MCP tool surface
+## 6. MCP Tool Surface
 
 The Director serves MCP over Streamable HTTP. Each seat has its own URL (`/mcp/<seat-token>`), so a thread only ever holds its own seat. Long-polls return within ~45 s to stay under harness tool-call timeouts; the agent simply calls again.
 
@@ -313,13 +313,13 @@ The Director serves MCP over Streamable HTTP. Each seat has its own URL (`/mcp/<
 | `get_card(name)` | One card's printed data, as card JSON (older events: one text line). By name only. |
 | `get_set_context(part?)` | The MTG Deck Tools Set Context for the format, in events that include it, one part per call (default part 1). Events run with `prompts/archive/v1`–`v3` have `get_set_primer(part?)` instead (the same parts, under its earlier name). |
 | `get_game_log(last_n?)` | The last lines (default 60, at most 300) of the seat's current game log. |
-| `report_rules_issue(card, note)` | Flag a card that seems to behave wrong. Feeds the card-health dashboard (DESIGN §4.2). Never affects the game. |
+| `report_rules_issue(card, note)` | Flag a card that seems to behave wrong. Feeds the engine-issue flags on games and the set page's engine section. Never affects the game. |
 
 Not built (ideas): `set_yield`, `get_zone`, `search_rules`, `card_stats`, per-seat notes (`notes_read` / `notes_write`), `get_card` by object id.
 
 **Draft, build and between games** use the same `wait_for_decision` / `decide` loop (`draft_pick`, `deck_build` and `deck_review` kinds, §3.1; events in the earlier format had no review; `play_draw` and `sideboard`, §3.3). There are no special tools, so an agent written for the game loop works for the draft unchanged.
 
-### Turn flow between two agents
+### Turn Flow Between Two Agents
 
 ```
 agent A                 table server                      agent B
@@ -332,13 +332,13 @@ agent A                 table server                      agent B
 
 The engine thread blocks on whoever holds the decision. The other seat's long-poll simply waits. Nothing is shared between the agents except the server.
 
-## 7. Wire protocols
+## 7. Wire Protocols
 
 - **Director ↔ phase-server:** phase-rs's own JSON-over-WebSocket protocol (`ClientHello` → `CreateGameWithSettings`/`JoinGame` → `StateUpdate{state, legal_actions, events}` → `Action{GameAction}`), pinned to the exact protocol version of our engine image. Only the Director speaks it.
 - **Seat ↔ Director:** MCP over Streamable HTTP, one URL per seat (`/mcp/<seat-token>`), using **our** envelope. MCP is the only seat interface today (plus the launcher's `GET /mcp/<seat-token>/progress`, §6); a plain JSON HTTP API with the same operations, for a web UI for humans or custom clients, is an idea, not built.
 - **Event log:** one append-only JSONL file per event (`runs/<id>/events.jsonl`). Every pack, pick, deck, decision offered (with the text the seat read), answer, refusal, auto-pass, forced action, forfeit, game and match result, turn snapshot and rules-issue report goes in, with wall time per decision. Harness-reported usage stays in separate files (`usage-<seat>.json`) collected by the runner. These files are the source of truth. Everything in analysis is derived from them. The engine's own replay log (seed, decks and actions, for re-simulating games) is not recorded: phase-server has no settable seed or replay log yet, so game replay verification is future work (METHODOLOGY §3.1).
 
-## 8. Rounds and pairings: what a seat is told
+## 8. Rounds and Pairings: What a Seat Is Told
 
 Every event seats 8 agents and plays a **3-round Swiss** by default (METHODOLOGY §3.2); Private Tables may choose a round robin. The tool surface and the decision envelope don't change. What a seat sees:
 
@@ -351,7 +351,7 @@ Every event seats 8 agents and plays a **3-round Swiss** by default (METHODOLOGY
 What a seat is never told: who its opponents are (name, model, harness, contributor), where they sit, other seats' records or the pairing standings, or the seed. Its own record is in the per-game and per-match notices. Seat names never appear in anything a seat reads (decision texts, `get_view`, the game log; `game.test.ts` checks it). Seats are named `seat-<hex>` at every table (lobby, Private Tables, one-shot events), never after their model, and anonymous status shows no live standings (LOBBY.md, SPECTATING.md), so a seat that finds a running event can't tell its opponent from it.
 
 **Log records** (for verifiers; not shown to seats):
-- `event_start.pairing`: `{ format: "swiss" | "round-robin", rounds, version }` (`version` is `PAIRING_VERSION` in `packages/director/src/pairings.ts`: 3 from Oct 23, 2026 (before the last round, mirror avoidance with the smallest record-group float; the last round strictly by points); 2 briefly that day (strictly by points every round); 1 for earlier logs. A resumed event keeps its logged version, and the Hub verifies each log against its own version).
+- `event_start.pairing`: `{ format: "swiss" | "round-robin", rounds, version }` (`version` is `PAIRING_VERSION` in `packages/director/src/pairings.ts`: 4 from Oct 23, 2026 (version 3's rules with the pairing identity model/effort, so two harnesses of one model and level are a mirror); 3 earlier that day (before the last round, mirror avoidance with the smallest record-group float; the last round strictly by points); 2 briefly before it (strictly by points every round); 1 for earlier logs. A resumed event keeps its logged version, and the Hub verifies each log against its own version).
 - `event_start.agent_order`: agent names in request order; agent *i* sits at the seed's shuffled position *i*.
 - `event_start.table` (hosted contributor events): `{ kind: "lobby" | "private", queue?, table_id?, schedule?, occurrence? }`; `event_start.seats[]` of lobby tables add `contributor_id` (the Hub's opaque id) and `contributor` (the handle, only when the contributor shows it publicly).
 - `round_start`: `{ round, rounds, format, pairs: [[a, b], …], byes: […] }`, logged when the round is paired.

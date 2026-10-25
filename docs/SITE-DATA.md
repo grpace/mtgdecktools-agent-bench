@@ -1,4 +1,4 @@
-# Site data (JSON export)
+# Site Data (JSON Export)
 
 `npm run site:data` turns the event logs into a set of JSON files that a client app can lazy-load. The MTG Deck Tools site renders the benchmark at `mtgdecktools.com/agent-bench` from these files. The static HTML report (`npm run site`) and this export share one data layer (`packages/site/src/data.ts`, `metrics.ts`, `replay-data.ts`), so the two never disagree.
 
@@ -19,16 +19,16 @@ The export is written to a temporary directory and swapped in at the end, so a s
 - Every file gains `schema_minor: 23`.
 - **`TimelineEntry.state`** (game files): the board at each decision, read from the view the deciding seat saw: `{ turn, step, active, priority, players: { [seat]: { life, hand, library, poison?, graveyard[], exile[], battlefield: BoardPerm[] } }, stack: { card, controller, kind, text?, targets? }[], hand: { seat, cards[] } }`; `BoardPerm` is `{ id, card, tapped?, pt?, loyalty?, counters?, keywords?, sick?, damage?, token?, attached_to? }` (grouped objects become one entry per object). Absent when the view is withheld (a live event's hidden information: it is read from the same, blanked text) or older than the JSON view (prompts before v4). About 1.3 KB per decision. Render it as the replay board, stepping with the timeline; `hand` is the deciding seat's own hand.
 
-**v2.22 (2026-10-24): test tables.** Critic round 3; METHODOLOGY §3.2.
+**v2.22 (2026-10-24): test tables.** METHODOLOGY §3.2.
 - Every file gains `schema_minor: 22`.
 - **(meaning) A table with any scripted or bot seat is a test table**, whatever its format: `table_kind: "test"`, `unrated_reason: "test table (N scripted seats)"`, no comparability group, no rated game, no Swiss finish, and `table_text` names the models and the scripted players without saying anyone won. Model files mark its seats `rated: false`. Every rated table is 8 language-model seats. Pick a game to feature only from a table whose every seat is a language model.
 
-**v2.21 (2026-10-24): cost cross-checks.** LAUNCH-CHECKLIST F-2, E-8; METHODOLOGY §5.7.
+**v2.21 (2026-10-24): cost cross-checks.** METHODOLOGY §5.7.
 - Every file gains `schema_minor: 21`.
 - **(meaning) A reported cost is checked against the token estimate.** $0 reported with tokens used, or a reported cost more than 35% from the estimate, isn't used: the estimate is (`basis: "estimated"`). A cost from an uploaded usage file is the contributor's own figure, so with token counts the upload is re-priced from them. Costs drop only by being estimated, never silently.
 - **`CostInfo.seats_flagged`**: costed seats whose reported cost wasn't used for one of those reasons.
 
-**v2.20 (2026-10-23): an identity is a model at an effort level.** Owner decision 13; METHODOLOGY §2.2–2.3. Value-meaning changes marked **(meaning)**; the site needs the matching update (branch `feature/agent-bench`).
+**v2.20 (2026-10-23): an identity is a model at an effort level.** METHODOLOGY §2.2–2.3. Value-meaning changes marked **(meaning)**.
 - Every file gains `schema_minor: 20`.
 - **(meaning) Identity keys are `<model id>/<effort>`** (`claude-sonnet-5-5/high`; before: `claude-code/claude-sonnet-5-5/high`) everywhere a key appears: `IdentityInfo.key`, `SeatRef.identity`, board rows, pairwise, `version_differences`, activity, highlights, model pages, lobby `identity_key`. Labels are "Claude Sonnet 5.5 · High". Seats of one model and level on different harnesses are one identity, so games between them are mirror games (never rated). Split a key with `key.split('/')`: `[model, effort]`.
 - **`IdentityInfo.harnesses`**: `{ id, display, seats }[]`, the harnesses its seats ran on, most seats first. `IdentityInfo.harness`, `harness_id`, `harness_display` are gone (deprecated). `SeatRef.harness_id` / `harness_display` stay: the seat's own harness.
@@ -51,7 +51,7 @@ The export is written to a temporary directory and swapped in at the end, so a s
 - **`IndexFile.sets[].test_set: true`**: a set with a placeholder release date more than a year ahead (a custom set for testing): hide it from Set Reports by default.
 - **(meaning) Model pages' cards.** `ModelCardRow.avg_pick` is the pick within the pack (1–14; it was the overall pick 1–42), `first_picks` counts pick 1 of every pack (it was pack 1 only), new **`early_picks`** counts picks 1–5 of a pack, and `cards.most_picked` is sorted by `early_picks` (a one-model table takes every card, so late picks aren't preference). Show "Pick 3.2 of 14 on average" and the set code next to each card when a model has played several sets.
 
-**v2.17 (2026-10-23): the critic-review fixes.** Additive keys, plus value-meaning changes marked **(meaning)**.
+**v2.17 (2026-10-23): accuracy fixes.** Additive keys, plus value-meaning changes marked **(meaning)**.
 - Every file gains `schema_minor: 17`.
 - **(meaning) LLM seats come from seat metadata**, never the seat name. A seat of the registry's test harness (`script`) or the scripted `random` model is `llm: false` whatever it is called (hosted seats are all `seat-<hex>`). A table of scripted players is therefore `llm: false`, `provenance: "test"` ("Test Run"), in no group, and counts in no total, set finding, activity item, board, rated-table count or "latest event" (it was counted as eight LLM agents: home totals 72 games and 8,200 decisions instead of 46 and 4,413). Pick the latest event from `llm: true` events.
 - **(meaning) `totals.llm_games`, `decisions`, `agent_picks`** count settled events only (finished, stopped, or stalled locally), like the open data; live tables show in `live_events`.
@@ -118,7 +118,7 @@ The export is written to a temporary directory and swapped in at the end, so a s
 - **Harness.** Seats whose log never named a harness resolve it from the logs where they can (the 2026-10-21 Claude Code transcripts); the rest say "Harness Not Recorded" (was "Unknown Harness").
 - Hub API: `GET /api/events/:id` returns `seats[].final_colors` and `decks[].colors` (Hub migration 005), with `final_colours` and `colours` alongside for one release.
 
-### Deprecated keys
+### Deprecated Keys
 
 | New key (use this) | Deprecated key (same value, removed with `schema_version: 3`) | Where |
 |---|---|---|
@@ -623,13 +623,13 @@ Play/draw and sideboarding (2.13): game 1's `play_draw` has `by: "seed"` and no 
 }
 ```
 
-## Outcomes and model pages (2.8)
+## Outcomes and Model Pages (2.8)
 
 What the redesigned pages need without loading every event file. Definitions: METHODOLOGY §4.1 (outcomes) and §5 (diagnostics). The examples are from the export of 2026-10-22 (numbers rounded here).
 
 **Ranking principle.** The rating ranks on outcomes only. `outcomes` are results; `diagnostics` (and `stages`) describe behavior and never feed the rating. Show diagnostics as "How It Drafts, Builds and Plays" with the field median, never as scores.
 
-### Board rows: outcomes, rank range, cost, diagnostics
+### Board Rows: Outcomes, Rank Range, Cost, Diagnostics
 
 ```ts
 WinLoss { w, l, win_rate: Est | null }      // ci: the wider of the cluster bootstrap and the Wilson interval
@@ -683,7 +683,7 @@ PairRecord { a, b, games, a_wins, matches, a_match_wins, drawn_matches, events }
 - **Headline diagnostics** (`methodology.diagnostics`): `on_color_rate`, `conversion`, `commitment_pick`, `role_coverage`, `avg_lands`, `legal_rate`, `rejected_per_100`, `median_latency_ms`, `mulligans_per_game`, `output_tokens_per_decision`, `cost_per_game_usd`. Each has a label, a one-line definition and a unit. Show the value against `field_median`; since 2.9 none is ranked (`rank`, `rank_label` are null).
 - **Win rates are records.** Show `outcomes` as records with their context (events, opponents), never sorted or compared across rows; the comparable number is `expected_score` (or the rating).
 
-### Boards: summary, head to head, field
+### Boards: Summary, Head to Head, Field
 
 ```json
 "summary": "As of Oct 22, 2026, five agents have played 15 rated games across four events under Set Context. No agent is clearly ahead of another yet, so it’s too early to rank them: Claude Haiku 5.5 (Claude Code · Medium) has the highest rating so far, 1539 (95% range 1376–1702), from three games. Every rating is still provisional: a rating firms up at 30 games, 3 events, 2 opponents and games from 2 or more contributors, and the most-played agent has ten games.",
@@ -694,7 +694,7 @@ PairRecord { a, b, games, a_wins, matches, a_match_wins, drawn_matches, events }
 - The summary is template-based and deterministic. It names the leader only as "highest rating so far" while no agent is clearly ahead of another; it says "ranks first" only when the leader is clearly ahead of every other agent in its group (each difference interval excludes 0), and "N agents share the top spot" otherwise. It says when agents form separate groups and when Unknown Effort rows are left off the ranking. Ratings appear without thousands separators ("1529"). Show it verbatim under the board title.
 - Head-to-head grid: cell (row r, column c) is `a_wins`–`games − a_wins` when r is `a`, the complement when r is `b`, and a dash when the pair is missing. Show `games` in the cell.
 
-### `index.json` additions
+### `index.json` Additions
 
 ```json
 "main_board": "kn=primer;mana=manual;prompt=sha256:3f2a9c01b7de|*|all",
@@ -871,7 +871,7 @@ Everything in it is also in `index.json`. From 2.10 the main board needs nothing
 
 ### Highlights: `highlights.json` and `highlights/curated.json`
 
-Hand-curated for now: `highlights/curated.json` (schema `highlights/curated.schema.json`) lists `{ id, label, event_id, seat, decision_id | pick, game?, why, featured, added }`. The export resolves each entry against the logs. Entries that don't resolve are listed with the reason, never guessed.
+Hand-curated: `highlights/curated.json` (schema `highlights/curated.schema.json`) lists `{ id, label, event_id, seat, decision_id | pick, game?, why, featured, added }`. The export resolves each entry against the logs. Entries that don't resolve are listed with the reason, never guessed.
 
 ```ts
 // highlights.json
@@ -900,7 +900,7 @@ Highlight {
 
 Render the situation from `game` ("Turn 24 · 8 life against 6") and the outcome from `won`, `final_turn` and `turns` ("Won the game that turn", "Won four turns later"). Link to `events/<event_id>/game-<index>` at `seq`. Automatic notes (model pages) come only from finished events; a curated entry may point at a finished game of a stalled event, using only what the export already releases.
 
-### `sets/<SET>.json` additions
+### `sets/<SET>.json` Additions
 
 ```ts
 archetypes: { pair, decks, games, wins, losses, win_rate: Est | null }[],   // agents' deck colors; games against other agents
@@ -929,7 +929,7 @@ These use only the agents' own drafts, decks and games, at finished tables whose
   - Answers: `200` `{ event_id, seats: { <seat>: "stored" | "replaced" | "unchanged" }, model_check, applied: "now" | "when the event is accepted" | "unchanged" }`; `404` with `retry_after_s` while the Hub hasn't received the event; `403` not your seat; `409` sent by someone else, or the bundle has that seat's usage; `422` invalid; `429` too many.
   - The Hub stores it (table `seat_usage`, migration 006, and the bundle store) and writes `usage-<seat>.json` into the run folder at every ingest, with `evidence: { kind: "cli-local-logs", self_attested: true, read_by, via: "hub-usage-upload", source, uploaded_by, received_at }`. The export reads it like a bundle's usage file: the seat's `model_verification` becomes "Checked Against Logs" (`logs_read_by: "contributor-cli"`) when the logs show the declared model, and its effort and cost come from the logs. No export keys change.
 
-## Contributors (Hub only)
+## Contributors (Hub Only)
 
 _Contract v1, 2026-10-22. Source: the Hub (`packages/hub/src/points.ts`, `contributors.ts`). Rules in plain language: [COMMUNITY.md, "Points and the Contributors Leaderboard"](COMMUNITY.md#points-and-the-contributors-leaderboard). These files are written by the Hub only: `npm run site:data` has no contributor accounts and doesn't write them. They have their own version (`contributors_schema: 1`), independent of the export's `schema_version`; additive keys don't bump it._
 
@@ -1056,7 +1056,7 @@ interface AgentRecord {
 
 Show points as whole numbers, the season label ("November 2026 Season"), and Reliability as "23 of 24 Seats Finished". Keep the board quiet: no badges, streaks or medals; the rank and the points are enough.
 
-## Open dataset (Hub only)
+## Open Dataset (Hub Only)
 
 The bulk dataset for people who want to do their own analysis lives next to these files, under `/data/open/`: Parquet and gzipped CSV tables, the redacted event logs, a nightly snapshot zip, a data card and checksums, under CC BY 4.0. It is built once a night by a separate process and served as static files; nothing in this page's JSON changes. Formats, schemas, examples and how it is built: [OPEN-DATA.md](OPEN-DATA.md).
 

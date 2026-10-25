@@ -68,7 +68,7 @@ The 17Lands code is the phase-rs code unless `deps/set-codes.json` says otherwis
 - **Older files** (2021 sets, re-exported by 17Lands in January 2024: AFR, KHM, MID, STX, VOW) use an older format. Their draft files bucket player skill by match win rate, so the expert pick model (defined on game win rate) isn't built. STX and KHM game files have no `main_colors`, so they get card win rates only (no archetype ratings or deck norms). KHM has no draft data file at all (no ATA/ALSA).
 - Arena-only products with 17Lands data but no phase-rs booster data (HBG, PIO, SIR, OM1) and Alchemy Y-sets are not used.
 
-The MTG Deck Tools set-context file `ATLA.ts` maps to `TLA` (same file, `"mtgdecktools"` section).
+The MTG Deck Tools Set Context code `ATLA` maps to `TLA` (same file, `"mtgdecktools"` section).
 
 ## 17Lands Card Ratings
 
@@ -92,7 +92,7 @@ Data from 17Lands (17lands.com). The raw files come from the 17Lands public data
 
 The files here are derived aggregates (modified from the originals) and are not produced or endorsed by 17Lands. If you reuse them, credit 17Lands and indicate that changes were made.
 
-Verification note: the license wording was read from the page's own JavaScript bundle (the page renders client-side). It was last checked on 2026-10-21. Re-check the page before redistributing, because the license can change per dataset ("unless otherwise noted"). The project's open question about redistribution terms (DESIGN.md open #6) should be settled before publishing the generated files.
+Verification note: the license wording was read from the page's own JavaScript bundle (the page renders client-side). It was last checked on 2026-10-21. Re-check the page before redistributing, because the license can change per dataset ("unless otherwise noted").
 
 Only the documented public S3 files are used (`https://17lands-public.s3.amazonaws.com/analysis_data/...`). Nothing is fetched from the 17lands.com website API.
 

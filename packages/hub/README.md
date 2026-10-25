@@ -1,8 +1,8 @@
-# Hub: the central results service
+# Hub: The Central Results Service
 
 The Hub is the single source of truth for benchmark **results** (not games). It takes finished events as
 results bundles, checks them (METHODOLOGY §3.1), stores them immutably, indexes them in Postgres and
-serves the JSON tree mtgdecktools.com reads (docs/SITE-DATA.md, schema 2.14) and the nightly open dataset (docs/OPEN-DATA.md). Design: docs/ARCHITECTURE.md §1, §3, §4.
+serves the JSON tree mtgdecktools.com reads (docs/SITE-DATA.md) and the nightly open dataset (docs/OPEN-DATA.md). Design: docs/ARCHITECTURE.md §1, §3, §4.
 
 ```
  bench submit ──▶ POST /api/submissions ─┐                       ┌─▶ Postgres index (events, seats, picks, decks,
@@ -23,7 +23,7 @@ serves the JSON tree mtgdecktools.com reads (docs/SITE-DATA.md, schema 2.14) and
   identities or card rarities changed because of it, and `index.json` (which carries every board). The
   tree is identical to `npm run site:data` over the same run folders (checked in development).
 
-## Quick start (local)
+## Quick Start (Local)
 
 ```bash
 # Postgres on 127.0.0.1:5440, its own volume
@@ -86,17 +86,17 @@ Defaults: `DATABASE_URL=postgres://hub:hub@127.0.0.1:5440/hub`, `HUB_DATA_DIR=tm
 | `HUB_LOBBY_CONCURRENT`, `HUB_LOBBY_DAILY` | 2, 12 | lobby quotas, counted separately from Private Tables (`contributor quota --lobby-*`): lobby tables at a time and per rolling day. Introspection `lobby_*` (migration 009) |
 | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` (`_FILE`) | none (sign-in off) | the GitHub OAuth App for self-serve tokens |
 | `HUB_SESSION_SECRET` (`_FILE`) | derived from the client secret | HMAC key for the sign-in and session cookies; set it so rotating the GitHub secret doesn't end sessions |
-| `HUB_GITHUB_MIN_ACCOUNT_DAYS` | 30 | refuse GitHub accounts younger than this (`0`: off; HUB-7) |
+| `HUB_GITHUB_MIN_ACCOUNT_DAYS` | 30 | refuse GitHub accounts younger than this (`0`: off) |
 | `HUB_TERMS_REQUIRED` | 1 | hosted play and uploads need the current terms accepted (`src/terms.ts`); `0` only for tests |
-| `MTGDT_CONTACT_URL` | none (a visible placeholder) | the contact for takedowns, privacy and conduct: in the data card and the served legal documents. **Owner: set before launch** |
-| `MTGDT_TERMS_URL`, `MTGDT_PRIVACY_URL`, `MTGDT_CONTENT_POLICY_URL` | the Hub's `/legal/*` | where `bench login` and the account page link the documents (the site's pages, at launch) |
+| `MTGDT_CONTACT_URL` | none (a visible placeholder) | the contact for takedowns, privacy and conduct: in the data card and the served legal documents. Without it, the documents say requests can't be made yet |
+| `MTGDT_TERMS_URL`, `MTGDT_PRIVACY_URL`, `MTGDT_CONTENT_POLICY_URL` | the Hub's `/legal/*` | where `bench login` and the account page link the documents (on the hosted stack, the site's pages) |
 | `HUB_MODERATION_HOLD` | 0 | `1`: hold bundles whose notes or deck names the content filter flags, for review (default: publish, never feature) |
 | `MTGDT_MODERATION_WORDLIST` | none | a private file of extra filter terms, one per line (`#` comments), added to the default list (public-text.ts) |
 | `HUB_TRUST_PROXY` | unset | `1`: client IP for sign-in rate limits from the last `X-Forwarded-For` hop (behind Traefik) |
 | `HUB_TRUST_CLOUDFLARE` | unset | `1`: when the address the proxy saw is a Cloudflare edge, the client is `CF-Connecting-IP` (any other sender's header is ignored). `HUB_CLOUDFLARE_IPS` (comma-separated CIDRs) replaces the built-in list of Cloudflare's ranges |
 | `GITHUB_OAUTH_URL`, `GITHUB_API_URL` | `https://github.com`, `https://api.github.com` | only for tests (a mock GitHub) |
 
-## Contributor points
+## Contributor Points
 
 Points reward contributing, never winning (rules: docs/COMMUNITY.md "Points and the Contributors Leaderboard"; contract:
 docs/SITE-DATA.md "Contributors"). `src/points.ts` is the scheme (pure, unit-tested); `src/contributors.ts` applies it to
@@ -124,7 +124,7 @@ npm run hub -- points show alice            # a contributor's points, rank and l
 Change the rules by editing `SCHEME` in `src/points.ts` (bump `SCHEME.id`) or `bounties.json`, then recompute: history is
 rescored with the new rules. Note the change in CHANGELOG.md.
 
-## Status lifecycle and policy
+## Status Lifecycle and Policy
 
 ```
 received → validated → ingested
@@ -153,7 +153,7 @@ Community, Hosted and Test Run; METHODOLOGY §3 "Table provenance"). Imports kee
 (`source.json` `exclude`) is carried over. Best-of-1 events and best-of-3 events without sideboarding are ingested
 as Early Test Data: indexed and exported, never rated (`events.comparability_group` null, `unrated_reason`).
 
-## Integrity checks (`src/checks.ts`, `src/packs.ts`)
+## Integrity Checks (`src/checks.ts`, `src/packs.ts`)
 
 - **Schema and hashes:** the Director's own `validateBundle` (packages/director/src/submissions.ts):
   manifest, sha256 of every file, known files only, exactly one `event_start`, finished (`event_end`), not
@@ -187,7 +187,7 @@ as Early Test Data: indexed and exported, never rated (`events.comparability_gro
   matching the declared model; a seat's decision stream (picks, deck, every answer with its note) identical
   to another seat's, in this or any ingested event.
 
-### What the Director logs for full verification
+### What the Director Logs for Full Verification
 
 Since 2026-10-22 every `event_start` names the booster data it was generated from
 (packages/director/src/provenance.ts):
@@ -287,7 +287,7 @@ events it touches from their stored bundles and sends `NOTIFY hub_moderation`, s
 The CLI writes to Postgres and the data directory and sends `NOTIFY hub_events`; the running server
 reloads that event and re-exports (and reconciles every 60 s in case a notification was missed).
 
-## Tokens and scopes
+## Tokens and Scopes
 
 | Scope (`tokens.scope`) | Prefix | Can (`tokens.scopes`) | Issued by |
 |---|---|---|---|
@@ -299,7 +299,7 @@ reloads that event and re-exports (and reconciles every 60 s in case a notificat
 Tokens are random, shown once and stored as sha256 only. Suspending a contributor disables all their tokens;
 `token revoke <id>` disables one.
 
-## Hosted play (token introspection)
+## Hosted Play (Token Introspection)
 
 Contributors create events on the official hosted Director with a `play` or `contributor` token. The Director
 asks the Hub who the token belongs to (and caches the answer briefly), so revocation and suspension take effect
@@ -322,7 +322,7 @@ The Director enforces them (it knows what is live), and lobby tables count towar
 contributor. `board_visibility` is the contributor's Leaderboard Visibility setting (`public`, `hidden`, or null to
 follow the lobby's `--hide-handle`): the Director's lobby honors it.
 
-## Self-serve tokens (GitHub sign-in)
+## Self-Serve Tokens (GitHub Sign-In)
 
 `/account` (and `/auth/github`) let anyone with a GitHub account get a `contributor` token (submit + play):
 
@@ -332,7 +332,7 @@ follow the lobby's `--hide-handle`): the Director's lobby honors it.
   another contributor already has it; system handles such as `maintainers`, `admin` or `director-…` get a `gh-`
   prefix instead). Login, avatar and account creation date are stored.
 - **First sign-in** issues a token at once. A token is shown only in the response that issues it (`no-store`),
-  with a copy button and next steps (https://www.mtgdecktools.com/agent-bench/play).
+  with a copy button and next steps (https://www.mtgdecktools.com/agent-bench/run).
 - **Account page:** handle, review status, hosted-play quotas, active tokens (prefix, scopes, created, last
   used) with Revoke; Create Token (at most 5 active) and Rotate (revokes every active token, issues one).
   Every change needs a sign-in within the last 10 minutes (signed SameSite=Strict session cookie) and the
@@ -347,16 +347,17 @@ follow the lobby's `--hide-handle`): the Director's lobby honors it.
 - Pages are plain server-rendered HTML with a strict CSP (no external assets). Tokens, codes, GitHub access
   tokens and cookies are never logged. Off (503 with a message) until both GitHub settings are present.
 
-**Setting up the GitHub OAuth App (owner, once):**
+**Setting up the GitHub OAuth App (once per Hub):**
 1. On github.com: Settings → Developer settings → OAuth Apps → New OAuth App (for an organization: the
    organization's Settings → Developer settings → OAuth Apps).
-2. Application name `MTG Deck Tools Agent Bench`; Homepage URL `https://www.mtgdecktools.com/agent-bench`;
-   Authorization callback URL `https://bench-data.mtgdecktools.com/auth/github/callback`. Tick
+2. Application name and Homepage URL of your choice (ours: `MTG Deck Tools Agent Bench`,
+   `https://www.mtgdecktools.com/agent-bench`); Authorization callback URL `<HUB_PUBLIC_URL>/auth/github/callback`
+   (ours: `https://bench-data.mtgdecktools.com/auth/github/callback`). Tick
    "Enable Device Flow" (`npm run bench -- login` uses it). Register application.
 3. Copy the Client ID. Click "Generate a new client secret" and copy it (GitHub shows it once).
 4. Give the Hub the two values. Either way works; the Coolify UI is preferred (the secret never leaves the server):
-   - **Coolify UI (preferred):** project `agent-bench-prod` (or `agent-bench`) → the application → Environment
-     Variables: set `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`, then Redeploy.
+   - **Coolify UI (preferred):** the application → Environment Variables: set `GITHUB_CLIENT_ID` and
+     `GITHUB_CLIENT_SECRET`, then Redeploy.
    - **Local files:** `deploy/coolify-setup.sh` passes them when these files exist on the workstation
      (`~/.config/mtgdt-prod/` for production):
      ```bash
@@ -367,11 +368,11 @@ follow the lobby's `--hide-handle`): the Director's lobby honors it.
      ```
    `HUB_SESSION_SECRET` needs nothing from you: `deploy/coolify-setup.sh` generates `hub-session-secret` when it
    creates the instance and sets it in Coolify.
-5. Check `https://bench-data.mtgdecktools.com/account` shows "Sign In With GitHub", and that
+5. Check `<HUB_PUBLIC_URL>/account` shows "Sign In With GitHub", and that
    `npm run bench -- login` prints a code. If the Hub's public URL changes, update the callback URL in the app to
    match `HUB_PUBLIC_URL/auth/github/callback` exactly. Device Flow must stay enabled for `bench login`.
 
-## CLI login (device flow)
+## CLI Login (Device Flow)
 
 `npm run bench -- login` gets a contributor token in the terminal, without a browser on the same machine:
 
@@ -418,7 +419,7 @@ Log me in to the MTG Deck Tools Agent Bench so I can run hosted events.
    the bench CLI reads it from there. Tell me my handle and hosted-play quotas.
 ```
 
-## Hosted Director → Hub hand-off (contract)
+## Hosted Director → Hub Hand-Off (Contract)
 
 - **Endpoint:** `POST $HUB_URL/api/internal/events` (in the Coolify stack `HUB_URL=http://hub:8787`, on
   the internal network; the public URL works too).
@@ -456,6 +457,7 @@ Keep them additive (RELEASING.md "Deploying").
 | `006_seat_usage.sql` | `seat_usage`: usage summaries of hosted seats |
 | `007_best_of_three.sql` | best of 3 with sideboarding: group keys without `bo=`, earlier formats unrated, `events.sideboarding`, `games.play_draw` / `sideboarding` / `deck_sizes`. Run `npm run hub -- reingest` after deploying it |
 | `008_terms_moderation.sql` | terms acceptance (`contributors.terms_version` / `terms_accepted_at`, `consents`), moderation (`moderation_hides`, `moderation_flags`, `moderation_log`, `contributors.moderation_hidden`) and erasure (`erasures`, status `erased`). Run `npm run hub -- reingest` after deploying it, so stored run folders get the shared scrubber |
+| `009_lobby_quotas.sql` | lobby quotas apart from Private Table quotas (`contributors.lobby_concurrent` / `lobby_daily`) |
 
 ## Tests
 

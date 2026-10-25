@@ -1,4 +1,4 @@
-# Model and harness registry
+# Model and Harness Registry
 
 Every leaderboard row is a **seat identity**: canonical model + canonical effort, for example `claude-sonnet-5-5/high`, shown as "Claude Sonnet 5.5 · High" (docs/METHODOLOGY.md §2). The harness each seat ran on is recorded per seat, not part of the row. This folder is the single list of the names a seat's harness, model and effort may take:
 
@@ -10,14 +10,14 @@ Every leaderboard row is a **seat identity**: canonical model + canonical effort
 
 The resolver that reads them is `packages/registry` (`resolveModel`, `resolveHarness`, `normalizeEffort`, `resolveSeat`, `primaryModelFromUsage`, `verifySeatModel`). The Director's create-event API, the lobby, the `bench` CLI, the Hub's checks and the site export all use it, so a name means the same thing everywhere.
 
-## Why this matters
+## Why This Matters
 
 Without a registry, "Sonnet 5.5", "sonnet", "claude-sonnet-5-5", "anthropic/claude-sonnet-5-5" and a typo would each become their own leaderboard row, splitting one model's games across several ratings. With it:
 - **Entry:** `bench new`, `bench setup`, lobby join and `POST /api/events` resolve every seat to canonical values and refuse unknown models with suggestions. Your own table (not the hosted one or the lobby) can pass `--unlisted-model`: those seats are labeled **Unlisted** and are unrated until the registry knows the name.
 - **Logs keep both:** `event_start` records the canonical values (`harness`, `model`, `effort`) and the strings as typed (`harness_declared`, `model_declared`, `effort_declared`).
 - **Export re-resolves:** the site export resolves the raw strings again every time it runs. A registry fix (a new alias, a newly listed model) therefore merges or rates old rows at the next export, without touching any stored log.
 
-## How names are matched
+## How Names Are Matched
 
 `resolveModel(raw, harness, { at })`:
 1. **Case, spaces, dots, dashes and underscores never matter.** "Claude Sonnet 5.5", "claude_sonnet_5_5" and "claude-sonnet-5-5" are the same name.
@@ -71,7 +71,7 @@ Rules:
 - **Fast serving mode** (Cursor's `-fast` names) is recorded per seat, but it isn't an effort level and isn't part of the identity.
 - **`ultra` is its own level, not a higher `max`.** Codex describes it as subagents working on parts of a task in parallel, and its docs give no order relative to `max`, so it has no rank. It is never mapped onto another level, and only Codex accepts it, for the models whose catalog lists it.
 
-## Helper models and verification
+## Helper Models and Verification
 
 Some harnesses run a second model for their own side tasks. Claude Code, for example, runs a small Haiku model in the background, so a Sonnet seat's usage also lists `claude-haiku-5-5`. `helper_models` in `harnesses.json` (ids or prefix globs ending in `*`) lists them. `primaryModelFromUsage` takes the model with the most output tokens, ignoring helpers unless nothing else ran (so a Haiku seat is still Haiku).
 
@@ -85,7 +85,7 @@ The Hub and the export compare that primary model with the declared one (METHODO
 
 Providers sometimes serve dated snapshots behind one id. **A snapshot is the same leaderboard row as its canonical id.** List known snapshots in `snapshots`. The export records which snapshot a seat's usage showed and flags snapshots the registry doesn't list, so a silent model change is visible on the site without splitting the row. If a provider ever ships a materially different model under an existing id, it can be split off by giving the new snapshot its own entry. Treat that as a methodology change (METHODOLOGY §9).
 
-## Adding a model
+## Adding a Model
 
 1. Find the **exact API id on the provider's official model page** (not a blog post, not a third-party router).
 2. Add an entry to `models.json → models`:
@@ -112,7 +112,7 @@ Providers sometimes serve dated snapshots behind one id. **A snapshot is the sam
    - The schema check and the uniqueness check must pass: no name may match two models, even after case and punctuation are dropped.
    - Then run `npm run site:data`. Any rows that merge or become rated are expected.
 
-### Pull request checklist
+### Pull Request Checklist
 
 - [ ] Official source link for the exact id (`source`)
 - [ ] Display name exactly as the provider writes it
@@ -133,7 +133,7 @@ Providers sometimes serve dated snapshots behind one id. **A snapshot is the sam
 - Only prices you read on the provider's official page (for Cursor's own Composer, Cursor's published rate). Leave a model out rather than guess; its costs then show as not reported. A price with no known start date uses the day it was read as `from`, with a note (Kimi K3).
 - Free hosted variants (OpenCode Zen `-free`) have no price row of their own: they cost nothing while free, and projections use the underlying model's price.
 
-## Adding a harness
+## Adding a Harness
 
 Add an entry to `harnesses.json`:
 - **Effort:** how to set it (`effort`), its documented defaults per model and version (`effort_defaults`), and where it logs the level it used (`effort_detection`). Mark that `untested` until you've checked real files.
@@ -154,7 +154,7 @@ An app that starts harness sessions without running the model loop itself is a *
 - **`logs`:** where it records the model and effort each session opened with. Effort detection reads the harness's own record first and the launcher's log as a fallback.
 - Names of launchers and harnesses never collide (`validateRegistry`).
 
-## Left out on purpose (2026-10-22)
+## Left Out on Purpose (2026-10-22)
 
 These were left out because their ids or settings couldn't be verified from official docs at the time:
 - **Older models** (Claude Opus 5, Claude Sonnet 5, Claude Fable 5, the 4.x line; GPT-5.4 and earlier; Gemini 3.7 and 3.6 Flash; GLM 5.2; Kimi K2.7 Code; Muse Spark 1.2): no event has used them.

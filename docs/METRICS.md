@@ -4,24 +4,21 @@ Design notes for how stages could be measured. **What the benchmark actually com
 
 **Rule:** to measure a stage, hold its input fixed, vary who performs it, and measure the output with a yardstick that doesn't depend on the agent being judged. The end-to-end rating, from game results only, is the headline. Stage measurements are diagnostics: they describe behavior and may help explain results, but never feed the rating (METHODOLOGY §5).
 
-## 0. Variance first
+## 0. Variance First
 
 Limited is noisy. In mtg-bench, two *identical* bot seats ended up 330 Elo apart after one pod. More games alone won't fix this, so we design for it:
 
 1. **Common random numbers** (*planned*). When comparing models or conditions, use the same packs, seeds and library orders, so luck cancels out in the difference. Packs are seeded today; games aren't (phase-rs picks its own seed).
-2. **Duplicate format** (*not possible yet*): every pairing played twice with decks swapped, canceling deck strength and play/draw advantage (as in duplicate bridge and poker). It needs seeded games. The related deck-swap round is future work (METHODOLOGY §11).
+2. **Duplicate format** (*not possible yet*): every pairing played twice with decks swapped, canceling deck strength and play/draw advantage (as in duplicate bridge and poker). It needs seeded games. A related deck-swap round is future work.
 3. **Balanced seating.** Seat positions come from the event seed, so over many events every model drafts from every position.
 4. **Noise floor before claims.** The calibration study (`analysis/results/calibration.md`) simulates the noise of real tables (deck luck from 17Lands data, play/draw, contributor effects) and sets how many games a claim needs. The rating's ranges and rank ranges carry that uncertainty (METHODOLOGY §4, §6).
 5. **Pre-registered analysis** for research studies: the config hash and analysis plan are fixed before an event runs, and the report states what was planned and what was exploratory.
 
-## 1. Headline rating
+## 1. Headline Rating
 
-What the benchmark computes (details: METHODOLOGY §4):
-- A **Bradley–Terry rating on the Elo scale** from game outcomes between LLM seats, with a common play/draw term: `P(A beats B) = σ(skill_A − skill_B + play_bonus)`. Deck quality is not separated: the rating credits the whole pipeline, draft and build included.
-- 95% ranges come from a **bootstrap over events** (and over a contributor's events once a board has enough contributors), floored by the posterior curvature, with a contributor component. Ranks come from the interval of each rating difference.
-- **Only LLM-vs-LLM games are rated.** There are no games against bots or the engine's AI, and **no anchor**: no fixed reference agent sits at tables, and ratings are centered on the unweighted mean of the identities in each connected group (METHODOLOGY §4, "Anchor").
-- Leaderboard entries are **model + effort** (for example Claude Opus 5.5 · High); the harness each seat ran on is recorded per seat (METHODOLOGY §2.2).
-- *Not used:* fitting player and deck effects together (`skill + deck`). It needs each model to pilot several decks, which only a deck-swap design gives (METHODOLOGY §11).
+The headline is a rating from game outcomes between LLM seats only: no games against bots or the engine's AI, and no anchor agent. Leaderboard entries are **model + effort** (for example Claude Opus 5.5 · High); the harness each seat ran on is recorded per seat. How the rating is fit, its uncertainty ranges and ranks are in [METHODOLOGY.md](METHODOLOGY.md).
+
+- *Not used:* fitting player and deck effects together (`skill + deck`). It needs each model to pilot several decks, which only a deck-swap design gives.
 
 ## 2. Draft (T1 Pick, T5 Pod)
 
@@ -43,7 +40,7 @@ What the benchmark computes (details: METHODOLOGY §4):
 | **Cross-build** | Every model builds every pool in the pod. Gives a clean build-skill estimate with pool effects removed. *Planned.* |
 | **Human comparison** | On 17Lands pools from the public game data (where the human deck is known), agent deck vs human deck. *Planned*; what is built instead is archetype build quality against 17Lands archetype ratings and winning-deck norms, with no simulated games (METHODOLOGY §5.2). |
 
-### Deck strength (bot duels, experimental)
+### Deck Strength (Bot Duels, Experimental)
 
 Not part of the methodology (METHODOLOGY §5.2): nothing on the leaderboard or in the diagnostics uses it.
 
@@ -74,9 +71,9 @@ Caveats: the gauntlet is only as good as the bot decks; each gauntlet game is a 
 
 ## 5. Efficiency
 
-Always measured by the server: **seconds per decision**, decisions per game, tool calls per decision, reconnects. Where the harness reports it (collected by `bench play` and `bench attach-logs`): tokens and $ per seat and per game, reported or estimated from token counts (METHODOLOGY §5.7); **cost per Elo** is planned. Seats on a subscription didn't pay the API-equivalent figure. Pricing for $ estimates comes from one pinned pricing file, `registry/prices.json` (runebench lesson).
+Always measured by the server: **seconds per decision**, decisions per game, tool calls per decision, reconnects. Where the harness reports it (collected by `bench play` and `bench attach-logs`): tokens and $ per seat and per game, reported or estimated from token counts (METHODOLOGY §5.7); **cost per Elo** is an idea, not built. Seats on a subscription didn't pay the API-equivalent figure. Pricing for $ estimates comes from one pinned pricing file, `registry/prices.json` (runebench lesson).
 
-## 6. Format insights (what agent games teach us about the set)
+## 6. Format Insights (What Agent Games Teach Us About the Set)
 
 These are computed per set over all agent games, and always shown next to the 17Lands human numbers. Built today (the set file, docs/SITE-DATA.md): agent picks and average pick against 17Lands ATA, per-card deck records, archetype records and the average deck shape. The other rows are *planned*.
 
@@ -90,9 +87,9 @@ These are computed per set over all agent games, and always shown next to the 17
 | **Play patterns** | Combat-trick timing, removal on tempo vs value, how often each card is cast on curve, how often it's stranded. |
 | **Strategy notes** | Clustered agent rationales (`note`) and post-game reviews: what the agents themselves say mattered. |
 
-**Caveats, always stated next to these numbers:** agents are a different population from humans. Engine card bugs affect results. A card that's strong against agents may not be strong against people. Cards the engine can't run are swapped out of packs and every swap is published; games touched by engine issues are flagged (METHODOLOGY §5.6). A per-set card trust list is planned (DESIGN §4.2).
+**Caveats, always stated next to these numbers:** agents are a different population from humans. Engine card bugs affect results. A card that's strong against agents may not be strong against people. Cards the engine can't run are swapped out of packs and every swap is published; games touched by engine issues are flagged (METHODOLOGY §5.6). A per-set card trust list is an idea, not built.
 
-## 7. What we explicitly don't score
+## 7. What We Explicitly Don't Score
 
 - How good the free-text rationale is (no LLM-judge in the headline; it's optional, as an annotation).
 - Speed, beyond what the clock already enforces.

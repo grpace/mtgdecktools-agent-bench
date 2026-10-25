@@ -1,4 +1,4 @@
-# analysis/ — context-aware draft evaluation
+# analysis/: Context-Aware Draft Evaluation
 
 This package builds the optional **human-reference layer** of the benchmark ("Compared with human drafters", METHODOLOGY §5.1–5.2) from 17Lands public datasets. Nothing that ranks agents depends on it: the rating, play, mana, reliability, build sanity and the core draft metrics need only game results, card data and the logs, and work for every set. The card-quality heuristic used by the core metrics is checked against human win rates in `results/card-quality.md`.
 
@@ -62,7 +62,7 @@ uv run python -m draft_eval pipeline FRA KHM --json /tmp/status.json   # prepare
 
 The parquet cache and `.venv` are not committed. Models are small JSON files (about 10 KB per set) and are committed.
 
-## Data findings
+## Data Findings
 
 - **Draft data** (one row per pick):
   - Columns: `draft_id, rank, event_match_wins/losses, pack_number, pick_number` (both 0-based), `pick`, `pick_2` (almost always empty), `pick_maindeck_rate`, `pick_sideboard_in_rate`, `user_n_games_bucket` (1/5/10/50/100/500), `user_game_win_rate_bucket` (0.02 steps).
@@ -106,7 +106,7 @@ The table covers the first nine sets; every set's numbers are in `analysis/resul
 
 **Basic lands have a high GIH WR** (FRA Forest 55.7%, above the 55.4% baseline). Anything that ranks cards by raw GIH, including the naive regret metric, therefore treats a basic land as a decent pick. The Director's bots pick basics: 126 of 2,778 bot picks (4.5%) in the 11 scored events, 92 of them at pick 9 or earlier. LLM agents took none. That is a bot bug (in `packages/director`, not fixed here).
 
-## 1. Archetype ratings: `sets/<SET>/17lands-archetypes.json`
+## 1. Archetype Ratings: `sets/<SET>/17lands-archetypes.json`
 
 **Buckets** are taken from `main_colors`:
 - the 10 color pairs;
@@ -155,13 +155,13 @@ Deck stats are for build evaluation:
 
 Example from FRA WU winners: 17 lands (p25-p75 17-17), 13 creatures (11-15), curve 1.4 / 8.9 / 5.8 / 4.0 / 1.5 / 1.7.
 
-## 2. Expert pick model: `analysis/models/<SET>.json`
+## 2. Expert Pick Model: `analysis/models/<SET>.json`
 
 ```
 P(pick = c | pack, pool, t) = softmax over distinct cards in the pack of  u_c = x_c · β  (+ a_c)
 ```
 
-### Lane model
+### Lane Model
 
 This model is shared by the features and the scorer (see `features.py`).
 
@@ -249,7 +249,7 @@ Held-out expert drafts (20% by draft-id hash, about 60-70k picks per set). Each 
 - `gih_x_t` is negative: raw power matters less as the draft goes on.
 - The curve and creature-need terms are small (|β| < 0.12). Either the strong drafters' picks barely react to curve within a draft, or our proxies are too coarse. Treat curve as a build-stage metric, not a pick-stage one.
 
-## 3. Run scorer: `runs/<id>/draft-eval.json`
+## 3. Run Scorer: `runs/<id>/draft-eval.json`
 
 `score` replays each seat's picks in order (pool = picks so far) and featurizes every pack with the set's model. Each seat (agents and bots) gets the fields below. Runs without a complete draft are skipped.
 
@@ -285,9 +285,9 @@ Held-out expert drafts (20% by draft-id hash, about 60-70k picks per set). Each 
 
 Top level: `schema` (`draft-eval/1`), `event_id, set, knowledge`, `model` (file, λ, expert definition, holdout numbers, `unrated_cards_in_event`) and `definitions`.
 
-## Results on existing runs
+## Early Results (Test Tables, October 2026)
 
-Scored runs:
+These were scored on the first test tables, which seated 2–3 agents with bot drafters in the other seats, before every table seated 8 agents. They show what the metrics can separate, not agent results. Scored runs:
 - 6 LLM events in `runs/`;
 - a FRA scripted smoke event in `runs/`;
 - 4 smoke runs from `tmp/smoke-runs/`, with scripted random agents.
@@ -304,7 +304,7 @@ The HOB 3-agent pod was not in local `runs/` and isn't scored. Group means:
 
 The uniform-random log-likelihood is −1.79. Scripted random agents score −2.65, worse than uniform, because the model is confident and they often pick what it rules out.
 
-### Does context change the conclusions? Yes
+### Does Context Change the Conclusions? Yes
 
 **1. LLM drafting looks much better in context.**
 - On the naive metric, LLM regret (2.1-2.2 GIH pts) is close to random's (2.8) and nearly 3× the bots' (0.8).
@@ -314,15 +314,15 @@ The uniform-random log-likelihood is −1.79. Scripted random agents score −2.
 - Most of the naive "regret" comes from staying in lane. The agents are actually more disciplined than the bots about colors: 1-2% wasted picks against 13%. Bots draft by raw GIH early (and take basics), then commit.
 
 **2. MSH (opus vs sonnet).**
-- The naive metric says opus drafted much better: 1.61 vs 2.72 pts regret, and 11/39 vs 6/39 17Lands-top picks in STATUS.
+- The naive metric says opus drafted much better: 1.61 vs 2.72 pts regret, and 11/39 vs 6/39 17Lands-top picks.
 - In context, the gap almost disappears:
   - ctx regret 0.80 vs 0.95;
   - value regret 0.63 vs 0.69.
 - On expert agreement sonnet is better: top-1 .50 vs .36, logp −1.49 vs −1.59.
 - Opus's lane settled at pick 36 (sonnet: pick 5), only 62% of its picks were in its final colors, and 19% were wasted (sonnet 2%). Opus took the highest-rated card and kept switching. Sonnet read red (`flow_z` R = +2.3, alignment +1.43) and stayed. Sonnet won 2-0.
 
-**3. FRA primer ablation (seed `abl-fra-1`).**
-- Both views agree on the direction: none → primer+stats improves both agents.
+**3. FRA Set Context ablation (seed `abl-fra-1`).**
+- Both views agree on the direction: No Set Context (`none`) → Set Context + Human Stats (`primer+stats`) improves both agents.
 - The context view shrinks the size of the effect:
 
 | Condition | Naive regret (sonnet / haiku) | Value regret (sonnet / haiku) |
@@ -331,7 +331,7 @@ The uniform-random log-likelihood is −1.79. Scripted random agents score −2.
 | primer | 2.67 / 1.60 | 0.87 / 0.36 |
 | primer+stats | 1.38 / 1.10 | 0.32 / 0.33 |
 
-- Sonnet with the primer alone was its worst draft by the model (logp −1.88, top-1 .36). The naive metric didn't separate it from "none".
+- Sonnet with the Set Context alone (`primer`) was its worst draft by the model (logp −1.88, top-1 .36). The naive metric didn't separate it from "none".
 
 **Picks the naive metric calls mistakes but the model calls correct:**
 
@@ -356,7 +356,7 @@ Where the expert model and the value model disagree, it is mostly rare-drafting 
 
 This is why EV regret uses the value model, and agreement uses the expert model.
 
-## 4. Build quality: `sets/<SET>/deck-norms.json`
+## 4. Build Quality: `sets/<SET>/deck-norms.json`
 
 `analysis/draft_eval/build_eval.py`; the TypeScript twin is `packages/site/src/build-quality.ts`. The two agree to 1e-15 on every agent deck in `runs/`.
 
@@ -396,7 +396,7 @@ This is why EV regret uses the value model, and agreement uses the expert model.
 - Picks include Arena incentives: rare-drafting for the collection, and pick-order habits. The expert model learns them through ATA and card intercepts. Use the value model and ctx regret for "what wins".
 
 **Pods.**
-- Our pods have 6 bots and 2-3 agents. Bots draft by GIH + color commitment and take basics, so signals and wheels differ from human pods.
+- The early test pods above had 6 bots and 2–3 agents. Bots draft by GIH + color commitment and take basics, so signals and wheels differed from human pods. Current tables seat 8 agents.
 - The signal score compares seats within one pod. With 6-8 seats and one pack round it is noisy; treat a single event's value as anecdotal.
 
 **Packs.**

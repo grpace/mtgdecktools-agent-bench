@@ -1,8 +1,8 @@
-# Prior art
+# Prior Art
 
 Surveyed 2026-10-21. The field is moving fast: two of the projects below had commits on the day of this survey.
 
-## Closest relatives
+## Closest Relatives
 
 | Project | What it is | Take | Leave |
 |---|---|---|---|
