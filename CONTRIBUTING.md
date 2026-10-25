@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping. This repo is the open-source half of the [MTG Deck Tools](https://www.mtgdecktools.com) Agent Benchmark: the Director (the bridge to the phase-rs rules engine, events and MCP seats), the protocol, prompts, scripts and the results format. The leaderboard, reports and Set Contexts live on mtgdecktools.com.
+Thanks for helping. This repository is the open-source part of the [MTG Deck Tools](https://www.mtgdecktools.com) Agent Bench: the Director (the bridge to the phase-rs rules engine, events and MCP seats), the Hub (results, accounts, open data), the protocol, prompts, the `bench` CLI and the results format. The leaderboard, reports and Set Contexts live on mtgdecktools.com.
 
 Ways to contribute:
 - **Run events** with your harnesses and models and share them ([docs/COMMUNITY.md](docs/COMMUNITY.md)).
@@ -8,10 +8,11 @@ Ways to contribute:
 - **Improve the Director**: labels for new mechanics, better decision text, bug fixes.
 - **Report engine issues**: cards that behave wrong in phase-rs. Send them upstream to [phase-rs](https://github.com/phase-rs/phase), with a link in our issue.
 
-## Dev setup
+## Dev Setup
 
 ```bash
-npm install
+git clone https://github.com/grpace/mtgdecktools-agent-bench.git && cd mtgdecktools-agent-bench
+npm ci
 # Rules engine, pinned build (see engine/phase.lock.json for the digest)
 podman run -d --name mtgdt-phase -p 127.0.0.1:9374:9374 -v mtgdt-phase-data:/var/lib/phase-server \
   ghcr.io/phase-rs/phase-server@$(node -p "require('./engine/phase.lock.json').digest")
@@ -28,7 +29,7 @@ Run the Director natively:
 
 Or run the whole stack in containers: `npm run up` ([docs/COMMUNITY.md](docs/COMMUNITY.md)).
 
-## Checks before a pull request
+## Checks Before a Pull Request
 
 ```bash
 npm run typecheck                         # all workspaces
@@ -51,11 +52,11 @@ Debug a live seat with `node scripts/peek-seat.mjs <seat-url> [option]`.
 
 Don't spend model tokens to test plumbing. Use the scripted agent (`scripts/mcp-random-agent.mjs`) for anything that doesn't need an LLM.
 
-Add a line under **Unreleased** in [CHANGELOG.md](CHANGELOG.md) for anything a user or contributor would notice. CI runs the typecheck and unit tests on every push, and the smoke event, the lobby and Hub end-to-end tests and the image build on pull requests and `main`.
+Add a line under **Unreleased** in [CHANGELOG.md](CHANGELOG.md) for anything a user or contributor would notice. CI runs the typecheck and unit tests on every push, and the smoke event, the lobby and Hub end-to-end tests and the image build on pull requests and `main`. `scripts/ci-local.sh --quick` runs the checks and the image build locally, and `--full` adds the integration job (both need Podman).
 
 Found a security problem? Report it privately ([docs/SECURITY.md](docs/SECURITY.md)), not in an issue. Everyone taking part follows the [Code of Conduct](CODE_OF_CONDUCT.md).
 
-## Ground rules
+## Ground Rules
 
 - [`docs/PROTOCOL.md`](docs/PROTOCOL.md) is the contract. Change it on purpose, and bump the version.
 - **Prompts:** The current prompts are in `prompts/`; every set events ran with stays in `prompts/archive/vN/`. Never edit an archived set. A change to the current prompts starts a new comparability group (groups key on their content hash); archive a released set as the next `vN`. Leaderboard comparability depends on it.
@@ -65,7 +66,7 @@ Found a security problem? Report it privately ([docs/SECURITY.md](docs/SECURITY.
 - No card images in the repo. Use only 17Lands **public datasets**, never the site's undocumented endpoints.
 - Shell scripts wrap their body in `main()`, because bash reads scripts lazily and editing a running script corrupts it. Kill processes by PID, not `pkill -f`.
 
-## Upgrading the engine
+## Upgrading the Engine
 
 phase-rs ships almost daily. We run the upstream image unmodified, pinned by digest in `engine/phase.lock.json`:
 

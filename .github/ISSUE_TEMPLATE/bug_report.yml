@@ -20,7 +20,7 @@ body:
       label: How to reproduce
       description: Commands, set code, seed, number of seats. A scripted-agent reproduction (scripts/mcp-random-agent.mjs) is ideal.
       placeholder: |
-        npm run director -- --set fra --agents a,b --seed bug-1
+        npm run director -- --set fra --agents a,b,c,d,e,f,g,h --seed bug-1
         node scripts/mcp-random-agent.mjs <seat-url>
     validations:
       required: true
