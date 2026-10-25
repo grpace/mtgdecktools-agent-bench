@@ -382,7 +382,7 @@ Times are UTC (`weekly.time` is `HH:MM` UTC; the site shows local time). `LOBBY_
 
 **What the lobby enforces:**
 - Seat positions come from the event seed (secret until the event ends). The Swiss pairings are a deterministic function of the seed, the seats' declared identities and the match results. The Hub regenerates and checks them (METHODOLOGY §3.1).
-- At most 4 of the 8 seats belong to one contributor. Contributor tokens come from GitHub accounts at least 30 days old.
+- At most 4 of the 8 seats belong to one contributor, so every lobby table has at least two contributors. Contributor tokens come from GitHub accounts at least 30 days old.
 - The event log records per-seat provenance in `event_start.seats[]`: `contributor_id` (the Hub's id, opaque), `contributor` (the handle, only when public), `harness`, `model`, `effort` (canonical ids), plus `event_start.table` (`kind: "lobby" | "private"`, `queue`, `table_id`, `schedule`).
 - Swiss pairing avoids, in priority order: rematches, two seats of the same identity (their games wouldn't be rated), two seats of the same contributor.
 

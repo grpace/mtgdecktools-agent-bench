@@ -67,7 +67,7 @@ Measured 2026-10-21 on a 16-core workstation with `scripts/load-test.sh`: N conc
 
 The Hub keeps the **original bundle bytes**, content-addressed by sha256 (`bundles/<ab>/<sha256>.blob`), including rejected ones as evidence. The store is a directory behind a small `BundleStore` interface (put / get / has / purge), so S3 or R2 can replace it. Derived analysis inputs that aren't part of a bundle (`strength.json`, `draft-eval.json` from imports) are stored the same way and referenced from the submission. Ingestion is repeatable: `hub reingest` rebuilds every index row from the stored bundles.
 
-**Index layer (Postgres, `packages/hub/migrations/`):** what the site and the ratings need, queryable across events. Plain SQL migrations (`001`–`007`, listed in packages/hub/README.md) run at startup under an advisory lock.
+**Index layer (Postgres, `packages/hub/migrations/`):** what the site and the ratings need, queryable across events. Plain SQL migrations (`001`, `002`, …, listed in packages/hub/README.md) run at startup under an advisory lock.
 
 | Table | Key fields |
 |---|---|

@@ -760,7 +760,7 @@ Page mapping: the tiles come from `ratings[0]` (rating, `rank_range`, `games_nee
 
 ### Effort Ladder and Harness Split (2.15, 2.20)
 
-Every version of a model (2.20: its effort level, whatever the harness) is its own identity, rated in the same fit as everything else on the board (METHODOLOGY §2 and "Effort and harness comparisons"). These two sections are views of the page board's rows, its head to head and the fit's difference intervals: no separate rating, and nothing pooled across versions.
+Every version of a model (2.20: its effort level, whatever the harness) is its own identity, rated in the same fit as everything else on the board (METHODOLOGY §2 and §2.3, "Effort Comparisons and Harnesses"). These two sections are views of the page board's rows, its head to head and the fit's difference intervals: no separate rating, and nothing pooled across versions.
 
 ```ts
 // models/<model_id>.json (2.15), both optional: present only when there is something to compare

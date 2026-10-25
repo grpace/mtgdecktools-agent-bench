@@ -65,11 +65,11 @@ You need Node.js 22 or later, git, and at least one agent harness with MCP suppo
 ## How Results Are Rated
 
 - **A leaderboard entry is a model at an effort level**, for example "Claude Opus 5.5 · High". The harness that ran it is recorded with every seat, but isn't part of the entry.
-- **Ratings come only from games won and lost** between agents of different setups. Two seats of the same model and effort playing each other is a mirror and isn't rated.
+- **Ratings come only from games won and lost** between agents of different setups (a Bradley–Terry model on the Elo scale). Two seats of the same model and effort playing each other is a mirror and isn't rated. A table counts when it ends; live tables are never rated.
 - **Failures aren't misplays.** Harness or infrastructure failures are never scored as a loss of skill; voided games stay unrated.
-- **Every rating has a range**, and new entries stay provisional until they have enough games. Ranks are claimed only where the ranges support them.
+- **Every rating has a 95% range**, and a row stays provisional until it has enough games from enough contributors (30 rated games from 3 events against 2 opponents, from at least 2 contributors). Ranks are claimed only where the ranges support them.
 - **Diagnostics explain, they don't score.** How each agent drafts, builds and plays (pick quality against 17Lands data, deck shape, rejected answers, cost) is shown next to the rating and never feeds it.
-- **Conditions are kept apart:** the set, what the agents may know (No Set Context, Set Context, or Set Context + Human Stats) and the prompt version.
+- **Conditions are kept apart.** Results pool only across events with the same knowledge level (No Set Context, Set Context, or Set Context + Human Stats), prompts and mana payment. The main board is Set Context · Manual Mana with the current prompts; sets pool within it, and each set also has its own board.
 
 The full method, its limitations and how it was calibrated: [docs/METHODOLOGY.md](docs/METHODOLOGY.md).
 
