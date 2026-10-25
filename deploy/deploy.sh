@@ -74,7 +74,11 @@ if [ "$instance" = prod ] && ! git merge-base --is-ancestor "$sha" origin/main; 
   echo "refusing: $short is not on origin/main (production deploys only merged commits)"; return 1
 fi
 current="$(git ls-remote origin "refs/heads/$branch" | cut -f1)"
-if [ "$current" = "$sha" ] && [ -z "$redeploy" ]; then
+# The instance's Coolify application (empty: none yet, or gr3g-server can't be reached).
+on_host() { ssh -o BatchMode=yes -o ConnectTimeout=15 gr3g-server "$@"; }
+app_id() { on_host "docker exec coolify-db psql -U coolify -d coolify -Atc \"select a.id from applications a join environments e on e.id = a.environment_id join projects p on p.id = e.project_id where p.name = '$name' and a.name = '$name' and a.deleted_at is null\""; }
+id="$(app_id 2>/dev/null || true)"
+if [ "$current" = "$sha" ] && [ -z "$redeploy" ] && [ -n "$id" ]; then
   echo "$branch is already at $short: nothing to deploy. To build and deploy it again: deploy/deploy.sh --redeploy"; return 0
 fi
 if [ "$current" != "$sha" ] && [ -n "$redeploy" ]; then echo "--redeploy: $branch is at ${current:0:7}, not $short (drop --redeploy to deploy $short)"; return 2; fi
@@ -97,7 +101,6 @@ trap on_exit EXIT
 # The admin token goes to curl through a file descriptor, never argv.
 admin_api() { curl -sS -m 20 -H @<(printf 'Authorization: Bearer %s\n' "$(cat "$secrets/admin-token")") "$@"; }
 live_events() { curl -sS -m 10 "https://$domain/api/capacity" 2>/dev/null | python3 -I -c "import json,sys; print(json.load(sys.stdin)['live']['events'])" 2>/dev/null || echo '?'; }
-on_host() { ssh -o BatchMode=yes -o ConnectTimeout=15 gr3g-server "$@"; }
 container_of() { echo "c=\$(docker ps --filter label=coolify.projectName=$name --filter label=com.docker.compose.service=$1 --format '{{.Names}}' | head -1)"; }
 
 # An engine upgrade while events are live (LAUNCH-CHECKLIST E-2): they would resume and play on the new build. Refused
@@ -198,8 +201,6 @@ if [ "$current" != "$sha" ]; then
   else git push -q origin "$sha:refs/heads/$branch"; fi
 fi
 # The deployment Coolify queued for the commit: <status> (queued, in_progress, finished, failed, cancelled-by-user).
-app_id() { on_host "docker exec coolify-db psql -U coolify -d coolify -Atc \"select a.id from applications a join environments e on e.id = a.environment_id join projects p on p.id = e.project_id where p.name = '$name' and a.name = '$name' and a.deleted_at is null\""; }
-id="$(app_id 2>/dev/null || true)"
 # A first deploy: the instance has no Coolify application yet. Create it now (deploy/coolify-setup.sh: Coolify DB backup,
 # secrets, the application) and deploy this commit. Never next to containers that aren't the application's (dev's
 # Coolify service from before git deploys: docs/OPERATIONS.md "Moving Dev to Git Deploys").
