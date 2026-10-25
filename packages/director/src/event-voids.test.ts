@@ -183,4 +183,34 @@ await test('the watchdog: paused while the server restarts; after a resume, seat
   assert.deepEqual(forfeited, ['a']);
 });
 
+await test('the watchdog: a decision open past DECISION_MAX_MS is settled even while the seat keeps calling', () => {
+  const seat = new AgentSeat('a', 0);
+  const forfeited: string[] = [];
+  const ev: any = Object.create(Event.prototype);
+  const now = 1_000_000_000;
+  Object.assign(ev, {
+    cfg: { seatTimeoutMs: 600_000, decisionMaxMs: 1_800_000 }, stage: 'games', aborted: undefined, checkpoint: undefined,
+    seats: [seat], startedAt: now - 3_600_000, resumedAt: undefined,
+    forfeit: (s: AgentSeat, _o: unknown, _idle: number, reason = 'inactive') => forfeited.push(`${s.name}:${reason}`),
+  });
+  (seat as any).pending = { forfeit: () => ({}), createdAt: now - 1_799_000, phase: 'game', id: 'G1', kind: 'x' };
+  seat.beginRequest(); // a call in flight right now (a get_view loop): busy, and active a moment ago
+  ev.checkIdle(now);
+  assert.deepEqual(forfeited, [], 'under the limit, a busy seat is left alone');
+  ev.checkIdle(now + 1_000);
+  assert.deepEqual(forfeited, ['a:decision_limit'], 'at the limit it is settled, busy or not');
+  forfeited.length = 0;
+  (seat as any).pending = { forfeit: () => ({}), createdAt: now - 1_799_000, phase: 'game', id: 'G2', kind: 'x', answering: true };
+  ev.checkIdle(now + 1_000);
+  assert.deepEqual(forfeited, [], 'never while its answer is being applied');
+  ev.cfg.decisionMaxMs = 0;
+  (seat as any).pending = { forfeit: () => ({}), createdAt: now - 10_000_000, phase: 'game', id: 'G3', kind: 'x' };
+  ev.checkIdle(now + 1_000);
+  assert.deepEqual(forfeited, [], '0 turns the limit off');
+  ev.cfg.decisionMaxMs = 1_800_000;
+  ev.resumedAt = now - 60_000;
+  ev.checkIdle(now + 1_000);
+  assert.deepEqual(forfeited, [], 'counted from a resume, not from before the restart');
+});
+
 console.log(`\n${passed} passed`);

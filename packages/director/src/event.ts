@@ -54,6 +54,13 @@ export interface EventConfig {
   seatTimeoutMs?: number;
   seatConnectTimeoutMs?: number;
   /**
+   * The most one decision may stay open (DECISION_MAX_MS, default 30 min; 0 = off), however often the seat calls
+   * meanwhile: a seat that keeps calling without ever answering would otherwise hold its table until the event's time
+   * limit. Settled like an inactivity forfeit, logged with reason `decision_limit`. Counted from the decision's offer,
+   * or from a resume if later.
+   */
+  decisionMaxMs?: number;
+  /**
    * Fields logged with event_start beyond the request: who organized the event (hosted play) and where the
    * seat metadata comes from (`self-reported` for contributor events).
    */
@@ -114,6 +121,7 @@ export const REPLAY_DELAYS_MS = [2_000, 30_000, 120_000];
 export const DEFAULT_RESUME_GRACE_MS = 15 * 60_000;
 
 export const DEFAULT_SEAT_TIMEOUT_MS = 10 * 60_000;
+export const DEFAULT_DECISION_MAX_MS = 30 * 60_000;
 export const DEFAULT_SEAT_CONNECT_TIMEOUT_MS = 30 * 60_000;
 
 /**
@@ -420,9 +428,16 @@ export class Event {
     if (this.checkpoint && !this.anySeatSeen) return;
     const connect = Math.max(timeout, this.cfg.seatConnectTimeoutMs ?? DEFAULT_SEAT_CONNECT_TIMEOUT_MS);
     const resumeGrace = Math.max(timeout, this.cfg.resumeGraceMs ?? DEFAULT_RESUME_GRACE_MS);
+    const decisionMax = this.cfg.decisionMaxMs ?? DEFAULT_DECISION_MAX_MS;
     for (const s of this.agents) {
       const o = s.pending;
-      if (!o?.forfeit || o.answering || s.done || s.busy) continue;
+      if (!o?.forfeit || o.answering || s.done) continue;
+      // Open too long, whatever the seat's activity (calls that never answer keep a seat "busy").
+      if (decisionMax > 0 && now - Math.max(o.createdAt, this.resumedAt ?? 0) >= decisionMax) {
+        this.forfeit(s, o, now - (s.lastActivity ?? this.startedAt), 'decision_limit');
+        continue;
+      }
+      if (s.busy) continue;
       const last = s.lastActivity ?? this.startedAt;
       // After a resume, a seat that hasn't called since gets the resume grace: its CLI may still be waiting out the
       // deploy (and its harness restarting). The restart itself is never held against a seat.
@@ -433,20 +448,27 @@ export class Event {
     }
   }
 
-  private forfeit(s: AgentSeat, o: Offer, idleMs: number): void {
+  private forfeit(s: AgentSeat, o: Offer, idleMs: number, reason: 'inactive' | 'decision_limit' = 'inactive'): void {
     const first = !s.inactive;
     s.inactive = true;
     const stage = o.phase;
     const details = o.forfeit!();
-    this.log('forfeit', { seat: s.name, stage, reason: 'inactive', idle_ms: idleMs, decision: o.id, kind: o.kind, ...details });
+    this.log('forfeit', { seat: s.name, stage, reason, idle_ms: idleMs, decision: o.id, kind: o.kind, ...details });
     const list = this.forfeits.get(s.name) ?? [];
     list.push({ stage, game: typeof details.game === 'string' ? details.game : undefined });
     this.forfeits.set(s.name, list);
-    const mins = Math.round(this.seatTimeoutMs / 60_000) || 1;
-    if (first) {
-      s.notify(`You made no call for over ${mins} minute${mins === 1 ? '' : 's'} with a decision open, so the Director is playing for you: draft picks are made by the bot policy, your deck by the reference builder, between games you keep your deck (and play first if the choice is yours), and open games are conceded. This stops as soon as you call wait_for_decision again. Keep calling it until EVENT COMPLETE.`);
+    const minutes = (ms: number) => Math.round(ms / 60_000) || 1;
+    const mins = minutes(reason === 'decision_limit' ? (this.cfg.decisionMaxMs ?? DEFAULT_DECISION_MAX_MS) : this.seatTimeoutMs);
+    const plural = mins === 1 ? '' : 's';
+    if (reason === 'decision_limit') {
+      s.notify(`A decision stayed open for over ${mins} minute${plural} without an answer, so the Director settled it for you (a draft pick by the bot policy, your deck by the reference builder, between games you keep your deck, an open game is conceded). Answer each decision when you have it.`);
+      if (stage === 'game') s.notify(`Game ${details.game_number} of your match was conceded for you (a decision open for ${mins}+ minute${plural}). The match goes on.`);
+      return;
     }
-    if (stage === 'game') s.notify(`Game ${details.game_number} of your match was conceded for you (no call for ${mins}+ minute${mins === 1 ? '' : 's'} with a decision open). The match goes on.`);
+    if (first) {
+      s.notify(`You made no call for over ${mins} minute${plural} with a decision open, so the Director is playing for you: draft picks are made by the bot policy, your deck by the reference builder, between games you keep your deck (and play first if the choice is yours), and open games are conceded. This stops as soon as you call wait_for_decision again. Keep calling it until EVENT COMPLETE.`);
+    }
+    if (stage === 'game') s.notify(`Game ${details.game_number} of your match was conceded for you (no call for ${mins}+ minute${plural} with a decision open). The match goes on.`);
   }
 
   private async runStages(): Promise<void> {

@@ -148,6 +148,8 @@ const base = {
   // Inactivity forfeit (docs/METHODOLOGY.md §5.5): SEAT_TIMEOUT_MS (default 10 min, 0 = off), SEAT_CONNECT_TIMEOUT_MS (30 min).
   seatTimeoutMs: env.SEAT_TIMEOUT_MS ? Number(env.SEAT_TIMEOUT_MS) : undefined,
   seatConnectTimeoutMs: env.SEAT_CONNECT_TIMEOUT_MS ? Number(env.SEAT_CONNECT_TIMEOUT_MS) : undefined,
+  // The most one decision may stay open however often the seat calls (DECISION_MAX_MS, default 30 min; 0 = off).
+  decisionMaxMs: env.DECISION_MAX_MS ? Number(env.DECISION_MAX_MS) : undefined,
 };
 
 /**

@@ -40,7 +40,7 @@ interface Decide {
 }
 ```
 
-There is no per-decision clock, attempt counter or minimum/maximum in the envelope: a refused answer leaves the decision open with the reason (§5), and the inactivity watchdog is the only time limit today (§5).
+There is no per-decision clock, attempt counter or minimum/maximum in the envelope: a refused answer leaves the decision open with the reason (§5), and the inactivity watchdog, with its 30-minute cap on one open decision, is the only time limit today (§5).
 
 **Decision kinds:**
 - Draft and deckbuilding: `draft_pick`, `deck_build`, `deck_review` (§3.1, "Deckbuilding").
@@ -279,7 +279,7 @@ A naive engine asks for priority dozens of times per turn. That is the biggest c
 
 Magic needs a chess clock. Without one, slow models just win on patience.
 
-**What is built: an inactivity forfeit, not a clock.** A seat with an open decision that has made no MCP request for 10 minutes (`SEAT_TIMEOUT_MS`) has it settled by the Director: a bot-policy pick, the reference deck, between games the current deck kept and play first, or the game conceded (the match continues). Logged as `forfeit` records and counted under reliability (METHODOLOGY §5.5). Headless launchers relaunch a harness session that exits early, and the seat resumes. The ideas below (per-decision timeouts, banks, censoring) are not built.
+**What is built: an inactivity forfeit, not a clock.** A seat with an open decision that has made no MCP request for 10 minutes (`SEAT_TIMEOUT_MS`) has it settled by the Director: a bot-policy pick, the reference deck, between games the current deck kept and play first, or the game conceded (the match continues). Logged as `forfeit` records and counted under reliability (METHODOLOGY §5.5). A decision still open after 30 minutes (`DECISION_MAX_MS`) is settled the same way even if the seat has kept calling, logged with `reason: "decision_limit"`. Headless launchers relaunch a harness session that exits early, and the seat resumes. The ideas below (per-decision timeouts, banks, censoring) are not built.
 
 - **Per decision:** soft timeout (default 300 s; harnesses differ a lot in speed, so this is generous). On timeout, the engine's AI decides and it's logged as `forfeit_decision`.
 - **Per match:** a wall-clock bank plus a token bank (whichever runs out first). An empty bank means every later decision is made by the engine's AI. If more than X% of a match's decisions are forfeited, the match is a loss.
