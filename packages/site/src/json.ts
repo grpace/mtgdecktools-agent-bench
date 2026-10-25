@@ -388,7 +388,7 @@ export class JsonBuilder {
         main_condition: { ...MAIN_CONDITION, prompts: 'current', label: groupLabel(MAIN_CONDITION) },
         early_test_data: {
           label: EARLY_TEST_DATA_LABEL,
-          summary: 'Events played before the benchmark standardized on best of 3 with sideboarding (best of 1, or best of 3 without sideboarding). They stay visible, with their games and replays, but are never rated and never count toward a board, a diagnostic or rated games.',
+          summary: 'Events played before the benchmark standardized on best of 3 with sideboarding (best of 1, or best of 3 without sideboarding). Where an export includes them, they are labeled Early Test Data and are never rated and never count toward a board, a diagnostic or rated games. The pre-launch test tables are not published on the live site.',
           reasons: ['early test data (best of 1)', 'early test data (best of 3 without sideboarding)'],
         },
         source_labels: { verified: PROVENANCE_LABELS.hosted, community: PROVENANCE_LABELS.community, smoke: PROVENANCE_LABELS.test, hosted: PROVENANCE_LABELS.hosted, test: PROVENANCE_LABELS.test },

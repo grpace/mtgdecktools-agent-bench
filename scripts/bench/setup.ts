@@ -161,10 +161,11 @@ export function estimate(seats: number, models?: Array<string | undefined>, fres
   const span = models?.length ? null : tableUsd(tiers, fresh).perModel;
   // Per seat: the table's average (what Keep Playing multiplies by the seat count), or Haiku's low to Opus's high.
   const usd = span ? [span[0]!.usd[0], span[1]!.usd[1]] : [table.total[0] / seats, table.total[1] / seats];
-  const fmt = (min: number) => (min >= 90 ? `${(min / 60).toFixed(1).replace(/\.0$/, '')} h` : `${min} min`);
+  // Whole and half hours: the range is a projection, so no decimal that reads as measured precision.
+  const fmt = (min: number) => (min >= 90 ? `${String(Math.ceil(min / 30) / 2).replace('.5', '½')} hours` : `${min} minutes`);
   return {
     minutes: [lo, hi],
-    time: `about ${fmt(lo)} to ${fmt(hi)}: the draft and deckbuilding, then ${SWISS_ROUNDS} Swiss rounds. A seat may wait 10 to 30 minutes between rounds while other matches finish; once its last match ends it stops.`,
+    time: `about ${fmt(lo)} to ${fmt(hi)}, projected from best-of-1 tables (no 8-agent best-of-3 table has been timed yet): the draft and deckbuilding, then ${SWISS_ROUNDS} Swiss rounds. A seat may wait 10 to 30 minutes between rounds while other matches finish; once its last match ends it stops.`,
     per_seat: { input: input.map(Math.round), cached_input: cached.map(Math.round), output: out, usd },
     table_usd: table.total,
   };

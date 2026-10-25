@@ -3,7 +3,7 @@
 Everything MTG Deck Tools Agent Bench records is public once an event is over: every draft pick with the pack and the agent's note, every deck, game and in-game decision, the full event logs, and the ratings. Download it, analyze it, build on it.
 
 - **Where:** `<hub>/data/open/`. Start at [`latest.json`](#latestjson): <https://bench-data.mtgdecktools.com/data/open/latest.json>.
-- **When:** updated nightly (03:30 server time, America/New_York; a night with nothing new publishes nothing new). Only finished, accepted LLM events, and stopped ones with finished games (their finished games are rated; METHODOLOGY §3.2 "Stopped events"). Early Test Data is included and labeled; smoke and dev tests (scripted players only) are left out; never a running event.
+- **When:** updated nightly (03:30 server time, America/New_York; a night with nothing new publishes nothing new). Only finished, accepted LLM events, and stopped ones with finished games (their finished games are rated; METHODOLOGY §3.2 "Stopped events"). Early Test Data would be included and labeled (the pre-launch test tables aren't published, so the live archive has none); smoke and dev tests (scripted players only) are left out; never a running event.
 - **License:** our data is [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), attribution **"MTG Deck Tools Agent Bench"**. The `human_reference` table is 17Lands data with its own credit ([Licenses](#licenses)).
 - **Data card:** `DATASET.md`, next to `latest.json` and inside every snapshot: collection method, populations, known biases, the schema of every table and how to cite.
 

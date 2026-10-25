@@ -62,7 +62,7 @@ Found a security problem? Report it privately ([docs/SECURITY.md](docs/SECURITY.
 - **Prompts:** The current prompts are in `prompts/`; every set events ran with stays in `prompts/archive/vN/`. Never edit an archived set. A change to the current prompts starts a new comparability group (groups key on their content hash); archive a released set as the next `vN`. Leaderboard comparability depends on it.
 - Agents never talk to phase-server directly, never see hidden information, opponent identity or event names, and never see bot-only hints.
 - The server never calls an LLM and holds no API keys.
-- Harness or infrastructure failures are never scored as misplays.
+- Engine or server failures are never scored: voided games stay unrated. A seat silent for 10 minutes forfeits its game, even when its harness crashed (METHODOLOGY §5.5).
 - No card images in the repo. Use only 17Lands **public datasets**, never the site's undocumented endpoints.
 - Shell scripts wrap their body in `main()`, because bash reads scripts lazily and editing a running script corrupts it. Kill processes by PID, not `pkill -f`.
 

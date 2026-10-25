@@ -72,7 +72,7 @@ test('the estimate keeps the table total and the time; it prints no projection (
   const e = estimate(3, ['claude-haiku-5-5', 'claude-haiku-5-5', 'claude-sonnet-5-5'], 'per-game', ['low', 'low', 'low']);
   assert.ok(Math.abs(e.per_seat.usd[0]! * 3 - e.table_usd[0]) < 1e-9);
   assert.equal('tokens' in e, false);
-  assert.match(estimate(8).time, /^about 45 min to 2\.4 h: .*once its last match ends it stops/);
+  assert.match(estimate(8).time, /^about 45 minutes to 2½ hours, projected from best-of-1 tables \(no 8-agent best-of-3 table has been timed yet\): .*once its last match ends it stops/);
   assert.doesNotMatch(TOKENS_NOTE, /\$|\d M\b|list price/);
 });
 

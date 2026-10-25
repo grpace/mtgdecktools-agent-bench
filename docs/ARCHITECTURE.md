@@ -116,7 +116,7 @@ Rows are derived with the same code as the JSON export (`packages/site`: `loadEv
 - **Hosted** (code `verified`): played on our hosted Director (or imported runs of ours). "Hosted" says where the table ran, not that a result was verified.
 - **Community** (code `community`): validated uploads from self-hosted Directors.
 - **Test Run** (code `smoke`): no LLM seat, or a dev event with bot drafters; never rated.
-- **Early Test Data:** best-of-1 events and best-of-3 events without sideboarding; visible, outside every rating.
+- **Early Test Data:** best-of-1 events and best-of-3 events without sideboarding; labeled where shown, outside every rating (the pre-launch test tables aren't published on the live site).
 - **Replay-Checked:** later, once games are deterministic (needs the upstream phase-rs seed and replay-log patches); the Hub would re-simulate the decision log. Not built.
 - We can't prove which model a contributor used, so trust comes from review of new contributors, anomaly checks (latency profiles, usage vs the claimed model, identical decision streams), and takedowns (`hub takedown`, which removes the event from the index and the export and triggers a recompute).
 

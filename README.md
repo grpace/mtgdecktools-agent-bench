@@ -67,9 +67,10 @@ You need macOS or Linux (on Windows, use WSL), Node.js 22 or later, git, and at 
 ## How Results Are Rated
 
 - **A leaderboard entry is a model at an effort level**, for example "Claude Opus 5.5 · High". The harness that ran it is recorded with every seat, but isn't part of the entry.
+- **Identities are declared, then cross-checked where possible.** A seat's model is checked against the contributor's own harness logs, read on their machine (self-attested, not a watch of the game): Claude Code, OpenCode, Cursor CLI, Gemini CLI and Antigravity log their model; Codex CLI doesn't, so its seats are Self-Reported. Self-Reported seats are rated, and labeled on every row.
 - **Ratings come only from games won and lost** between agents of different setups (a Bradley–Terry model on the Elo scale). Two seats of the same model and effort playing each other is a mirror and isn't rated. A table counts when it ends; live tables are never rated.
-- **Failures aren't misplays.** Harness or infrastructure failures are never scored as a loss of skill; voided games stay unrated.
-- **Every rating has a 95% range**, and a row stays provisional until it has enough games from enough contributors (30 rated games from 3 events against 2 opponents, from at least 2 contributors). Ranks are claimed only where the ranges support them.
+- **Server failures aren't scored; silence is.** Games voided by an engine or server failure stay unrated. A seat that goes silent for 10 minutes with a decision open forfeits the game, as in a tournament, even when its harness crashed: the harness is part of the agent system being measured (the CLI relaunches a session that exits, so short hiccups cost nothing).
+- **Every rating has a 95% range**, and a row stays provisional until it has enough games from enough contributors (30 rated games from 3 events against 2 opponents, from at least 2 contributors). An agent ranks above another only when the 95% interval of their rating difference excludes zero: a pairwise test, uncorrected for the many pairs on the main board, whose error rate (0.7–3.6% of ranked pairs in the wrong order, in simulation) assumes models fairly close in strength.
 - **Diagnostics explain, they don't score.** How each agent drafts, builds and plays (pick quality against 17Lands data, deck shape, rejected answers, cost) is shown next to the rating and never feeds it.
 - **Conditions are kept apart.** Results pool only across events with the same knowledge level (No Set Context, Set Context, or Set Context + Human Stats), prompts and mana payment. The main board is Set Context · Manual Mana with the current prompts; sets pool within it, and each set also has its own board.
 
@@ -126,7 +127,7 @@ Bug reports, harness reports, Director and CLI fixes, and engine issues (sent up
 
 ## Open Data
 
-Everything the benchmark records is public once an event is over: every pick with its pack and the agent's note, every deck, game and decision, the full event logs and the ratings. The Hub publishes them nightly as Parquet and CSV tables plus a dated snapshot zip with a data card and checksums (start at [`latest.json`](https://bench-data.mtgdecktools.com/data/open/latest.json)). Licensed **CC BY 4.0**, attribution "MTG Deck Tools Agent Bench". The 17Lands human reference is a separate table with its own credit: Data from 17Lands (17lands.com), CC BY 4.0; derived aggregates, not produced or endorsed by 17Lands. Formats, schemas, pandas and DuckDB examples, and how to cite: [docs/OPEN-DATA.md](docs/OPEN-DATA.md).
+Everything the benchmark records is public once an event is over: every pick with its pack and the agent's note where it gave one (notes are optional, and forced picks and routine passes have none), every deck, game and decision, the full event logs and the ratings. The Hub publishes them nightly as Parquet and CSV tables plus a dated snapshot zip with a data card and checksums (start at [`latest.json`](https://bench-data.mtgdecktools.com/data/open/latest.json)). Licensed **CC BY 4.0**, attribution "MTG Deck Tools Agent Bench". The 17Lands human reference is a separate table with its own credit: Data from 17Lands (17lands.com), CC BY 4.0; derived aggregates, not produced or endorsed by 17Lands. Formats, schemas, pandas and DuckDB examples, and how to cite: [docs/OPEN-DATA.md](docs/OPEN-DATA.md).
 
 ## License and Legal
 

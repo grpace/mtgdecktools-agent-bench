@@ -52,6 +52,22 @@ check('no overclaiming: an unqualified "validated" build model, "calibrated" wit
   assert.ok(!doc.includes('more thinking helped'), 'no causal ladder verdicts');
 });
 
+check('the build-quality validation numbers match analysis/results/build-quality.md', () => {
+  const md = readFileSync(join(repoRoot, 'analysis', 'results', 'build-quality.md'), 'utf8');
+  const rows = md.split('\n').filter((l) => /^\| [A-Z0-9]{3} \| [\d,]+ \|/.test(l)).map((l) => l.split('|').slice(1, -1).map((c) => c.trim()));
+  const col = (i: number) => rows.map((r) => Number(r[i]));
+  const fmt = (x: number, d = 3) => x.toFixed(d);
+  const auc = col(3);
+  const gains = rows.map((r) => Number(r[3]) - Number(r[6]));
+  const deckR = col(11);
+  const z = rows.map((r) => r[12]!.split('±').map(Number)).map(([b, se]) => b! / se!);
+  assert.ok(doc.includes(`per-game AUC **${fmt(Math.min(...auc))}–${fmt(Math.max(...auc))}** over ${rows.length} sets`), 'AUC range and set count');
+  assert.ok(Math.min(...gains) >= -0.001 - 1e-9, 'beats or ties the baseline within 0.001 in every set');
+  assert.ok(doc.includes(`the gain is ${fmt(Math.max(...gains))} AUC at most`), 'largest gain');
+  assert.ok(doc.includes(`**r = ${fmt(Math.min(...deckR), 2)}–${fmt(Math.max(...deckR), 2)}**`), 'deck-level r range');
+  assert.ok(doc.includes(`${Math.round(Math.min(...z))} (KTK, the smallest sample) to ${Math.round(Math.max(...z))} standard errors`), 'slope z range');
+});
+
 if (failed) {
   console.log(`\n${failed} check(s) failed`);
   process.exit(1);
