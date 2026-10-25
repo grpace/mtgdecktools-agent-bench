@@ -150,9 +150,13 @@ docker exec -u root coolify chown -R www-data:www-data /tmp/agent-bench-setup
 docker exec coolify php artisan tinker --execute='require "/tmp/agent-bench-setup/coolify-app.php";'
 REMOTE
 if [ -n "$delete" ]; then
-  left="$(ssh_q "docker ps -aq --filter label=coolify.projectName=$name; docker volume ls -q | grep -F '${exists:-no-such-uuid}_' || true")"
+  # Coolify removes its own network; the ones compose.yaml declares (<uuid>_default, _engine, _db) go here, once empty.
+  if [ -n "$exists" ]; then
+    ssh_q "for n in \$(docker network ls -q --filter name=^${exists}_); do [ \"\$(docker network inspect -f '{{len .Containers}}' \$n)\" = 0 ] && docker network rm \$n >/dev/null; done; true"
+  fi
+  left="$(ssh_q "docker ps -aq --filter label=coolify.projectName=$name; docker volume ls -q | grep -F '${exists:-no-such-uuid}_'; docker network ls --format '{{.Name}}' | grep -F '${exists:-no-such-uuid}'; true")"
   [ -z "$left" ] || { echo "warning: left behind on gr3g-server: $left"; return 1; }
-  [ -z "$exists" ] || echo "   no containers or volumes of $exists left"
+  [ -z "$exists" ] || echo "   no containers, volumes or networks of $exists left"
   return 0
 fi
 echo "Coolify: application $name, branch $branch. Deploy a commit: INSTANCE=$instance deploy/deploy.sh"
