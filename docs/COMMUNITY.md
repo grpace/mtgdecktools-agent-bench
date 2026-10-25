@@ -1,4 +1,4 @@
-# Play in the benchmark and share the results
+# Play in the Benchmark and Share the Results
 
 The MTG Deck Tools Agent Benchmark is run by its community: you bring the agents, on your own harnesses and tokens. Every table seats **8 agents**, who draft together, build decks and play three Swiss rounds of best-of-3 matches with sideboarding (the loser of a game chooses to play or draw the next one).
 
@@ -9,9 +9,9 @@ Either way you choose **Play One Table** (one draft, then it stops) or **Keep Pl
 
 A private table runs **on the hosted table** (recommended: we run the rules engine and the Director, your agents connect over MCP, and results go straight to the leaderboard, labeled **Hosted**, METHODOLOGY §3) or **on your own machine** (you run phase-server and the Director, then submit the results bundle for the **Community** label; sections 1–5 below). The server never calls a model and needs no API key from you.
 
-## Set up an event
+## Set Up an Event
 
-There is one setup flow, `bench setup`. It asks the questions (Private Table or Lobby, one table or Keep Playing, where it runs, the set, each seat's harness, model and effort, what the agents may know), checks the answers against the server and the model registry, runs a quick preflight for every harness it will start, and ends in a **Confirmation**: the details the leaderboard will record for each seat, the time and the tokens it will use. Nothing starts until you confirm.
+There is one setup flow, `bench setup`. It asks the questions (Private Table or Lobby, one table or Keep Playing, where it runs, the set, each seat's harness, model and effort, what the agents may know), checks the answers against the server and the model registry, runs a quick preflight for every harness it will start, and ends in a **Confirmation**: the details the leaderboard will record for each seat, how long the table takes, and a note on tokens. Nothing starts until you confirm.
 
 **With your coding agent (recommended).** Paste [`prompts/setup.md`](../prompts/setup.md) into a coding agent that can run commands (Claude Code, Codex, Gemini CLI, OpenCode, Cursor and the like). It installs the kit and runs `bench setup --agent`, asks you its questions in plain language, shows you the confirmation and starts the event only after you say yes.
 
@@ -24,21 +24,21 @@ npm run bench -- setup
 
 In the checkout's folder, `bench` is `npm run bench --`. From any other folder it is `npm --prefix <checkout> run -s bench --` (the setup prompt clones to `~/mtgdt-bench`, so there it is `npm --prefix ~/mtgdt-bench run -s bench --`). The CLI runs from a clone of this repository (it is not distributed on npm). `bench check` shows what your machine has (Node.js 22 or later, sign-in, installed harnesses and their models) and what you can choose.
 
-### The confirmation
+### The Confirmation
 
 For each seat (identical seats are grouped), one line in the leaderboard's order, **model · harness · effort**:
 - the model's registry name, the harness and its version (when it starts on this machine), and the effort level, then how the effort is known: **set by flag** at launch (and seen in the harness's log where it logs one), **declared by you** for a seat you start yourself, or the harness's **documented default** where it has no setting or you don't know it;
 - where it starts (this machine, or by you) and the preflight: **✓** it answered and the model it reported is the declared one; **⚠** it can't be checked here (it is Self-Reported); **✗** a problem to fix first (not installed, not signed in, a different model answered).
 
-Then the table (private or lobby, hosted or your own), the set, the knowledge level, the format (best of 3 with sideboarding), the time (about 45 minutes to 2.4 hours) and the tokens. The preflight costs one short message per harness and model.
+Then the table (private or lobby, hosted or your own), the set, the knowledge level, the format (best of 3 with sideboarding), the time (about 45 minutes to 2.4 hours) and a note on tokens. The preflight costs one short message per harness and model.
 
 **Tokens.** A table uses a lot of tokens: every seat drafts, builds a deck and plays 6 to 9 games on your own harness subscription or API key, with a fresh agent session per game (one session per seat costs several times as much). Take part only if you have tokens to burn, and set a spending limit with your provider; on a subscription it counts against your plan's limits. We don't project what your table will cost. What seats have actually cost is on the leaderboard and in the open data (cost per game), and [HARNESSES.md](HARNESSES.md#expected-usage) has the measured token counts.
 
-### Make your table count
+### Make Your Table Count
 
 Only games between **different setups** (a different model or effort level; the harness doesn't count) are rated. A table of 8 identical seats plays a full event and still adds format data, but none of its games is rated. The Confirmation says how many games your table can rate ("Rated games this table can produce: 29 (of up to 29)"), and when the answer is few or none it warns you plainly and suggests mixes from what you can run: an **Effort Ladder** (one model at two effort levels, for example 4 seats at low and 4 at high), a **Model Mix** (two or three models from one provider), a **Provider Mix** (models from two providers, such as Claude Code and Codex CLI seats; one model through two harnesses is still one setup), or **Join the Lobby**. Nothing is refused. `bench check` and the seats question also show which seats you can run are **most needed** right now, from the leaderboard's Most Needed list. Several providers, apps such as T3 Code and Cursor, and good tables for common subscriptions: [MULTI-PROVIDER.md](MULTI-PROVIDER.md).
 
-### Flags, for scripts
+### Flags, for Scripts
 
 The same answers work as flags; `--yes` confirms (after the same checks and preflight):
 
@@ -58,7 +58,7 @@ npm run bench -- status <event>   # stage, who is deciding, standings
 npm run bench -- stop <event>     # stop the event and the seats running here
 ```
 
-## The hosted table in detail
+## The Hosted Table in Detail
 
 **Before you play: the terms.** The first `bench login` shows a short summary of the [Terms](legal/TERMS.md), [Privacy Notice](legal/PRIVACY.md) and [Content Policy](legal/CONTENT-POLICY.md) and asks for an explicit "yes" (a coding agent shows you the summary and passes `--accept-terms` only after you agree). In short: you run your agents on your own subscriptions or API keys and are responsible for all costs and for your providers' terms (we can't refund costs or help with account actions such as rate limits, flags or bans); finished events, including your agents' notes, are published and released as open data under CC BY 4.0; your handle shows only if you choose. When the terms change, hosted play and uploads stop until you accept again: run `bench login` (or `bench terms`), or press the button on your account page.
 
@@ -88,7 +88,7 @@ The answer has the seat URLs right away: `201` when the event starts now, `202` 
 
 **After the event:** `bench play` sends the Hub each seat's usage summary (the model ids and token counts your harness logged, the effort level and the harness version; never prompts or transcripts), so your seats are **Checked Against Logs** instead of Self-Reported. Seats you started by hand: `bench attach-logs <event>` finds their sessions on this machine (it asks first) and sends the same summary. If the Hub didn't have the event yet, run `bench attach-logs <event>` again later; it resends. The Hub takes it only for seats you seated (METHODOLOGY §2.1).
 
-**4. Follow it:** the Watch page on mtgdecktools.com (`/agent-bench/events/<id>/live`), `bench status <event>` (or `GET /api/events/<id>`: stage, `queue_position` while queued, standings; while the event runs, per-seat details and standings need your token, which `bench status` sends: the admin token for a table created with it, else your contributor token), and `GET /api/capacity` for the server's load. Only you (and we) can see your event's seat URLs (`GET /api/events/<id>/seats`) and logs (`bench pull`). Cancel a queued event, or stop a running one, with `bench stop <event>` (`DELETE /api/events/<id>`). Stopping doesn't erase a table: its finished games still count and are rated; games never played are not results, and an open game is void, or a loss for your own seat if it faced someone else's (METHODOLOGY §3.2, "Stopped events").
+**4. Follow it:** the Watch page on mtgdecktools.com (`/agent-bench/watch/<id>/live`), `bench status <event>` (or `GET /api/events/<id>`: stage, `queue_position` while queued, standings; while the event runs, per-seat details and standings need your token, which `bench status` sends: the admin token for a table created with it, else your contributor token), and `GET /api/capacity` for the server's load. Only you (and we) can see your event's seat URLs (`GET /api/events/<id>/seats`) and logs (`bench pull`). Cancel a queued event, or stop a running one, with `bench stop <event>` (`DELETE /api/events/<id>`). Stopping doesn't erase a table: its finished games still count and are rated; games never played are not results, and an open game is void, or a loss for your own seat if it faced someone else's (METHODOLOGY §3.2, "Stopped events").
 
 **5. Results** go to the leaderboard by themselves: when the event ends, the Director hands it to the Hub, which checks it and lists it as Hosted. You don't submit anything.
 
@@ -97,11 +97,11 @@ The answer has the seat URLs right away: `201` when the event starts now, `202` 
 - **Limits:** an event may run at most 8 hours; a queued event that hasn't started after 4 hours is dropped; an event whose seats never connect is stopped after 30 minutes; a seat silent for 10 minutes with a decision open forfeits it (METHODOLOGY §5.5).
 - Requests are rate limited (per address and per seat); a well-behaved agent never notices.
 
-## Your own table
+## Your Own Table
 
 Set it up with `npm run bench -- setup --local`, or step by step:
 
-### 1. Start the table (once)
+### 1. Start the Table (Once)
 
 Your own table needs:
 - Docker or Podman.
@@ -131,7 +131,7 @@ Options: `BENCH_PORT=8820 npm run up` changes the port. `npm run down` stops the
 
 To let agents on other machines connect, put the Director behind HTTPS and set `PUBLIC_URL=https://your-host`, so seat URLs use that address. Keep the admin token secret: anyone holding it can create events.
 
-### 2. Create an event
+### 2. Create an Event
 
 `npm run bench -- setup --local` asks the same questions as on the hosted table and starts the Director if it isn't running. One step at a time:
 
@@ -149,7 +149,7 @@ npm run bench -- new --set fra --knowledge primer \
 
 The seat URLs are saved to `runs/<event>/event.json` (gitignored). Anyone with a seat URL can play that seat, so don't share them.
 
-### 3. Seat the agents
+### 3. Seat the Agents
 
 ```bash
 npm run bench -- play <event>             # launch every seat headless
@@ -159,7 +159,7 @@ npm run bench -- seats <event>            # config snippets, to seat them by han
 
 `play` launches each seat with its harness's command line in an empty temp directory, gives it [`prompts/join.md`](../prompts/join.md), and saves the harness's own transcript to `runs/<event>/transcript-<seat>.jsonl`. If a session exits before its seat's EVENT COMPLETE (the Director's `GET /api/events/<id>` says the seat isn't done), `play` launches a fresh one, which resumes the seat, up to `--relaunch` times (default 3); every session is appended to the same transcript and the usage report sums them. A seat is done as soon as its own last match ends: the Director answers `EVENT COMPLETE. You're done…` with that seat's results, and `play` stops a session still running 2 minutes after that. On the hosted Director, `play` then waits for the event to end (no tokens spent) and sends your seats' usage to the Hub; the results go to the Hub on their own, with nothing to pull or bundle. A seat that stays silent for 10 minutes with a decision open forfeits it (METHODOLOGY §5.5), so a dead session never stalls the table. By default each game starts a fresh agent session to keep costs down, and every decision carries the full board and match history (`--fresh-session per-game`; `per-match` or `off` at `bench new`, `bench setup` or `bench lobby join`); it is recorded with each seat ([HARNESSES.md](HARNESSES.md), "Fresh sessions"). Supported harnesses and how each one is started: [HARNESSES.md](HARNESSES.md).
 
-### 4. Watch it, then pull the logs
+### 4. Watch It, Then Pull the Logs
 
 ```bash
 npm run bench -- status <event>   # stage, who is deciding, standings
@@ -168,7 +168,7 @@ npm run bench -- pull <event>     # copy events.jsonl + summary.json from the Di
 
 An event takes about 45 minutes to 2.4 hours (best of 3 with sideboarding). To browse your runs locally, use `npm run site` (static viewer over `runs/`) or the Director's live report data at `http://127.0.0.1:8787/data/index.json`.
 
-### 5. Bundle and submit
+### 5. Bundle and Submit
 
 ```bash
 npm run bench -- bundle <event> --submitter <your-handle>
@@ -199,7 +199,7 @@ curl -H "Authorization: Bearer $BENCH_TOKEN" <hub>/api/submissions          # yo
 curl -H "Authorization: Bearer $BENCH_TOKEN" <hub>/api/submissions/<id>     # one: status, reasons, every check
 ```
 
-## The lobby: bring one to four agents
+## The Lobby: Bring One to Four Agents
 
 Every table seats 8 agents, so with fewer you join the **lobby** and are matched with other contributors' agents under the same conditions. Details and the full API: [LOBBY.md](LOBBY.md).
 
@@ -226,7 +226,7 @@ npm run bench -- lobby join --set fra --seat claude-code/claude-opus-5-5/high --
 - **Private Table:** a new table with a new seed and the same 8 seats, on the same set or rotating through the sets you choose (`--rotate-sets featured` or `--rotate-sets fra,tla`).
 - **Lobby:** your seats rejoin the queue after each table, at the back like any new join.
 
-Every seat must start on this machine (each new table has new seat URLs), and every table uses your tokens. It runs in the background until you stop it or a limit you set is reached: a number of tables (`--max-tables 5`), hours (`--max-hours 8`), tokens (`--max-tokens 200M`, input plus output; cached re-reads aren't counted) or dollars (`--max-usd 50`), whichever comes first. It won't start a table that is expected to go past a limit. Tokens and dollars use what your harness reports in its usage logs where it does, and the high end of the setup estimate where it doesn't. The Confirmation shows the mode, the limits, the estimate per table and in all. Before each table the loop re-runs the quick preflight; if a harness stops answering (signed out, out of credits), the loop stops instead of seating a dead agent. When the hosted server is busy or your daily limit is used up, it waits as long as the server says; on other errors it backs off (1, 2, 4 … 30 minutes) and stops after five failures in a row. It writes a running summary (every table, your seats' results, tokens and cost) to `runs/loops/<loop id>/summary.json`.
+Every seat must start on this machine (each new table has new seat URLs), and every table uses your tokens. It runs in the background until you stop it or a limit you set is reached: a number of tables (`--max-tables 5`), hours (`--max-hours 8`), tokens (`--max-tokens 200M`, input plus output; cached re-reads aren't counted) or dollars (`--max-usd 50`), whichever comes first. It won't start a table that is expected to go past a limit. Tokens and dollars use what your harness reports in its usage logs where it does, and a measured per-table size (the high end) where it doesn't. The Confirmation shows the mode, the limits and how many tables they allow. Before each table the loop re-runs the quick preflight; if a harness stops answering (signed out, out of credits), the loop stops instead of seating a dead agent. When the hosted server is busy or your daily limit is used up, it waits as long as the server says; on other errors it backs off (1, 2, 4 … 30 minutes) and stops after five failures in a row. It writes a running summary (every table, your seats' results, tokens and cost) to `runs/loops/<loop id>/summary.json`.
 
 ```bash
 npm run bench -- status                    # your loops (and events on the Director)
@@ -243,7 +243,7 @@ Keep Playing shares the hosted server fairly: a continuous Private Table waits b
 
 ## Points and the Contributors Leaderboard
 
-Every seat you bring that plays rated games earns points. Points reward **contributing**, not winning: a seat that loses every game earns as much as one that wins them all. Points never affect the model ratings. The point values and the length of a season below may still change before launch; any change is applied to all history (see Recomputable).
+Every seat you bring that plays rated games earns points. Points reward **contributing**, not winning: a seat that loses every game earns as much as one that wins them all. Points never affect the model ratings. If we change a point value or the length of a season, the change is applied to all history (see Recomputable).
 
 **What earns points** (per seat, at tables the Hub accepted; only seats with at least one rated game earn anything):
 
@@ -305,7 +305,7 @@ Then your **reliability** multiplies the seat's points: the share of your last 2
 - **A lobby ticket disappeared:** tickets expire after 24 hours without a table; join again.
 - **Set Context + Human Stats isn't offered for a new set:** it needs 17Lands' public data for the set, which usually arrives a few weeks after release. `bench check` shows what each set offers.
 
-## Fairness rules
+## Fairness Rules
 
 Results are only comparable if everyone plays the same game. For leaderboard submissions:
 
@@ -316,7 +316,7 @@ Results are only comparable if everyone plays the same game. For leaderboard sub
 5. **Submit every completed event you ran for the leaderboard, not just the wins.** Restarts after a crash are fine. Mention them.
 6. Experiments (other prompts, ablations, custom harness setups) are welcome. Submit them too and say what you changed. They're labeled and kept off the main board.
 
-## What the server checks
+## What the Server Checks
 
 `POST /api/submissions` on the Hub (`Authorization: Bearer <submission token>`, body: the `.tar.gz`, up to 25 MB, 30 per day). The Hub keeps your bundle byte-for-byte (content-addressed by sha256) and runs the checks in [METHODOLOGY.md §3.1](METHODOLOGY.md):
 
@@ -344,7 +344,7 @@ Accepted events appear in the Hub's `/data/index.json` with the **Community** la
 
 **What "Community" means today:** the log is structurally valid, internally consistent, and its packs regenerate from its seed. It shows which model played only as far as the harness usage does (Checked Against Logs above), and it doesn't prove the games themselves weren't edited. Once phase-rs supports seeded games and server-side replay logs, submissions will be re-run against the pinned engine, and those that replay cleanly will be labeled **Replay-Checked**.
 
-## Running a submission server yourself
+## Running a Submission Server Yourself
 
 The Hub is in this repo (`packages/hub`, see its README): Postgres plus one Node process. For a quick local test without it, any server-mode Director also accepts submissions (the interim endpoint: it stores bundles as run folders and runs only the structural checks, not the draft, game or pack checks above) when `SUBMIT_TOKENS` is set: a comma-separated list of `name:token` pairs (tokens of 16+ characters; the name is recorded as the submitter). For a local test, put one `name:token` per line in `.bench/submit-tokens` and restart the stack. Related settings:
 - `SUBMIT_MAX_BYTES` (default 25 MB).

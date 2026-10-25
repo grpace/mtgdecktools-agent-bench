@@ -2,7 +2,7 @@
 
 _Contract v1, 2026-10-22. Implemented in the Director (`packages/director/src/lobby*.ts`). The mtgdecktools.com site builds its lobby pages from the public API in §4; that section is a stable contract (additive changes only, breaking changes bump `api_version`)._
 
-## 1. Why there is a lobby
+## 1. Why There Is a Lobby
 
 Every event seats **8 agents**. There are no bot drafters in product events (METHODOLOGY §3). Two kinds of table, in the words the CLI, the setup prompt and the site use:
 - **Private Table:** "You bring all 8 agents and play right away; repeat models as you like." (`bench setup --private`, or `bench new` with 8 seats.)
@@ -48,11 +48,11 @@ Either can be played once (**Play One Table**) or over and over (**Keep Playing*
 - **Contributors** need a contributor token from GitHub sign-in on the Hub (`bench login`). The hosted Hub only issues those to GitHub accounts at least 30 days old (`HUB_GITHUB_MIN_ACCOUNT_DAYS`: 30 in the hosted deployment, off by default in a Hub you run yourself).
 - **Handles** are shown publicly unless you opt out (`--hide-handle`, `"show_handle": false`). The Leaderboard Visibility setting on your Hub account page wins over that choice: **Hide** hides you in the lobby too, **Show** shows you, and **Follow My Lobby Choice** uses `--hide-handle`. The Director reads the setting with every authenticated request and for everyone it knows every 5 minutes (`POST /api/internal/contributors/visibility` on the Hub), so hiding on the Hub takes effect in the lobby within minutes. Hidden contributors appear as "Anonymous Contributor" and have no public stats page; their seats still count toward model stats. Event logs written while you are hidden carry no handle (lobby seats, and the organizer of your Private Tables); logs written earlier keep the handle they were written with.
 
-### 2.2 Mid-event drop-outs
+### 2.2 Mid-Event Drop-Outs
 
 The existing inactivity watchdog handles them (METHODOLOGY §5.5). A seat silent for 10 minutes with a decision open has its picks made by the bot policy, its deck built by the reference builder, and its open games conceded. Those games count as losses for it in the rating (METHODOLOGY §5.5). The seat counts as **abandoned** in its contributor's reliability. A seat that played to the end without a forfeit counts as **finished**. Events stopped by the server (restart failures, maximum duration) count for nobody.
 
-### 2.3 Capacity, restarts and deploys
+### 2.3 Capacity, Restarts and Deploys
 
 - A fired table goes through normal admission control (`MAX_CONCURRENT_GAMES`; an 8-seat table holds 4 game slots). If the worker is full, the event waits in the Director's FIFO queue and every holder sees `queue_position`. Seat URLs work at once; agents are told to keep waiting.
 - **Keep Playing never starves the lobby.** A contributor's Private Table created by a Keep Playing loop (`POST /api/events` with `"continuous": true`; logged as `event_start.table.continuous`) is admitted under stricter rules (`packages/director/src/admission.ts`):
@@ -61,19 +61,19 @@ The existing inactivity watchdog handles them (METHODOLOGY §5.5). A seat silent
   - each contributor has at most `CONTINUOUS_PER_CONTRIBUTOR` (default 1) continuous tables running or queued (`429` otherwise);
   - it counts toward the contributor's daily Private Table quota like any other Private Table (`HUB_PLAY_DAILY`, default 6 a day), so Keep Playing on a hosted Private Table plays at most that many tables a day unless the quota is raised. Keep Playing in the lobby counts toward the lobby quota instead (12 a day).
   - `GET /api/capacity` reports `continuous: { running, queued, reserve, per_contributor }`. A continuous table still waiting after `QUEUE_MAX_WAIT_HOURS` is dropped like any queued event; the loop backs off and tries again.
-- **Durability.** Lobby state (entries, tickets as sha256 hashes, forming tables, fired tables, stats, schedules) lives in the Director's private store, `<RUNS_DIR>/.lobby/state.json` (mode 600, atomic writes: a temp file, then a rename). It survives restarts. Ready checks that were in progress are restarted with a fresh window. A state file written before queue keys lost their best-of is migrated at the start: `-bo3` keys (entries, ready checks, featured queues, schedules, fired tables) become the current key, so nothing waiting is lost; best-of-1 entries and ready checks end (their holders see a notice saying best of 1 was removed), and best-of-1 featured queues and schedules are dropped (logged). Fired best-of-1 tables keep the key they played under. Writes are batched (at most one a second, written asynchronously off the request path; a synchronous write on shutdown), and the state stays small: left, expired and dropped entries and their tickets are forgotten 10 minutes after they end, seated entries after a day.
+- **Durability.** Lobby state (entries, tickets as sha256 hashes, forming tables, fired tables, stats, schedules) lives in the Director's private store, `<RUNS_DIR>/.lobby/state.json` (mode 600, atomic writes: a temp file, then a rename). It survives restarts. Ready checks that were in progress are restarted with a fresh window. Legacy queue keys in a state file (ending in `-bo3`) become the current key at start; best-of-1 entries end with a notice. Writes are batched (at most one a second, written asynchronously off the request path; a synchronous write on shutdown), and the state stays small: left, expired and dropped entries and their tickets are forgotten 10 minutes after they end, seated entries after a day.
 - **Draining** (`deploy/deploy.sh --drain`, `POST /api/admin/drain`). The lobby forms no tables and fires nothing while the Director drains. Forming tables dissolve: confirmed entries go back to the front of their queue. Holders see `"paused": true`. Nothing is lost; the CLI keeps polling through the restart.
 
 ### 2.4 Keep Playing
 
-`bench setup` asks **Play One Table** or **Keep Playing**. Keep Playing runs a loop in the background on the contributor's machine (`scripts/bench/loop.ts`): a new table as soon as one finishes, until `bench stop <loop id>` or a limit (tables, hours, tokens, dollars). In the lobby, each new table is a new `lobby join` with the same seats: they rejoin at the **back** of the queue, and every lobby rule above applies (3 seats per table, 6 entries, ready checks, reliability). The server needs nothing special for lobby rejoins. Before each table the loop re-runs the harness preflight and stops if a harness stopped answering; errors back off (1, 2, 4 … 30 minutes) and five in a row stop it.
+`bench setup` asks **Play One Table** or **Keep Playing**. Keep Playing runs a loop in the background on the contributor's machine (`scripts/bench/loop.ts`): a new table as soon as one finishes, until `bench stop <loop id>` or a limit (tables, hours, tokens, dollars). In the lobby, each new table is a new `lobby join` with the same seats: they rejoin at the **back** of the queue, and every lobby rule above applies (at most 4 seats per table, 8 entries, ready checks, reliability). The server needs nothing special for lobby rejoins. Before each table the loop re-runs the harness preflight and stops if a harness stopped answering; errors back off (1, 2, 4 … 30 minutes) and five in a row stop it.
 
-### 2.5 Launch configuration
+### 2.5 Hosted Configuration
 
 What the hosted Director runs is committed, not set by hand: `deploy/lobby.json` ships in the image, and `deploy/compose.yaml` points the Director at it with `LOBBY_CONFIG=/app/deploy/lobby.json` and `LOBBY_CONFIG_APPLY=always`, so the file replaces the featured queues and schedules at every start (§6). Change it with a commit and a deploy; an admin `PUT /api/admin/lobby/config` lasts until the next start.
 
-- **Featured queue at launch:** one, the main condition (Set Context · Manual Mana, METHODOLOGY §3.3) of the newest featured set: `fra-primer-manual` (owner, 2026-10-24). It always shows in `GET /api/lobby`, even empty, so early contributors gather at one table instead of spreading over eight. The other featured sets in `sets/rotation.json` stay joinable in any condition (`bench lobby join --queue sos-primer-manual …`) and show once someone waits; any set at all can be played as a Private Table. Every table the main condition fires lands on the headline board. A unit test (`lobby.test.ts`) fails when `deploy/lobby.json` doesn't feature the first set in the rotation, so a new set updates both.
-- **No scheduled table at launch** (decided 2026-10-22). A weekly table helps only once there are enough regular contributors to fill 8 seats at one time; at launch the queues fill from whoever is around, waiting costs nothing, and an empty scheduled slot would read as a dead lobby. Revisit when queues regularly wait more than a few hours with seats in them (`oldest_wait_s` in `GET /api/lobby`), or for a launch-night event: add an entry to `schedules` in `deploy/lobby.json` (§6 has the format) and deploy.
+- **Featured queue:** one, the main condition (Set Context · Manual Mana) of the newest featured set, the first in `sets/rotation.json` (now `fra-primer-manual`). It always shows in `GET /api/lobby`, even empty, so contributors gather at one table instead of spreading over eight. The other featured sets stay joinable in any condition (`bench lobby join --queue sos-primer-manual …`) and show once someone waits; any set at all can be played as a Private Table. Every table the main condition fires lands on the headline board. A unit test (`lobby.test.ts`) fails when `deploy/lobby.json` doesn't feature the first set in the rotation, so a new set updates both.
+- **Scheduled tables:** none right now. A weekly table helps once there are enough regular contributors to fill 8 seats at one time; until then the queues fill from whoever is around, and waiting costs nothing. To add one, put an entry in `schedules` in `deploy/lobby.json` (§6 has the format) and deploy.
 
 ## 3. CLI
 
@@ -98,7 +98,7 @@ Options: `--knowledge none|primer|primer+stats` (default `primer`), `--mana manu
 
 **Sessions.** Lobby seats get the same context policy as Private Tables (docs/HARNESSES.md "Fresh sessions"). The model seats `lobby join` starts get a fresh agent session per game by default (`--fresh-session per-game`): `bench play` ends the seat's session when its deck is locked and after every game, and starts a fresh one; every decision carries the full board and match history. `--fresh-session per-match` starts one after every match instead; `--fresh-session off` keeps one session. Seats you seat by hand (`--no-launch`, or a harness the CLI can't start or that isn't installed) keep their own session and record none. Scripted test seats keep one session unless `--fresh-session` is given. The policy is declared with each seat when you join (§5.1), kept with your ticket, and recorded per seat in the fired table's `event_start.seats[].context_policy`, exactly as at a Private Table. When the table fires, the CLI starts only seats whose recorded policy is the one you joined with. `bench setup --lobby` and Keep Playing pass the same choice on. A Director that doesn't record policies yet (no `context_policy` on the join answer's entries) gets the note "this Director doesn't record context policies yet" and your seats keep one session each.
 
-## 4. Public API (read-only, for the site)
+## 4. Public API (Read-Only, for the Site)
 
 Base: the Director, `https://bench.mtgdecktools.com`. All public responses:
 - are JSON with `Access-Control-Allow-Origin: *`;
@@ -188,7 +188,7 @@ Everything the lobby page needs in one request.
    "seats_listed": "when the event ends",
    "status_url": "https://bench.mtgdecktools.com/api/events/2026-10-22-17-40-02-fra-1c2d",
    "live_url": "https://bench.mtgdecktools.com/api/events/2026-10-22-17-40-02-fra-1c2d/live",
-   "watch_url": "https://www.mtgdecktools.com/agent-bench/events/2026-10-22-17-40-02-fra-1c2d/live"
+   "watch_url": "https://www.mtgdecktools.com/agent-bench/watch/2026-10-22-17-40-02-fra-1c2d/live"
   }
  ]
 }
@@ -196,14 +196,14 @@ Everything the lobby page needs in one request.
 
 Field notes:
 - `queues`: featured queues plus every queue with at least one entry. Featured first, then by `seats_filled` (descending).
-- `seats_filled`: present entries waiting in the queue (0–8), the "6/8" number. `seats_needed`: how many more seats it takes to form a table, **counting the per-contributor cap** (6 seats from 2 contributors with 3 each need 2 seats from someone else). `seats_away`: entries whose holder isn't polling right now; they don't count until they come back.
+- `seats_filled`: present entries waiting in the queue (0–8), the "6/8" number. `seats_needed`: how many more seats it takes to form a table, **counting the per-contributor and same-setup caps** (§10). `seats_away`: entries whose holder isn't polling right now; they don't count until they come back.
 - `status`: `waiting` (fewer than 8 present), `ready_check` (a table is forming), `paused` (the Director is draining for a restart), `scheduled` (a scheduled queue before `starts_at`).
 - `seats[].status`: `waiting`, `ready_check` (in a forming table, not confirmed), `confirmed`. Order: queue order.
 - `forming`: tables in a ready check: `[{ "table_id", "confirmed": 5, "seats": 8, "deadline": "…" }]`.
 - `recent`: the last 20 fired tables (lobby and Private Tables, including the operator's own Private Tables created with the admin token, which have `contributors: 0` and never count in contribution stats; tables of scripted seats only are left out), newest first. `stage`: `queued` (waiting for capacity, with `queue_position`), `draft`, `build`, `games`, `done`, `aborted`. `watch_url` is the site's watch page; `live_url` the spectator stream (docs/SPECTATING.md: delays and redaction already applied). Once the event has ended, its seats are listed (seat objects as in `queues[].seats`, without `waiting_since` and `status`) in a canonical order (model, harness, effort), never in seat order. A table whose event is still running lists no seats (`seats: []`, `seats_listed: "when the event ends"`): while it plays, an agent with web tools could otherwise find its own table and learn its opponents' models. Seat names are neutral (`seat-<hex>`) at every table, lobby or Private Table, and never encode the model.
 - `best_of`: always `3` (every table plays best of 3 with sideboarding). It stays in the view for older clients; queues and `group` don't split on it.
 - `knowledge_label`: the display name (`No Set Knowledge`, `Set Context`, `Set Context + Human Stats`).
-- **Every seat object** (queues, recent tables, tickets) carries the canonical identity, never free text: `model_id`, `model_display`, `harness_id`, `harness_display`, `effort`, `effort_display`, `identity_key` (`harness/model/effort`, the leaderboard identity) and `identity_label` ("Claude Opus 5.5 · Claude Code · High"). Show `identity_label` wherever a seat is listed: the effort is part of who is playing.
+- **Every seat object** (queues, recent tables, tickets) carries the canonical identity, never free text: `model_id`, `model_display`, `harness_id`, `harness_display`, `effort`, `effort_display`, `identity_key` (`model/effort`, the leaderboard identity) and `identity_label` ("Claude Opus 5.5 · High"). Show `identity_label` wherever a seat is listed: the effort is part of who is playing.
 
 ### 4.2 `GET /api/lobby/queues/<key>`
 
@@ -264,7 +264,7 @@ Contribution stats for light gamification. Cached 60 s.
 
 One row from §4.4. A model row adds `contributors`: the public handles backing it (`[{ "handle", "seats" }]`, top 50) and `anonymous_backers` (a count). A contributor row adds `recent`: their last 20 tables (`table_id`, `event_id`, `fired_at`, `stage`, `kind`, their seats' `model_id`s, `watch_url`). `404` for an unknown model or a hidden or unknown contributor.
 
-## 5. Contributor API (token required)
+## 5. Contributor API (Token Required)
 
 `Authorization: Bearer <contributor token>` (GitHub sign-in, `play` scope). `401` without a valid token with the `play` scope (the Hub reports other tokens as inactive), `503` when the Hub can't be reached to check it.
 
@@ -303,7 +303,7 @@ A seat may also add `"context_policy"`: `"fresh-per-game"` or `"fresh-per-match"
 
 `show_handle` is the lobby choice; the Hub's Leaderboard Visibility setting, when set, wins over it (§2.1).
 
-Errors (`{ "error": "…" }`): `400` invalid seats (more than 3 in one join), unknown or unlisted model or harness, a missing or `default` effort, an unknown `context_policy`, a scripted test seat, unknown set, a set without a public queue, invalid key, a `best_of` other than 3 or a queue key ending in `-bo1` (`Best of 1 was removed: Agent Bench plays best of 3 with sideboarding.`); `403` an admin token, or a contributor token not from GitHub sign-in; `409` the per-contributor limits (more than 3 seats in this queue, more than 6 entries in all) or a cooldown (`Retry-After`); `429` more than 20 joins in an hour, or the daily lobby quota is spent (`Retry-After`); `503` paused (draining), the lobby is full, or the Hub is unreachable.
+Errors (`{ "error": "…" }`): `400` invalid seats (none, or more than 4 in one join), unknown or unlisted model or harness, a missing or `default` effort, an unknown `context_policy`, a scripted test seat, unknown set, a set without a public queue, invalid key, a `best_of` other than 3 or a queue key ending in `-bo1` (`Best of 1 was removed: Agent Bench plays best of 3 with sideboarding.`); `403` an admin token, or a contributor token not from GitHub sign-in; `409` the per-contributor limits (more than 4 seats in this queue, more than 8 entries in all) or a cooldown (`Retry-After`); `429` more than 20 joins in an hour, or the daily lobby quota is spent (`Retry-After`); `503` paused (draining), the lobby is full, or the Hub is unreachable.
 
 ### 5.2 `GET /api/lobby/tickets/<ticket>?wait=40&rev=<n>`
 
@@ -352,7 +352,7 @@ Body `{ "table_id": "t-7f3a9c2e" }` → `200` with the ticket view. `409` when t
 
 Leave: every waiting or ready-check entry of the ticket, or one entry. Seated entries are unaffected; they belong to a running event (stop a seat by stopping its harness: the watchdog takes over). `200` with the ticket view.
 
-## 6. Admin API (admin token)
+## 6. Admin API (Admin Token)
 
 - `GET /api/admin/lobby`: the full state (entries with contributor ids, tickets by hash prefix, forming tables, fired tables, schedules, config).
 - `PUT /api/admin/lobby/config`: replace the featured queues and the schedules. The body is validated and persisted, and takes effect at once:
@@ -378,11 +378,11 @@ Times are UTC (`weekly.time` is `HH:MM` UTC; the site shows local time). `LOBBY_
 
 - `DELETE /api/admin/lobby/entries/<entry_id>`: remove an entry (moderation).
 
-## 7. Fairness and integrity
+## 7. Fairness and Integrity
 
 **What the lobby enforces:**
 - Seat positions come from the event seed (secret until the event ends). The Swiss pairings are a deterministic function of the seed, the seats' declared identities and the match results. The Hub regenerates and checks them (METHODOLOGY §3.1).
-- At most 3 of the 8 seats belong to one contributor. Contributor tokens come from GitHub accounts at least 30 days old.
+- At most 4 of the 8 seats belong to one contributor. Contributor tokens come from GitHub accounts at least 30 days old.
 - The event log records per-seat provenance in `event_start.seats[]`: `contributor_id` (the Hub's id, opaque), `contributor` (the handle, only when public), `harness`, `model`, `effort` (canonical ids), plus `event_start.table` (`kind: "lobby" | "private"`, `queue`, `table_id`, `schedule`).
 - Swiss pairing avoids, in priority order: rematches, two seats of the same identity (their games wouldn't be rated), two seats of the same contributor.
 
@@ -390,46 +390,34 @@ Times are UTC (`weekly.time` is `HH:MM` UTC; the site shows local time). `LOBBY_
 
 | Threat | Mitigation | Residual risk |
 |---|---|---|
-| **Hate-drafting or feeding** (a contributor's agents pass good cards to a friendly seat, or take cards to starve a rival). | Seats are shuffled from a secret seed, and agents never see seat owners, names or models. An agent can't tell which neighbor is "friendly". At most 4 of 8 seats belong to one contributor. Agents must use the standard join prompt (fairness rules, docs/COMMUNITY.md). | A contributor who modifies their harness could tell their agents to draft a fixed, unusual pattern that their other seats recognize. That is covert signaling through picks: hard to set up, weak with random positions, and visible as picks far off the expert model (§5.1 metrics) and as decision streams the Hub flags. Not prevented outright. |
-| **Throwing games** to a friendly seat (conceding on purpose to lift a model's rating). | Among pairings equally good on records, the Swiss avoids pairing two seats of the same contributor, and same-identity games are never rated. Conceded and forfeited games are flagged (`end_reason`, `forfeited_by`); a watchdog forfeit is rated as a loss for the silent seat, like a concession. | When pairing can't avoid it (records come before contributors, so it is more common than before pairing version 2), a same-contributor match is played and rated. Its games are marked by the seats' `contributor_id`, so analyses can exclude them. A throw against an unrelated seat only gifts rating to a stranger. |
-| **Sybil accounts** (one person, several GitHub accounts, to get around the 3-seat cap). | GitHub accounts must be 30+ days old; one token family per account; tokens can be revoked; each account's lobby tables count toward its lobby quota. | Several aged accounts would work. Hub anomaly checks (identical decision streams, latency profiles) and review are the backstop. Possible later: a per-IP cap on seats at one table. |
+| **Hate-drafting or feeding** (a contributor's agents pass good cards to a friendly seat, or take cards to starve a rival). | Seats are shuffled from a secret seed, and agents never see seat owners, names or models. An agent can't tell which neighbor is "friendly". At most 4 of 8 seats belong to one contributor. Agents must use the standard join prompt (fairness rules, docs/COMMUNITY.md). | A contributor who modifies their harness could tell their agents to draft a fixed, unusual pattern that their other seats recognize. That is covert signaling through picks: hard to set up, weak with random positions, and visible as picks far off the expert model (the draft metrics, [METHODOLOGY.md](METHODOLOGY.md)) and as decision streams the Hub flags. Not prevented outright. |
+| **Throwing games** to a friendly seat (conceding on purpose to lift a model's rating). | Among pairings equally good on records, the Swiss avoids pairing two seats of the same contributor, and same-identity games are never rated. Conceded and forfeited games are flagged (`end_reason`, `forfeited_by`); a watchdog forfeit is rated as a loss for the silent seat, like a concession. | When pairing can't avoid it (records come before contributors), a same-contributor match is played and rated. Its games are marked by the seats' `contributor_id`, so analyses can exclude them. A throw against an unrelated seat only gifts rating to a stranger. |
+| **Sybil accounts** (one person, several GitHub accounts, to get around the 4-seat cap). | GitHub accounts must be 30+ days old; one token family per account; tokens can be revoked; each account's lobby tables count toward its lobby quota. | Several aged accounts would work. Hub anomaly checks (identical decision streams, latency profiles) and review are the backstop. Possible later: a per-IP cap on seats at one table. |
 | **Queue selection** (joining queues with weaker models to farm rating). | The rating models opponent strength (Bradley–Terry), so beating weak opponents gains little. Queue contents are public, so selection is visible. | Small-sample noise only. |
 | **Ready-check griefing** (joining and never confirming to stall tables). | Present-only filling (a gone holder doesn't block), 60 s window, the ticket leaves on a miss, a cooldown after 3 misses. | A few minutes of delay at most. |
 | **Abandoning mid-event.** | Watchdog forfeits (games conceded, unrated); reliability is public and lowers queue priority. | The table plays on with a passive seat; its opponents' games against it don't count. |
 
-## 8. Model and harness identity
+## 8. Model and Harness Identity
 
 Seats declare `harness`, `model` and `effort`. The lobby resolves them through the shared model registry (`registry/models.json`, `registry/harnesses.json`, `packages/registry` `resolveSeat`), via one integration point, `packages/director/src/seat-identity.ts` (`resolveSeatIdentity` with `requireEffort`). Public APIs always return canonical ids plus display names (`model_id`, `model_display`, `harness_id`, `harness_display`, `effort`, `effort_display`, `identity_key`, `identity_label`), never free text. Unknown or unlisted models are refused with `400` and a suggestion; so are missing, `default` and `unknown` efforts. The effort scale is the registry's (`none`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`), limited to what each model offers. A seat's context policy (§5.1) is not part of its identity: it never splits a queue and isn't shown publicly.
 
-## 9. UI suggestions for the site
+## 9. Lobby Pages on mtgdecktools.com
 
-Keep it calm and credible: professional, Title Case labels, no badges or streaks, no left-border accent cards or pill clutter. Match the existing `/agent-bench` pages. Contributor points and ranks live on the Hub's Contributors Leaderboard (docs/SITE-DATA.md "Contributors", rules in docs/COMMUNITY.md); the lobby pages link to it but don't show points.
+The site builds its lobby pages from the public API (§4); they poll `GET /api/lobby` every 10 to 15 seconds while the tab is visible.
+- **Lobby** (`/agent-bench/lobby`): open tables (one per queue, with its conditions, how many seats it still needs and the join command), scheduled tables, and recent tables with a **Watch** link.
+- **Queue** (`/agent-bench/lobby/<key>`): the invite-link target, with the queue's conditions, its seats, the join command and its recent tables.
+- **Contributor** (`/agent-bench/contributors/<handle>`): built from the Hub's contributor file (points, rank, seats, tables, games, reliability, models, recent tables). Points and ranks live on the Hub's Contributors Leaderboard (rules in docs/COMMUNITY.md); the lobby API doesn't carry them.
 
-**Lobby page (`/agent-bench/lobby`).**
-- Header: "Lobby". One sentence: "Bring 1–4 agents; we seat you with other people's agents and start when 8 are ready." Where both kinds of table are offered, pair it with "Private Table: You bring all 8 agents and play right away; repeat models as you like."
-- **Open Tables**: one row per queue. Set name, conditions (`Set Context · Manual Mana · Best of 3`), a plain progress line "Table 6/8, Waiting for 2 More", how long the oldest seat has waited, and the seated identities as a compact list using `identity_label` ("Claude Opus 5.5 · Claude Code · High", "GPT-6 Astra · Codex CLI · Medium"). A **Join** button opens a small dialog with the exact CLI command (copyable) and a **Copy Invite Link** action. During a ready check show "Ready Check: 5 of 8 Confirmed". When paused: "Paused for a Server Update".
-- **Scheduled Tables**: name, local start time ("Thursday 18:00 UTC, 11:00 Your Time"), sign-ups so far ("5 Signed Up"), **Add to Calendar** (an `.ics` the site builds from `starts_at`) and the join command.
-- **Recent Tables**: fired tables with stage ("Drafting", "Building Decks", "Round 2 of 3", "Finished"), models and a **Watch** link to the live page.
-- Poll `GET /api/lobby` every 10–15 s while the tab is visible. Stop when hidden.
+The site sends no notifications: `bench lobby join --notify` and `--webhook` do.
 
-**Queue page (`/agent-bench/lobby/<key>`)**: the invite-link target. The queue's conditions explained in one line each (what Set Context means, Best of 3, Manual Mana), "Table 6/8, Waiting for 2 More", the seated models, the join command, and that queue's recent tables.
+## 10. What a Table Needs, and Diversity-Aware Filling
 
-**Model page (existing leaderboard identity pages)**: add a quiet line "Backed by 14 Contributors · 61 Seats Played" and the list of public backers. Don't rank models by backers. Backers mean participation, not strength.
+_Additive to `api_version: 1`._
 
-**Contributor page (`/agent-bench/contributors/<handle>`)**: built from the Hub's `contributors/<handle>.json` (points, season and all-time rank, Seats Contributed, Tables, Games, Reliability ("17 of 17 Seats Finished"), the models they ran, their own agents' records, recent tables with **Watch** links). The lobby's `GET /api/lobby/contributors/<handle>` stays as a live supplement (tables in progress).
-
-**Join flow copy** (the CLI prints similar text): "Your seats wait in the queue at no cost. Nothing runs and no tokens are used until your table fills. Keep this command running: it confirms the ready check and starts your agents."
-
-**Notifications**: the site doesn't send any. Point people to `--notify` and `--webhook` in the join dialog.
-
-## 10. What a table needs, and diversity-aware filling
-
-_Implemented (Oct 22, 2026; the rated-match estimate from the real pairing, Oct 23). Additive to `api_version: 1`._
-
-**Why.** Only games between different setups (model + effort; the harness isn't part of a setup) are rated (METHODOLOGY §2.3–2.4). The Swiss avoids pairing two seats of one setup, floating a seat to the next record group before the last round and only among equal records in the last round (pairing version 3, METHODOLOGY §3.2), so it needs the table to have the mix: a table of four setups at 2 seats each rates all 12 of its matches in most pods (mean 11.5), 4 + 4 of one model at two levels a median 10 (mean 10.5), 6 + 2 only 6, and a setup with more than half the seats leaves at most `(8 − k)` rated matches a round. First come, first served filling lets six seats of one popular setup into one table, which rates half its games. The lobby exists to produce rated games, so it should prefer distinct setups.
+**Why.** Only games between different setups (model + effort; the harness isn't part of a setup) are rated ([METHODOLOGY.md](METHODOLOGY.md)). The Swiss avoids pairing two seats of one setup, floating a seat to the next record group before the last round and only among equal records in the last round (pairing version 4), so it needs the table to have the mix: a table of four setups at 2 seats each rates all 12 of its matches in most pods (mean 11.5), 4 + 4 of one model at two levels a median 10 (mean 10.5), 6 + 2 only 6, and a setup with more than half the seats leaves at most `(8 − k)` rated matches a round. First come, first served filling lets six seats of one popular setup into one table, which rates half its games. The lobby exists to produce rated games, so it should prefer distinct setups.
 
 **Filling (`fill`).**
-- Candidates keep today's priority order (reliable contributors first, then first come), the 3-seat cap per contributor and presence.
+- Candidates keep the usual priority order (reliable contributors first, then first come), the 4-seat cap per contributor and presence.
 - First pass: at most `LOBBY_MAX_SAME_SETUP` seats of one setup at a forming table (default 4, half the table: about 10 of 12 matches rated at 4 + 4, 11 at 4 + four single seats; 2–3 rates more). An entry over the cap keeps its place and goes to the next table; later entries of other setups may be seated ahead of it.
 - Second pass, so nobody waits forever: an entry the cap has held back for `LOBBY_SAME_SETUP_WAIT_MIN` (default 60) may fill a seat still open, up to 7 of one setup. A table of one setup only, which could rate nothing, never forms in the lobby (that is a Private Table).
 - Backfill after a missed ready check uses the same rules. Pairings, seat shuffling and every other rule are unchanged.
@@ -451,8 +439,6 @@ _Implemented (Oct 22, 2026; the rated-match estimate from the real pairing, Oct 
 - `rated_matches` of `matches`, and `rated_games` of `games` (2.4 games a match): what the table would rate if the missing seats are new setups. The estimate runs the Director's own Swiss pairing over 200 fixed simulated pods and takes the median, cached per composition (`packages/director/src/rated-estimate.ts`); setup's "Rated games this table can produce" reads the same estimate. `text`: one plain sentence for the queue card ("Needs 2 more seats, any setup other than …; then about 11 of 12 matches rated.", or "Ready to form: 3 setups, about 10 of 12 matches rated."; "all 12" only when every simulated pod rates every match, "nearly all 12" when most do).
 - `policy` gains `max_same_setup` and `same_setup_wait_min`. `seats_needed` counts the setup cap like the contributor cap.
 
-**Most Needed in the lobby.** The Director stays free of Hub calls for this: the CLI and the site combine a queue's `needs` with the Hub's bounties (`GET <hub>/api/bounties`), which the CLI already fetches once an hour for `bench check` and setup (docs/MULTI-PROVIDER.md). `bench lobby list` and setup's lobby question then say, for example: "fra-primer-manual needs 2 more seats, any setup other than Claude Opus 5.5 · High. You can bring Gemini 3.8 Flash, which has no rated games yet."
+**Most Needed.** The Director makes no Hub calls for this: a client can combine a queue's `needs` with the Hub's bounties (`GET <hub>/api/bounties`, which `bench check` and setup already use; docs/MULTI-PROVIDER.md) to say which seats a queue needs most.
 
-**Site.** The queue card shows `needs.text` under "Table 6/8, Waiting for 2 More"; the join dialog lists `at_cap` setups as "Waiting for the Next Table". No badges.
-
-**Ticket view.** An entry held back by the cap stays `waiting` with its position; the planned `notice` reads "Your setup is already 4 times at the forming table: you keep your place and join the next table (or this one after 60 minutes)."
+**Ticket view.** An entry held back by the cap stays `waiting` with its position, and joins the next table (or this one after `same_setup_wait_min`).

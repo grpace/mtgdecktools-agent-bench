@@ -1,10 +1,10 @@
-# Several providers, one table: making your games count
+# Several Providers, One Table: Making Your Games Count
 
 Only games between two **different setups** are rated. A setup is a model at an effort level (METHODOLOGY §2): "Claude Haiku 5.5 · Low" and "Claude Haiku 5.5 · High" are two setups. The harness isn't part of it: Claude Sonnet 5.5 · High through Claude Code and through Cursor CLI is one setup, so games between them aren't rated. A table of 8 identical seats plays a full event, and its games still add format data (what agents draft, build and win with, play or draw, decks), but none of them is rated.
 
 This page is for contributors who want their tables to produce ratings: how to seat a varied table from one machine, what `bench check` shows, and good tables for common subscriptions. You don't need several providers. One subscription and two effort levels is already a rated table.
 
-## How many games will be rated?
+## How Many Games Will Be Rated?
 
 `bench setup` tells you before anything starts. Once you have given the seats, it works out how many of the table's games can be rated (the real Swiss pairing: it avoids two seats of the same setup, moving a seat to the next record group if it must, except in the last round, which is strictly by record) and shows it in the Confirmation:
 
@@ -32,15 +32,15 @@ Nothing is refused: a mirror table still runs if you confirm it. In the terminal
 
 **Effort ladders and the effort question.** Setup asks the effort once per harness and model, so `8x Claude Code / Claude Haiku 5.5` with the effort left out becomes 8 seats at one level. Give the levels in the seat lines instead: `4x Claude Code / Claude Haiku 5.5 / low` and `4x Claude Code / Claude Haiku 5.5 / high`.
 
-## What `bench check` shows
+## What `bench check` Shows
 
 `bench check` lists, per harness installed on this machine, the models the registry lists for it and their effort levels. It also shows:
-- **Apps found here** that seat agents by hand: T3 Code (found by its `~/.t3` folder) and the Antigravity CLI. T3 Code starts other harnesses (Claude Code, Codex CLI, OpenCode, Cursor CLI, Antigravity); each seat ranks as the harness it runs, shown as "Claude Code via T3 Code" and so on.
+- **Apps found here** that seat agents by hand: T3 Code (found by its `~/.t3` folder) and the Antigravity CLI. T3 Code starts other harnesses (Claude Code, Codex CLI, OpenCode, Cursor CLI, Antigravity); each seat is recorded as the harness it runs, shown as "Claude Code via T3 Code" and so on.
 - **Most Needed Right Now, from what you can run:** the Hub's bounties (the leaderboard's Most Needed list, `GET /api/bounties`) matched against your harnesses and models, with a ready `--seat` line for each. For example: "Your Gemini access is the most needed right now: no Gemini 3.8 Flash games yet." First Games (a model with no rated games) come first, then setups that still need games for a firm rating in the conditions you will play. It is one call to the Hub, cached for an hour; without the Hub, check and setup work as before. `bench check --json` has the same as `apps`, `needed` and `needed_headline`.
 
 Setup's seats question repeats the Most Needed lines (`needed` in `--agent` mode).
 
-## Seating a varied table from one machine
+## Seating a Varied Table From One Machine
 
 Every seat is one MCP URL, so seats from different tools can share a table. Seats whose harness `bench play` can start (Claude Code, Codex CLI, Gemini CLI, OpenCode, Cursor CLI) start on their own; everything else you start by hand from the steps setup prints (`bench seats <event>` prints them again). Keep Playing starts every table's seats itself, so it takes only harnesses installed here.
 
@@ -56,7 +56,7 @@ Every seat is one MCP URL, so seats from different tools can share a table. Seat
 
 Details per harness, and how each is shut in to its game tools: [HARNESSES.md](HARNESSES.md).
 
-**T3 Code.** T3 Code is an app that starts harnesses, not a harness: its Claude threads run Claude Code's harness (the Claude Agent SDK), its Codex threads the Codex App Server, and so on. A seat started there ranks as the harness it runs, and T3 Code is recorded as its launcher in the seat details. Like any harness, it isn't part of the setup: Claude Sonnet 5.5 · High is one row however it was started. Declare the seats with the harness, for example `4x Cursor CLI via T3 Code / Grok 4.7 / high` (or `t3-code:cursor/grok-4.7/high`, or `T3 Code (Cursor CLI)`). For each seat, start a new thread on that harness and model, set the effort in the thread's model options, give the harness the seat's `mtg` MCP server (the same server config as the harness by hand, [HARNESSES.md](HARNESSES.md)), turn off file, shell and web tools where it lets you, and send the join prompt (`bench prompt`). After the event, `bench attach-logs <event>` reads the harness's own logs and T3 Code's provider log to check the model and effort (it asks first), which earns full points. T3 Code has no per-thread MCP setting, and every thread also gets T3 Code's own tools (other threads, worktrees, pull requests), so a seat launched from T3 Code can't be shut in to its game tools; for Antigravity, the Antigravity CLI seats a cleaner seat (HARNESSES.md "Antigravity").
+**T3 Code.** T3 Code is an app that starts harnesses, not a harness: its Claude threads run Claude Code's harness (the Claude Agent SDK), its Codex threads the Codex App Server, and so on. A seat started there is recorded as the harness it runs, and T3 Code is recorded as its launcher in the seat details. Like any harness, it isn't part of the setup: Claude Sonnet 5.5 · High is one row however it was started. Declare the seats with the harness, for example `4x Cursor CLI via T3 Code / Grok 4.7 / high` (or `t3-code:cursor/grok-4.7/high`, or `T3 Code (Cursor CLI)`). For each seat, start a new thread on that harness and model, set the effort in the thread's model options, give the harness the seat's `mtg` MCP server (the same server config as the harness by hand, [HARNESSES.md](HARNESSES.md)), turn off file, shell and web tools where it lets you, and send the join prompt (`bench prompt`). After the event, `bench attach-logs <event>` reads the harness's own logs and T3 Code's provider log to check the model and effort (it asks first), which earns full points. T3 Code has no per-thread MCP setting, and every thread also gets T3 Code's own tools (other threads, worktrees, pull requests), so a seat launched from T3 Code can't be shut in to its game tools; for Antigravity, the Antigravity CLI seats a cleaner seat (HARNESSES.md "Antigravity").
 
 **Cursor.** One Cursor login reaches Claude, GPT-5.6 and GPT-5.5, Gemini, Grok, Kimi K3, GLM-5.3, Muse and Cursor's own Composer models (the registry lists which), so one tool can seat a Model Mix across providers.
 
@@ -86,12 +86,12 @@ T3 Code shows each harness's own model names. The registry resolves them when th
 - Cost: a free variant costs you nothing while it lasts.
 - `bench play` starts a free seat under the name as typed (`opencode/deepseek-v4.1-flash-free#high`), not the registry's launch string (the paid route), and leaves it OpenCode's `read` tool in the seat's empty folder: Zen refuses free requests without it (403 `FreeTierError`, checked 2026-10-23). HARNESSES.md "OpenCode" has the details.
 
-## Good tables for common subscriptions
+## Good Tables for Common Subscriptions
 
 **Claude only** (a Claude plan in Claude Code)
 - Effort Ladder, the cheapest rated table: `4x Claude Code / Claude Haiku 5.5 / low` + `4x Claude Code / Claude Haiku 5.5 / high`.
 - Model Mix: `3x Claude Code / Claude Haiku 5.5 / high` + `3x Claude Code / Claude Sonnet 5.5 / high` + `2x Claude Code / Claude Opus 5.5 / high`.
-- Or join the lobby with up to 3 seats.
+- Or join the lobby with 1 to 4 seats.
 
 **Claude + ChatGPT** (Claude Code and Codex CLI)
 - Two providers, one level: `4x Claude Code / Claude Sonnet 5.5 / high` + `4x Codex / GPT-6 Astra / high`.
@@ -102,14 +102,14 @@ T3 Code shows each harness's own model names. The registry resolves them when th
 - With Cursor CLI installed, the Gemini seats can start here instead: `2x Cursor CLI / Gemini 3.8 Flash / high`.
 - Four providers through T3 Code: `2x Claude Code via T3 Code / Claude Sonnet 5.5 / high` + `2x Cursor CLI via T3 Code / Grok 4.7 / high` + `2x Antigravity via T3 Code / gemini-4-argon-high` + `2x OpenCode via T3 Code / opencode/glm-5.3-flash-free / high`.
 
-## How mixed seats are compared
+## How Mixed Seats Are Compared
 
 Every setup is its own leaderboard row, rated in the same fit as everyone else; games between two setups of one model (low against high) are rated games like any other. Neither a harness nor a launcher makes a setup: Claude Sonnet 5.5 · High is one row whether it ran in Claude Code, Cursor CLI or Claude Code via T3 Code. Model pages then line them up:
 - **Effort Ladder:** one model, its effort levels in order, with each level's rating, record and cost per game, the change from one level to the next with its 95% range, and the head to head between the levels. "More thinking helped" is said only when that range excludes zero.
 - **Harness split:** for an effort level its seats ran on several harnesses, the record and win rate per harness. It's a check, never a rating.
 
-Effort levels are never merged: a level changes how long a model thinks and what it spends, so pooling them would hide exactly what the Effort Ladder shows. Harnesses are pooled, because every seat plays through the same game tools (METHODOLOGY §2.3).
+Effort levels are never merged: a level changes how long a model thinks and what it spends, so pooling them would hide exactly what the Effort Ladder shows. Harnesses are pooled, because every seat plays through the same game tools. How ratings are computed: [METHODOLOGY.md](METHODOLOGY.md).
 
-## The lobby, coming next
+## Lobby Tables
 
 Each lobby queue shows what its forming table **needs** (setups already at the cap, and about how many of its 12 matches will be rated), and filling prefers distinct setups so lobby tables produce more rated games: [LOBBY.md §10](LOBBY.md).

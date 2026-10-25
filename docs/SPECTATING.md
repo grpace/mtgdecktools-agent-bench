@@ -1,6 +1,6 @@
-# Spectating live events
+# Spectating Live Events
 
-Live events are not rated while they run (METHODOLOGY §10), but they should be watchable: the draft, the decks and the games, with the agents' reasoning. The Director serves a read-only live view of every event, and mtgdecktools.com renders it on the Watch page (`/agent-bench/events/<id>/live`).
+Live events are not rated while they run ([METHODOLOGY.md](METHODOLOGY.md)), but they should be watchable: the draft, the decks and the games, with the agents' reasoning. The Director serves a read-only live view of every event, and mtgdecktools.com renders it on the Watch page (`/agent-bench/watch/<id>/live`).
 
 The catch is fairness. Anyone can watch a public event: the person running one of the seats, or an agent with web tools that finds the server it is playing on. Whatever the stream shows, one agent could be fed. So the stream is built around one rule:
 
@@ -8,7 +8,7 @@ The catch is fairness. Anyone can watch a public event: the person running one o
 
 The policy is implemented once (`packages/director/src/spectate-policy.ts`) and applied twice: to the live stream (`spectate.ts`) and to the report export of any event still in progress (`packages/site/src/live-redact.ts`). The hosted export refreshes every two minutes while events run; without the second application it would publish hands, notes and every pick as they happen.
 
-## What is shown, and when
+## What Is Shown, and When
 
 | Information | Default release | Why |
 |---|---|---|
@@ -28,11 +28,11 @@ The policy is implemented once (`packages/director/src/spectate-policy.ts`) and 
 | **Sideboarding: that a seat sideboarded, and its deck size** | after the broadcast delay | Public at the table: the opponent can count the deck. |
 | **Sideboarding: what went in and out, and the note** | with the decklist: when the seat has no games left, and never before the broadcast delay | What a seat brought in tells this match's opponent (in game 3) and later opponents what the deck and sideboard hold. We chose this over releasing the swaps after the delay alone: a game takes longer than 90 s, so a viewer could pass the swaps to the opponent before the next game. |
 | **Draft picks** (the card, the pack it came from, the drafter's note), and the round's pack swaps | when **every pack of that round is empty** | A pack's contents describe what downstream seats are about to be passed. Once the round is over, no pack it describes can still be picked from. Live, the board shows who has picked and how long they took, not what. |
-| The event seed | when the event is over | The seed regenerates every pack. Default seeds now carry 32 random bits so they can't be brute-forced from a released round. |
+| The event seed | when the event is over | The seed regenerates every pack. Default seeds carry 32 random bits so they can't be brute-forced from a released round. |
 | `report_rules_issue` reports | like decisions (delayed, card names blanked) | They are agent notes. |
 | Unimplemented-effect flags | live | The effect resolved on the stack in public. |
 
-### Residual leaks (accepted, documented)
+### Residual Leaks (Accepted, Documented)
 
 - **Earlier draft rounds during later ones, and pools during games.** With the default `round` release, pack 1 is public during packs 2 and 3, and every pool is public during deckbuilding and the games. That is the price of a watchable draft. It mostly reveals what good drafters infer from signals anyway, but it is more than a real draft table gives. Strict operators: `SPECTATE_DRAFT=draft` (picks after the draft) or `seat` (an agent's picks once it has no games left; bots after the draft).
 - **Plans in released notes.** A note released two turns later can still describe a plan that hasn't happened ("keeping a trick up"). Hidden card names are blanked, the gist isn't. Strict: `SPECTATE_NOTES=game` or `seat`.
@@ -43,7 +43,7 @@ The policy is implemented once (`packages/director/src/spectate-policy.ts`) and 
 
 None of this replaces the integrity rules in METHODOLOGY §3.1: a contributor who wants to cheat can already put a human in a seat. The policy keeps the stream from becoming an easy side channel, especially for agents with web access.
 
-## Configuration (environment)
+## Configuration (Environment)
 
 | Variable | Values (default first) | Effect |
 |---|---|---|
@@ -60,7 +60,7 @@ None of this replaces the integrity rules in METHODOLOGY §3.1: a contributor wh
 
 Unknown values fall back to the default. The same variables reach the report export, which the Director runs as a child process with its environment.
 
-## Protocol (version 1)
+## Protocol (Version 1)
 
 `GET /api/events/<id>/live` (also served by a one-shot `npm run director`, for local testing)
 
