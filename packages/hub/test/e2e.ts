@@ -36,10 +36,18 @@ async function req(path: string, init: RequestInit = {}): Promise<{ status: numb
 const post = (path: string, data: Buffer, token: string) => req(path, { method: 'POST', headers: { ...auth(token), 'Content-Type': 'application/gzip' }, body: new Uint8Array(data) });
 async function until<T>(what: string, f: () => Promise<T | undefined>, seconds = 60): Promise<T> {
   const end = Date.now() + seconds * 1000;
+  let lastError: unknown;
   for (;;) {
-    const v = await f();
+    // A poll can lose a race with the server closing an idle keep-alive socket (an export holds the event loop for
+    // seconds on a slow runner, then the keep-alive timer fires as the next request goes out): retry it.
+    let v: T | undefined;
+    try {
+      v = await f();
+    } catch (e) {
+      lastError = e;
+    }
     if (v !== undefined) return v;
-    if (Date.now() > end) throw new Error(`timed out waiting for ${what}`);
+    if (Date.now() > end) throw new Error(`timed out waiting for ${what}${lastError ? ` (last error: ${String((lastError as Error)?.cause ?? lastError)})` : ''}`);
     await new Promise((r) => setTimeout(r, 500));
   }
 }
