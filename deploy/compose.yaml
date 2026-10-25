@@ -300,6 +300,10 @@ services:
       HUB_CORS_ORIGIN: "*"
       # Traefik is the only way in: per-client rate limits (sign-in, account) key on its X-Forwarded-For hop.
       HUB_TRUST_PROXY: "1"
+      # Production's Hub host is proxied by Cloudflare, whose X-Forwarded-For Traefik drops: take the client from
+      # CF-Connecting-IP, but only on requests Traefik received from a Cloudflare address (HUB-32, ratelimit.ts). A
+      # no-op where Cloudflare isn't in front (dev).
+      HUB_TRUST_CLOUDFLARE: "1"
       # Self-serve contributor tokens (GitHub sign-in, web + device flow; packages/hub/README.md). The OAuth App's id and
       # secret are set in Coolify's environment UI (preferred) or by deploy/coolify-setup.sh
       # from ~/.config/mtgdt/github-oauth-client-{id,secret}. Unset: sign-in is off with a clear message.

@@ -74,7 +74,8 @@ export interface HubConfig {
   sessionSecret: string;
   /**
    * Behind a reverse proxy: client IP from X-Forwarded-For (HUB_TRUST_PROXY=1), for the rate limits; the client is
-   * HUB_TRUST_PROXY_HOPS hops back (default 1: Traefik; 2 with Cloudflare proxied in front). See ratelimit.ts clientIp.
+   * HUB_TRUST_PROXY_HOPS hops back (default 1: Traefik). Behind Cloudflare, HUB_TRUST_CLOUDFLARE=1 instead (HUB-32;
+   * Traefik drops Cloudflare's X-Forwarded-For). See ratelimit.ts clientIp.
    */
   trustProxy: boolean;
   /** Usage uploads for hosted seats (POST /api/usage) per contributor (or the admin token) per hour (HUB_USAGE_UPLOADS_PER_HOUR). */

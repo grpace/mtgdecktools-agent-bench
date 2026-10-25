@@ -10,7 +10,7 @@ import { unpackBundle } from '../src/hub.js';
 import { LIMITS, sanityErrors } from '../src/sanity.js';
 import { toCsv } from '../src/open-data/formats.js';
 import type { TableDef } from '../src/open-data/tables.js';
-import { clientIp } from '../src/ratelimit.js';
+import { clientIp, isCloudflare } from '../src/ratelimit.js';
 
 const MB = 2 ** 20;
 const ok = (files: Record<string, string>) => packTarGz(new Map(Object.entries(files).map(([k, v]) => [k, Buffer.from(v)])));
@@ -127,4 +127,21 @@ test('C-1: the client address behind proxies: the last hop by default, further b
   assert.notEqual(clientIp(req('203.0.113.7, 104.16.0.1'), true, 2), clientIp(req('198.51.100.1, 104.16.0.1'), true, 2), 'two hops back: Cloudflare in front of Traefik');
   assert.equal(clientIp(req('203.0.113.7'), true, 5), clientIp(req('203.0.113.7'), true, 1), 'more hops than the header has: the first address');
   assert.equal(clientIp(req('203.0.113.7'), false), clientIp({ headers: {}, socket: { remoteAddress: '10.0.0.9' } } as unknown as Parameters<typeof clientIp>[0], false), 'untrusted: the socket address');
+});
+
+test('HUB-32: behind Cloudflare, CF-Connecting-IP only from a Cloudflare edge', () => {
+  type Req = Parameters<typeof clientIp>[0];
+  const req = (xff: string, cf?: string, peer = '10.0.15.2') =>
+    ({ headers: { 'x-forwarded-for': xff, ...(cf ? { 'cf-connecting-ip': cf } : {}) }, socket: { remoteAddress: peer } }) as unknown as Req;
+  // Traefik drops Cloudflare's X-Forwarded-For (untrusted) and appends the edge it saw.
+  assert.equal(clientIp(req('172.70.1.1', '203.0.113.7'), true, 1, true), '203.0.113.7', 'through Cloudflare: the client Cloudflare names');
+  assert.equal(clientIp(req('172.70.1.1', '2001:db8:1:2:3:4:5:6'), true, 2, true), '2001:db8:1:2::/64', 'an IPv6 client by /64, whatever the hops');
+  assert.notEqual(clientIp(req('172.70.1.1', '203.0.113.7'), true, 1, true), clientIp(req('172.70.1.1', '198.51.100.1'), true, 1, true), 'two visitors of one edge: two keys');
+  // Straight to the origin (bypassing Cloudflare): the header is the client's own claim.
+  assert.equal(clientIp(req('198.51.100.9', '203.0.113.7'), true, 2, true), '198.51.100.9', 'a forged CF-Connecting-IP from a non-Cloudflare address is ignored');
+  assert.equal(clientIp(req('172.70.1.1', 'not-an-ip'), true, 1, true), '172.70.1.1', 'a malformed header: the edge address');
+  assert.equal(clientIp(req('172.70.1.1', '203.0.113.7'), true, 1, false), '172.70.1.1', 'off unless HUB_TRUST_CLOUDFLARE');
+  assert.equal(clientIp(req('', '203.0.113.7', '::ffff:104.16.5.5'), false, 1, true), '203.0.113.7', 'no proxy in between: the socket peer is the edge');
+  assert.ok(isCloudflare('2a06:98c0::1') && isCloudflare('104.16.0.1') && !isCloudflare('203.0.113.7') && !isCloudflare('junk'));
+  assert.ok(isCloudflare('192.0.2.1', '192.0.2.0/24') && !isCloudflare('104.16.0.1', '192.0.2.0/24'), 'HUB_CLOUDFLARE_IPS replaces the list');
 });

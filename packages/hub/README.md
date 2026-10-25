@@ -93,6 +93,7 @@ Defaults: `DATABASE_URL=postgres://hub:hub@127.0.0.1:5440/hub`, `HUB_DATA_DIR=tm
 | `HUB_MODERATION_HOLD` | 0 | `1`: hold bundles whose notes or deck names the content filter flags, for review (default: publish, never feature) |
 | `MTGDT_MODERATION_WORDLIST` | none | a private file of extra filter terms, one per line (`#` comments), added to the default list (public-text.ts) |
 | `HUB_TRUST_PROXY` | unset | `1`: client IP for sign-in rate limits from the last `X-Forwarded-For` hop (behind Traefik) |
+| `HUB_TRUST_CLOUDFLARE` | unset | `1`: when the address the proxy saw is a Cloudflare edge, the client is `CF-Connecting-IP` (any other sender's header is ignored). `HUB_CLOUDFLARE_IPS` (comma-separated CIDRs) replaces the built-in list of Cloudflare's ranges |
 | `GITHUB_OAUTH_URL`, `GITHUB_API_URL` | `https://github.com`, `https://api.github.com` | only for tests (a mock GitHub) |
 
 ## Contributor points
