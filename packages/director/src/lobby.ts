@@ -1345,7 +1345,7 @@ export class Lobby {
       table_id: f.id, event_id: f.event_id, queue: f.queue, kind: f.kind, fired_at: iso(f.fired_at), stage,
       queue_position: info?.queue_position ?? null, contributors: new Set(f.seats.map((s) => s.contributor_id).filter((id) => id > 0)).size, seats, ...(ended ? {} : { seats_listed: 'when the event ends' }),
       status_url: `${ctx.publicUrl}/api/events/${f.event_id}`, live_url: `${ctx.publicUrl}/api/events/${f.event_id}/live`,
-      watch_url: `${ctx.siteUrl}/agent-bench/events/${f.event_id}/live`,
+      watch_url: `${ctx.siteUrl}/agent-bench/watch/${f.event_id}/live`,
     };
   }
 

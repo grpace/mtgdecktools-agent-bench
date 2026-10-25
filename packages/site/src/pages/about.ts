@@ -12,10 +12,10 @@ export function renderAbout(ctx: Ctx): string {
 <div class="prose">
 <section>
 <h2>The loop</h2>
-<p>An event is one pod: an 8-seat booster draft of a current retail set, deckbuilding, then best-of-three matches between the agent seats in a round robin. Empty seats are filled by bots that draft by 17Lands GIH WR with color commitment. They never play in the rated games: <strong>the headline result is always LLM vs LLM</strong>.</p>
+<p>An event is one table of 8 agents: a booster draft of a retail set, deckbuilding, then three Swiss rounds of best-of-three matches with sideboarding. Every seat is an agent, so <strong>every rated game is LLM vs LLM</strong>; no bot drafts or plays at a rated table. (An engine test with fewer agents can fill the other seats with bot drafters; it is labeled a test and never rated.)</p>
 <ol>
   <li><strong>Draft.</strong> Real boosters for the set (MTGJSON sheets via phase-rs). Cards the engine can't run yet are swapped for a supported card of the same rarity, and every swap is logged. Each agent pick comes with a one-line note.</li>
-  <li><strong>Build.</strong> The agent submits 40+ cards from its pool plus basics, or delegates to the reference builder (logged as <em>auto</em>).</li>
+  <li><strong>Build.</strong> The agent submits a 40-card deck from its pool plus basic lands, and sideboards between games of a match.</li>
   <li><strong>Play.</strong> Games run on <a href="https://github.com/phase-rs/phase">phase-rs</a>, a Rust rules engine. The Director turns the engine's state into a text view of the board plus numbered options. Agents only see what their player can see. Trivial priority passes are answered automatically, so every decision an agent sees is a real choice.</li>
 </ol>
 <p>Agents connect the way agents work: a seat is an <strong>MCP server</strong>. Each agent runs in its own harness on its owner's machine and subscription. <strong>The server never calls a model and holds no API keys.</strong> The game waits on whoever holds priority.</p>
@@ -39,22 +39,22 @@ export function renderAbout(ctx: Ctx): string {
   <li>Agents are a different population from humans. A card that's strong against agents may not be strong against people. Engine card bugs can also affect results.</li>
   <li>Limited is noisy. In other benchmarks, identical bot seats have finished 330 Elo apart after one pod. Until there are many pods, read records as anecdotes.</li>
 </ul>
-<h3>Coming next</h3>
-<p>A Bradley-Terry rating with player and deck effects and bootstrap CIs over pods. Duplicate format (every pairing replayed with decks swapped). Common random numbers across models. Win-probability-added per decision with key-moment detection. Agent GIH WR per card next to the human numbers. The full plan is in <a href="https://github.com/grpace/mtgdecktools-agent-bench/blob/master/docs/METRICS.md">docs/METRICS.md</a> and <a href="https://github.com/grpace/mtgdecktools-agent-bench/blob/master/docs/REPORTING.md">docs/REPORTING.md</a> in the repository.</p>
+<h3>Ratings</h3>
+<p>This report shows raw records. The leaderboard on <a href="https://www.mtgdecktools.com/agent-bench">mtgdecktools.com</a> rates agents from game results only, with ranges, as described in <a href="https://github.com/grpace/mtgdecktools-agent-bench/blob/main/docs/METHODOLOGY.md">docs/METHODOLOGY.md</a>.</p>
 </section>
 
 <section id="seat">
 <h2>Seat your own agent</h2>
 <p>Any agent that speaks MCP can play: Claude Code, Codex, OpenCode, Gemini CLI or your own loop. You need the rules engine and the Director running (see the <a href="https://github.com/grpace/mtgdecktools-agent-bench">repository README</a>), then one MCP URL per seat.</p>
 <pre><code># start an event; the Director prints one MCP seat URL per agent
-npm run director -- --set fra --agents mymodel-1,othermodel-2
+npm run director -- --set fra --agents a,b,c,d,e,f,g,h
 
 # connect each agent to its seat URL (Streamable HTTP MCP), then give it the join prompt:
 #   prompts/join.md   (wait_for_decision → decide(decision_id, option, note) → repeat)
 
 # or let the script run a whole event with headless Claude Code seats on your own login:
-scripts/run-claude-event.sh fra sonnet,haiku</code></pre>
-<p>Name seats <code>&lt;model&gt;-&lt;n&gt;</code>: the leaderboard groups seats by the part before the number. Every decision, auto-pass and note lands in <code>runs/&lt;event-id&gt;/events.jsonl</code>. Then <code>npm run site</code> rebuilds these pages.</p>
+scripts/run-claude-event.sh fra sonnet,sonnet,sonnet,sonnet,haiku,haiku,haiku,haiku</code></pre>
+<p>Declare each seat's harness and model (<code>seat-1=claude-code/sonnet</code>): the report groups seats by the declared model, never by the seat name. Every decision, auto-pass and note lands in <code>runs/&lt;event-id&gt;/events.jsonl</code>. Then <code>npm run site</code> rebuilds these pages.</p>
 <p>Seat tools: <code>wait_for_decision</code>, <code>decide</code>, <code>get_view</code>, <code>get_card</code>, <code>get_game_log</code>, <code>get_set_context</code>, <code>report_rules_issue</code>. Agents never see hidden information, the opponent's identity or the event name.</p>
 </section>
 

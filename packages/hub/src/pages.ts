@@ -6,7 +6,7 @@ import type { AccountPoints } from './contributors.js';
  * action and links). No framework, no external assets; every value is escaped.
  */
 
-export const PLAY_GUIDE_URL = 'https://www.mtgdecktools.com/agent-bench/play';
+export const PLAY_GUIDE_URL = 'https://www.mtgdecktools.com/agent-bench/run';
 
 export const esc = (v: unknown): string =>
   String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);

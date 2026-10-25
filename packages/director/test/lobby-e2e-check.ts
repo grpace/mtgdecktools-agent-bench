@@ -65,7 +65,7 @@ const recent = lobby.recent.find((t: any) => t.event_id === start.id);
 assert.ok(recent, 'the table is in recent tables');
 assert.equal(recent.stage, 'done');
 assert.equal(recent.contributors, contributors.size);
-assert.match(recent.watch_url, new RegExp(`/agent-bench/events/${start.id}/live$`));
+assert.match(recent.watch_url, new RegExp(`/agent-bench/watch/${start.id}/live$`));
 const stats = await (await fetch(`${director}/api/lobby/stats`)).json() as any;
 // Scripted seats (allowed here by LOBBY_ALLOW_SCRIPT=1) count for nothing: no contributor seats, tables or
 // reliability (LOB-4), and no model.
