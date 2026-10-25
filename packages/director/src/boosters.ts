@@ -108,6 +108,22 @@ export class BoosterFactory {
     return (this.generator === 'boosters-v1' ? faces.slice(0, 1) : faces).every((f) => !this.unsupported.has(f.trim().toLowerCase()));
   }
 
+  /**
+   * The set's booster cards this factory always swaps out (the engine can't run them, and their sheet has a supported
+   * card of the same rarity to put in their place), sorted by name. A card that stays on some sheet is not listed.
+   */
+  swappedOut(code: string): string[] {
+    const out = new Set<string>();
+    const kept = new Set<string>();
+    for (const sheet of Object.values(this.pool(code).sheets)) {
+      for (const c of sheet.cards) {
+        const swapped = !this.isSupported(c.name) && sheet.cards.some((x) => x.rarity === c.rarity && this.isSupported(x.name));
+        (swapped ? out : kept).add(c.name);
+      }
+    }
+    return [...out].filter((n) => !kept.has(n)).sort((a, b) => a.localeCompare(b));
+  }
+
   private pool(code: string): SetPool {
     const p = this.pools[code.toLowerCase()];
     if (!p) throw new Error(`No booster data for set "${code}".`);

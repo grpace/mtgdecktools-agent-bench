@@ -94,9 +94,11 @@ export function setContextPart(seat: AgentSeat, part: number | undefined, name: 
   if (!parts.length) return `No ${name.toLowerCase()} is available in this event.`;
   const n = parts.length;
   const i = Math.min(Math.max(1, Math.floor(part ?? 1)), n);
-  if (n === 1) return parts[0]!;
+  // The event's pack note (cards swapped out of this set's packs) leads part 1, outside the author's text.
+  const lead = i === 1 && seat.setContextNote ? `${seat.setContextNote}\n\n` : '';
+  if (n === 1) return `${lead}${parts[0]!}`;
   const note = part != null && (part < 1 || part > n) ? ` (there is no part ${part}; showing part ${i})` : '';
-  return `${name.toUpperCase()} (MTG Deck Tools), part ${i} of ${n}${note}.\n\n${parts[i - 1]}\n\n`
+  return `${name.toUpperCase()} (MTG Deck Tools), part ${i} of ${n}${note}.\n\n${lead}${parts[i - 1]}\n\n`
     + (i < n ? `(End of part ${i} of ${n}. Next: ${tool}(part=${i + 1}).)` : `(End of the ${name}: part ${n} of ${n}.)`);
 }
 

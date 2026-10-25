@@ -87,4 +87,15 @@ test('an event resumes on the generator it started with (no generator logged: bo
   for (let i = 0; i < 20; i++) assert.deepEqual(old.pack('tst', new Rng(`r-${i}`)), v1.pack('tst', new Rng(`r-${i}`)));
 });
 
+test('swappedOut lists the cards packs never contain: unsupported (any face) with a same-rarity card to take their place', () => {
+  assert.deepEqual(new BoosterFactory(pools, unsupported).swappedOut('TST'), ['Broken Common', 'Pyre Rhymer // Molten Tide']);
+  assert.deepEqual(new BoosterFactory(pools, unsupported, 'boosters-v1').swappedOut('tst'), ['Broken Common'], 'v1 checked front faces only');
+  assert.deepEqual(new BoosterFactory(pools, []).swappedOut('tst'), []);
+  // Nothing supported to swap in: the card stays in packs, so it isn't listed.
+  assert.deepEqual(new BoosterFactory(pools, ['Molten Tide', 'Bonecrusher']).swappedOut('tst'), []);
+  const f = new BoosterFactory(pools, unsupported);
+  const out = new Set(f.swappedOut('tst').map((n) => n.split(' // ')[0]));
+  for (let i = 0; i < 200; i++) for (const c of f.pack('tst', new Rng(`so-${i}`))) assert.ok(!out.has(c.name), `seed so-${i}: ${c.name} reached a pack`);
+});
+
 console.log(`# ${passed} passed`);

@@ -128,6 +128,8 @@ export class AgentSeat {
   primer?: string;
   /** The Set Context split into parts that each fit one tool result (get_set_context(part)); set with the primer. */
   primerParts?: string[];
+  /** Set before the Set Context's first part: the set's cards this event's packs can't contain (knowledge.ts packCoverageNote). */
+  setContextNote?: string;
   /**
    * The event's format in one phrase ("a booster draft, then deckbuilding, then 3 rounds of best-of-1 matches"), for the
    * MCP instructions, which are built per request.

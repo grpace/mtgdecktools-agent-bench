@@ -9,7 +9,7 @@ import {
   deckFromLog, gameResume, readKnowledge, repairLog, type EventCheckpoint, type ResumeLog, writeCheckpoint, writeKnowledge,
 } from './durable.js';
 import { Game, GameResult, GameSession, GameVoidError, ManaMode } from './game.js';
-import { Knowledge, KnowledgeLevel, loadKnowledge, PrimerSources, splitSetContext } from './knowledge.js';
+import { Knowledge, KnowledgeLevel, loadKnowledge, packCoverageNote, PrimerSources, splitSetContext } from './knowledge.js';
 import { observationFormat, setDocName } from './observation.js';
 import { promptsHash, promptVersionOf } from './prompts.js';
 import { PAIRING_VERSIONS, pairingSeat, pairRound, plan, type MatchOutcome, type PairingFormat, type PairingPlan, type RoundPairing } from './pairings.js';
@@ -580,6 +580,7 @@ export class Event {
     const k = this.knowledge;
     s.primer = k.primer;
     s.primerParts = k.primer ? splitSetContext(k.primer) : undefined;
+    s.setContextNote = k.primer ? packCoverageNote(this.factory.swappedOut(this.cfg.set)) : undefined;
     s.observation = observationFormat(this.cfg.promptsDir);
     // Set Context levels: each harness session reads it before its first game decision (seat.ts setContextGate).
     s.setContextRequired = s.primerParts?.length ? { tool: setDocName(s.observation).tool, parts: s.primerParts.length } : undefined;

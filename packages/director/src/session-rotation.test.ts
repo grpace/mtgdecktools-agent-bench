@@ -288,11 +288,44 @@ await test('over MCP: each new session (initialize) must read the Set Context ag
 await test('Set Context gate: the Event requires it at Set Context levels only, with the tool and parts it names in the briefing', async () => {
   const { ev, seats: [a] } = stubEvent(3);
   ev.knowledge = { level: 'primer', stats: false, primer: 'x'.repeat(30_000) };
+  ev.cfg.set = 'fra';
+  ev.factory = { swappedOut: (code: string) => (code === 'fra' ? ["Jace's Machinations", 'Paradox Shaper // Omit Variables'] : []) };
   ev.equipSeat(a, 'Reality Fracture');
   assert.deepEqual(a!.setContextRequired, { tool: 'get_set_context', parts: 2 });
   const { ev: ev2, seats: [b] } = stubEvent(3);
   ev2.equipSeat(b, 'Reality Fracture');
   assert.equal(b!.setContextRequired, undefined);
+  assert.equal(b!.setContextNote, undefined, 'no Set Context, no pack note');
+});
+
+await test('Set Context pack note: the event\'s swapped-out cards lead part 1 of the Set Context, over MCP, the guide text untouched', async () => {
+  const { ev, seats: [a] } = stubEvent(3);
+  const guide = `# Reality Fracture\n\nDraft [[Jace's Machinations]] in GU.\n\n${'y'.repeat(30_000)}`;
+  ev.knowledge = { level: 'primer', stats: false, primer: guide };
+  ev.cfg.set = 'fra';
+  ev.factory = { swappedOut: () => ["Jace's Machinations", 'Paradox Shaper // Omit Variables'] };
+  ev.equipSeat(a, 'Reality Fracture');
+  assert.equal(a!.primer, guide, 'the guide text is the author\'s');
+  assert.equal(a!.primerParts!.join('').replace(/\s/g, ''), guide.replace(/\s/g, ''));
+  assert.match(a!.setContextNote!, /^Not in this event's packs \(the rules engine can't run them yet\), even where the Set Context below mentions them: Jace's Machinations; Paradox Shaper \/\/ Omit Variables\.$/);
+  a!.observation = 'v4';
+  const http = startHttp((t) => (t === a!.token ? a : undefined), {} as CardDb, 0, '127.0.0.1');
+  await new Promise((r) => http.once('listening', r));
+  const client = new Client({ name: 'test', version: '1' });
+  const text = (r: any) => String(r.content[0].text);
+  try {
+    await client.connect(new StreamableHTTPClientTransport(new URL(`http://127.0.0.1:${(http.address() as AddressInfo).port}/mcp/${a!.token}`)));
+    const p1 = text(await client.callTool({ name: 'get_set_context', arguments: { part: 1 } }));
+    assert.match(p1, /^SET CONTEXT \(MTG Deck Tools\), part 1 of \d\.\n\nNot in this event's packs[^\n]*Jace's Machinations[^\n]*\n\n# Reality Fracture/);
+    const p2 = text(await client.callTool({ name: 'get_set_context', arguments: { part: 2 } }));
+    assert.doesNotMatch(p2, /Not in this event's packs/, 'once, on part 1');
+    // A one-part Set Context: the note leads it too.
+    a!.primerParts = ['Short guide.'];
+    assert.match(text(await client.callTool({ name: 'get_set_context', arguments: {} })), /^Not in this event's packs[^\n]*\n\nShort guide\.$/);
+  } finally {
+    await client.close();
+    http.close();
+  }
 });
 
 await test('match memory across games: the most copies of a name seen in any one game; junk ignored', async () => {

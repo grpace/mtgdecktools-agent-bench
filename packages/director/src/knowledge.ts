@@ -150,6 +150,16 @@ export function poolAnalysis(pool: PackCard[], ratings: Ratings, withStats: bool
   return lines;
 }
 
+/**
+ * The line the Director puts before the Set Context when the event's packs can't contain some of the set's cards (the
+ * engine can't run them yet, so they are swapped out; boosters.ts). The guide text itself is the author's and stays as
+ * published; this note is tool output, built from the event's own unsupported-card list after card overrides.
+ */
+export function packCoverageNote(swappedOut: string[]): string | undefined {
+  if (!swappedOut.length) return undefined;
+  return `Not in this event's packs (the rules engine can't run them yet), even where the Set Context below mentions them: ${swappedOut.join('; ')}.`;
+}
+
 /** The largest part of the Set Context one tool result carries (about 6k tokens; harnesses cut results near 50 KB). */
 export const SET_CONTEXT_PART_CHARS = 24_000;
 
