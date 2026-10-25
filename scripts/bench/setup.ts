@@ -1024,8 +1024,13 @@ export async function cmdSetup(argv: string[]) {
     setAnswer(a, q.id, byIndex ?? ans);
   }
 
-  // Sign in for the hosted table and the lobby.
-  if (plan.hosted && !contributorToken(values.token)) {
+  // Sign in for the hosted table and the lobby. A dry run needs neither the sign-in nor the terms: it runs every local
+  // check and shows the whole Confirmation, and stops before anything would be created on the server.
+  const dry = !!values['dry-run'] && !values.confirm;
+  const signInFirst = dry && plan.hosted && !contributorToken(values.token)
+    ? `Sign in to create this table: \`${BENCH} login\` (GitHub sign-in, once; you accept the terms then).`
+    : undefined;
+  if (plan.hosted && !dry && !contributorToken(values.token)) {
     if (agent) {
       const info = await fetchTerms(hubUrl(values.hub));
       return emit({
@@ -1043,7 +1048,7 @@ export async function cmdSetup(argv: string[]) {
     await finishLogin(hub, contributorToken() ?? '');
   }
   // The terms: accepted, or accepted again after a change (the Hub refuses hosted play until then; consent.ts).
-  const signedIn = plan.hosted ? contributorToken(values.token) : undefined;
+  const signedIn = plan.hosted && !dry ? contributorToken(values.token) : undefined;
   if (signedIn) {
     const hub = account()?.hub ?? hubUrl(values.hub);
     if (agent) {
@@ -1077,8 +1082,8 @@ export async function cmdSetup(argv: string[]) {
     if (!conf.ready) die(`not ready: ${conf.problems.join(' ')}`);
   } else if (agent && values['dry-run']) {
     return emit({
-      step: 'confirm', dry_run: true, confirmation: conf, answers: a,
-      instructions: 'This is a dry run: nothing will be created. Show the person `confirmation.text` as it is. To start for real, run setup again with the same answers and without --dry-run.',
+      step: 'confirm', dry_run: true, confirmation: conf, answers: a, ...(signInFirst ? { sign_in: signInFirst } : {}),
+      instructions: `This is a dry run: nothing will be created. Show the person \`confirmation.text\` as it is.${signInFirst ? ' Then tell them `sign_in`: a real run signs them in first.' : ''} To start for real, run setup again with the same answers and without --dry-run.`,
     });
   } else if (agent) {
     return emit({
@@ -1094,6 +1099,7 @@ export async function cmdSetup(argv: string[]) {
     if (!go) {
       asker?.close();
       console.log(`\nNothing created.${conf.ready && !values['dry-run'] ? ` To go ahead: ${BENCH} setup ${planFlags(plan)} --yes` : ''}`);
+      if (signInFirst) console.log(signInFirst);
       return;
     }
   }

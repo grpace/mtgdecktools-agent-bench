@@ -285,6 +285,29 @@ test('setup --dry-run: an agent dry run never offers a `next` that creates the e
   assert.match(flags.stdout, /What may the agents know\? The same for every seat\. Set Context \(the default/);
   assert.match(flags.stdout, /Nothing created\./);
 
+  // Signed out: a dry run of a hosted Private Table or a lobby join still runs every check and shows the whole
+  // Confirmation; no sign-in, no terms, and it says to sign in before a real run.
+  const out = { ...env, BENCH_TOKEN: '' };
+  const hubBefore = hub.hits.length;
+  const priv = JSON.parse((await bench(['setup', '--agent', '--dry-run', '--no-launch', '--skip-preflight', '--answers', JSON.stringify({ ...answers, knowledge: 'primer' })], out)).stdout);
+  assert.equal(priv.step, 'confirm');
+  assert.match(priv.confirmation.text, /Please confirm your event/);
+  assert.match(priv.confirmation.text, /Seats/);
+  assert.match(priv.sign_in, /^Sign in to create this table: `bench login`/);
+  assert.match(priv.instructions, /tell them `sign_in`/);
+  const lobbyOut = JSON.parse((await bench(['setup', '--agent', '--dry-run', '--no-launch', '--skip-preflight', '--answers', JSON.stringify({ table: 'lobby', play_mode: 'once', set: 'fra', knowledge: 'primer', seats: ['2x Claude Code / Claude Haiku 5.5 / low'] })], out)).stdout);
+  assert.equal(lobbyOut.step, 'confirm');
+  assert.match(lobbyOut.confirmation.text, /Join the Lobby/);
+  assert.match(lobbyOut.sign_in, /bench login/);
+  const term = await bench(['setup', '--private', '--hosted', '--set', 'fra', '--seat', '4x Claude Code/Claude Haiku 5.5/low', '--seat', '4x Claude Code/Claude Haiku 5.5/high', '--dry-run', '--no-launch', '--skip-preflight'], out);
+  assert.equal(term.status, 0, term.stderr);
+  assert.match(term.stdout, /Please confirm your event/);
+  assert.match(term.stdout, /Nothing created\.\nSign in to create this table: `bench login`/);
+  assert.ok(!hub.hits.slice(hubBefore).some((h) => /\/api\/(account|login)/.test(h)), 'no sign-in or terms call');
+  // Signed in, a dry run says nothing about signing in.
+  assert.equal(c.sign_in, undefined);
+  assert.ok(!director.hits.some((h) => h.startsWith('/api/events') || h.startsWith('/api/lobby/join')), 'nothing created');
+
   // Missing seats: the error says how to give them, without listing every model.
   const noSeats = await bench(['setup', '--private', '--set', 'fra', '--dry-run', '--no-launch', '--skip-preflight'], env);
   assert.notEqual(noSeats.status, 0);
