@@ -168,6 +168,9 @@ async function main() {
   const { createHash } = await import('node:crypto');
   assert.equal(createHash('sha256').update(new Uint8Array(await full.arrayBuffer())).digest('hex'), latest.body.snapshot.sha256, 'the zip matches its checksum');
   assert.equal((await fetch(zipUrl, { headers: { 'If-None-Match': head.headers.get('etag')! } })).status, 304);
+  const folder = await fetch(`${base}/data/open`, { redirect: 'manual' });
+  assert.equal(folder.status, 302, 'the citation address leads to latest.json');
+  assert.equal(folder.headers.get('location'), '/data/open/latest.json');
   const card = await fetch(`${base}/data/open/DATASET.md`);
   assert.match(await card.text(), /Updated nightly/);
   const parquet = await fetch(`${base}/data/open/${latest.body.tables.picks.parquet.path}`, { method: 'HEAD' });

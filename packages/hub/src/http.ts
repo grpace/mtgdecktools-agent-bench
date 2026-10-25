@@ -380,6 +380,11 @@ export function startServer(hub: Hub): Server {
         open_data: hub.openData ? { next_build_at: hub.openData.nextAt ? new Date(hub.openData.nextAt).toISOString() : null, last_build: hub.openData.lastRun } : null,
       });
     }
+    // The dataset's address in citations (latest.json → citation): its folder has no index, so send readers to latest.json.
+    if ((path === '/data/open' || path === '/data/open/') && (method === 'GET' || method === 'HEAD')) {
+      res.writeHead(302, { ...cors, Location: '/data/open/latest.json', 'Cache-Control': 'public, max-age=3600' }).end();
+      return;
+    }
     if (path.startsWith('/data/') && (method === 'GET' || method === 'HEAD')) {
       let rel: string;
       try {
