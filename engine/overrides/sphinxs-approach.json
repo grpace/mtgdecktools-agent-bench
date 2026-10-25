@@ -6,9 +6,9 @@
   "upstream_issue": null,
   "marks_supported": true,
   "applies_to": {
-    "server_version": "0.116.0",
-    "build_commit": "3f79456",
-    "card_data_sha256": "c4cfb737d0c0b1b135d3a353d71a95606f6ee147727bc11c3d16b82ece33da41",
+    "server_version": "0.117.0",
+    "build_commit": "09c286c",
+    "card_data_sha256": "84d5fd2af84e2f125b740eeb05637785b2e8df26d34e41a2cd628697dae30513",
     "entry_sha256": "becc3b0d27518f06582de5ad53fad2c11a8ed288854566f6dd4ecbb340fde33a"
   },
   "rules": {
@@ -823,6 +823,11 @@
       "date": "2026-10-23",
       "status": "active",
       "note": "Written against Oracle text, the Dragon's Approach ruling and CR 608.2c/608.2d/701.23a/608.2n; tested on 0.116.0 (3f79456): upstream accepts the option with any number of copies, exiles only the spell and still searches; the override offers it only with four other copies and exiles exactly four of them."
+    },
+    {
+      "date": "2026-10-25",
+      "status": "active",
+      "note": "Re-pinned to 0.117.0 (09c286c): the card entry is unchanged, and `npm run overrides -- test` still shows the bug on upstream data and the fix with the override."
     }
   ]
 }

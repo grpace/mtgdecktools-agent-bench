@@ -1,32 +1,32 @@
 {
  "schema": "deps-manifest/1",
  "_comment": "What versions of everything we're on. Written by scripts/deps.py (npm run deps -- manifest|update); don't edit by hand. Guide: docs/UPGRADING.md.",
- "updated_at": "2026-10-23T03:56:22Z",
+ "updated_at": "2026-10-25T12:49:35Z",
  "phase_rs": {
   "_comment": "The pin itself is engine/phase.lock.json (image digest, server version, build, protocol). Update with `npm run deps -- update phase`.",
   "lock_file": "engine/phase.lock.json",
-  "lock_sha256": "29ecac031d1ffaa677df6dda13162c68eb5437fd1363e6dc349029c113ae4d7d",
-  "server_version": "0.116.0",
-  "protocol_version": 166,
+  "lock_sha256": "ce70d8c6a89f531b7f9477f1985a0bc03457e2c93b4e1f0adb3f298ed18369b2",
+  "server_version": "0.117.0",
+  "protocol_version": 171,
   "data": {
    "card_data": {
     "file": "data/card-data.json",
-    "sha256": "c4cfb737d0c0b1b135d3a353d71a95606f6ee147727bc11c3d16b82ece33da41",
-    "bytes": 99992964,
-    "cards": 36011
+    "sha256": "84d5fd2af84e2f125b740eeb05637785b2e8df26d34e41a2cd628697dae30513",
+    "bytes": 100070783,
+    "cards": 36037
    },
    "booster_data": {
     "file": "data/draft-pools.json",
-    "sha256": "22c4cccda0045f5242b8042920cc2ba5fada25413d4e31cfe57d40f154c4a023",
+    "sha256": "dbcf9b7ebd35a02bdcb660d3f150644f7468853de1d9ef49c80b1849410c8aa7",
     "bytes": 45787396,
     "sets": 175
    },
    "unsupported": {
     "file": "data/unsupported-cards.json",
-    "sha256": "e79d61a5cf65df5a26588abeaa8c48567f023d38aa36b522d9fcd59f37698c53",
-    "bytes": 84791,
-    "count": 4010,
-    "generated": "2026-10-22",
+    "sha256": "2d133b9a58169700252588a8b24bcbe12ffca34c5e861c1d6d688cfa6e35beec",
+    "bytes": 84914,
+    "count": 4015,
+    "generated": "2026-10-25",
     "sources": "this build's card-data markers + https://data.phase-rs.dev/coverage-data.json"
    }
   },
@@ -216,6 +216,15 @@
     "verified_at": "2026-10-21",
     "card_data_sha256": "a81ec87f3b46eba12c8c321a713261cc9321ebcfc24ebabef4821c4c4d96aa70",
     "replaced_at": "2026-10-23"
+   },
+   {
+    "digest": "sha256:81f2fd69cbabd3451de696b1cc466ea632e0f42b16deb7541917d9edc78755ec",
+    "server_version": "0.116.0",
+    "build_commit": "3f79456",
+    "protocol_version": 166,
+    "verified_at": "2026-10-22",
+    "card_data_sha256": "c4cfb737d0c0b1b135d3a353d71a95606f6ee147727bc11c3d16b82ece33da41",
+    "replaced_at": "2026-10-25"
    }
   ],
   "archived": [
@@ -2352,10 +2361,10 @@
    "registry/harnesses.json"
   ],
   "current": {
-   "version": "sha256-1dd4ec6eb47f",
-   "sha256": "1dd4ec6eb47feeb066dd2ad86f8a10f5ef18d693422ce44c6594f30ee439702d",
-   "models": 10,
-   "harnesses": 13,
+   "version": "sha256-fd098a190b06",
+   "sha256": "fd098a190b06e9cb8384c6d0453f23bdea060fee793eae5198390c01e38abd06",
+   "models": 25,
+   "harnesses": 12,
    "latest_release": "2026-10-13"
   }
  },

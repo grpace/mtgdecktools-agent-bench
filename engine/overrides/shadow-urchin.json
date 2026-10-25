@@ -6,9 +6,9 @@
   "upstream_issue": null,
   "marks_supported": true,
   "applies_to": {
-    "server_version": "0.116.0",
-    "build_commit": "3f79456",
-    "card_data_sha256": "c4cfb737d0c0b1b135d3a353d71a95606f6ee147727bc11c3d16b82ece33da41",
+    "server_version": "0.117.0",
+    "build_commit": "09c286c",
+    "card_data_sha256": "84d5fd2af84e2f125b740eeb05637785b2e8df26d34e41a2cd628697dae30513",
     "entry_sha256": "b8ce70c0170d2c42782c32847fe475d9c3f8b65b8395a366eb7ccf109188df40"
   },
   "rules": {
@@ -889,6 +889,11 @@
       "date": "2026-10-23",
       "status": "active",
       "note": "Written against Oracle text and CR 603.10a, 608.2h and 700.4; tested on 0.116.0 (3f79456)."
+    },
+    {
+      "date": "2026-10-25",
+      "status": "active",
+      "note": "Re-pinned to 0.117.0 (09c286c): the card entry is unchanged, and `npm run overrides -- test` still shows the bug on upstream data and the fix with the override."
     }
   ]
 }

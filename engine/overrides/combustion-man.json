@@ -6,9 +6,9 @@
   "upstream_issue": null,
   "marks_supported": true,
   "applies_to": {
-    "server_version": "0.116.0",
-    "build_commit": "3f79456",
-    "card_data_sha256": "c4cfb737d0c0b1b135d3a353d71a95606f6ee147727bc11c3d16b82ece33da41",
+    "server_version": "0.117.0",
+    "build_commit": "09c286c",
+    "card_data_sha256": "84d5fd2af84e2f125b740eeb05637785b2e8df26d34e41a2cd628697dae30513",
     "entry_sha256": "1cdbd2620425a572763a96250b708990c50f671bb85ca0eaa78a43bddb8e5d60"
   },
   "rules": {
@@ -795,6 +795,11 @@
       "date": "2026-10-23",
       "status": "active",
       "note": "Written against Oracle text and CR 118.12, 603.3d, 608.2b and 608.2h; tested on phase-rs 0.116.0 (3f79456). Upstream's trigger does nothing; with the override the target's controller chooses between taking damage equal to his power and losing the permanent."
+    },
+    {
+      "date": "2026-10-25",
+      "status": "active",
+      "note": "Re-pinned to 0.117.0 (09c286c): the card entry is unchanged, and `npm run overrides -- test` still shows the bug on upstream data and the fix with the override."
     }
   ]
 }
