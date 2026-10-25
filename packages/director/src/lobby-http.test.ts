@@ -98,6 +98,11 @@ try {
     assert.equal(bad.status, 400);
     assert.equal(bad.json.error, BO1_REMOVED);
   });
+  await test('join: an oversized body is refused with 413 and the connection closed (not drained)', async () => {
+    const res = await fetch(`${base}/api/lobby/join`, { method: 'POST', headers: { authorization: 'Bearer tok-999', 'content-type': 'application/json' }, body: JSON.stringify({ set: 'fra', pad: 'x'.repeat(100_000) }) });
+    assert.equal(res.status, 413);
+    assert.equal(res.headers.get('connection'), 'close');
+  });
 } finally {
   server.close();
   lobby.flush();

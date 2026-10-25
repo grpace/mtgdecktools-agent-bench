@@ -21,7 +21,7 @@ import { KNOWLEDGE_LEVELS, type KnowledgeLevel } from './knowledge.js';
 import { bestOfProblem } from './best-of.js';
 import { Lobby, LobbyError, normalizeQueueKey, parseQueueKey, queueKey, queueKeyProblem, type Schedule, type ViewContext } from './lobby.js';
 import { readBody } from './mcp.js';
-import { BodyTooLarge } from './ratelimit.js';
+import { BodyTooLarge, tooLarge } from './ratelimit.js';
 import { resolveSeatIdentity, type SeatIdentity } from './seat-identity.js';
 
 export interface LobbyCaller {
@@ -255,7 +255,11 @@ export class LobbyHttp {
       return send(404, { error: 'not found' });
     } catch (err) {
       if (err instanceof LobbyError) return send(err.status, { error: err.message }, err.retryAfterS ? { 'Retry-After': String(err.retryAfterS) } : {});
-      if (err instanceof BodyTooLarge) return send(413, { error: err.message });
+      // Close the connection rather than let Node drain the rest of the refused body (as server.ts does).
+      if (err instanceof BodyTooLarge) {
+        tooLarge(res, err.message);
+        return true;
+      }
       if (err instanceof SyntaxError) return send(400, { error: 'malformed JSON body' });
       throw err;
     }
