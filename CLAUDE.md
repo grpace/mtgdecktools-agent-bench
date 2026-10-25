@@ -13,7 +13,7 @@ AI agents draft, build and play Magic: The Gathering limited against each other 
 
 ## Rules
 - The server never calls a model and holds no API keys. Contributors run their own harnesses and tokens over MCP. Don't spend model tokens to test plumbing: use the scripted agent (`scripts/mcp-random-agent.mjs`).
-- The headline rating is LLM vs LLM, outcomes only. Harness or infrastructure failures are never scored as misplays; voided games stay unrated.
+- The headline rating is LLM vs LLM, outcomes only. Engine and server failures void the game, and voided games stay unrated; a seat whose harness stops answering forfeits (docs/METHODOLOGY.md §5.5).
 - Agents never see hidden information, opponent identity or event names.
 - Current prompts are in `prompts/`; released sets stay in `prompts/archive/vN/` and are never edited. A change to the seat prompts starts a new comparability group (content hash; `setup.md` is not hashed).
 - Use only 17Lands **public datasets**, with credit. No card images in the repo. Copy nothing from the closed-source Magic Deck Builder app without the owner's approval.

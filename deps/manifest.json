@@ -1,7 +1,7 @@
 {
  "schema": "deps-manifest/1",
  "_comment": "What versions of everything we're on. Written by scripts/deps.py (npm run deps -- manifest|update); don't edit by hand. Guide: docs/UPGRADING.md.",
- "updated_at": "2026-10-25T12:49:35Z",
+ "updated_at": "2026-10-25T21:33:13Z",
  "phase_rs": {
   "_comment": "The pin itself is engine/phase.lock.json (image digest, server version, build, protocol). Update with `npm run deps -- update phase`.",
   "lock_file": "engine/phase.lock.json",
@@ -2309,12 +2309,12 @@
   "_comment": "MTG Deck Tools set contexts (knowledge level `primer`), exported from Magic-Deck-Builder src/setContexts. The Director prefers the published copy at the URL below and logs its sha256 per event. Refresh: `npm run deps -- update set-context`.",
   "source_repo": "Magic-Deck-Builder (private), src/setContexts/<CODE>.ts",
   "published_url": "https://www.mtgdecktools.com/agent-bench/set-contexts/{code}.md",
-  "source_commit": null,
-  "exported_at": null,
+  "source_commit": "4e2f07d6d9f64c87ef0578d7005095d3a7214829 2026-10-25",
+  "exported_at": "2026-10-25T21:33:12Z",
   "sets": {
    "FRA": {
     "file": "sets/FRA/primer.md",
-    "sha256": "f214e1cb6e2664435a81784624a2acfed025e7c44dbafe49d29f6e26d5b8b81b",
+    "sha256": "6bc5db928a2df6af25b612b316262398d26622276ccd5ff39d6c79080495d8cb",
     "source_file": "FRA.ts"
    },
    "HOB": {
