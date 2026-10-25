@@ -1,11 +1,17 @@
 # Agent Bench stack: phase-rs rules engine + Director + Hub (results service) + its Postgres.
-# Deployed on Coolify (gr3g-server). The director image is built on the host by deploy/deploy.sh
-# (pull_policy: never); the hub runs from the same image with another command.
-# PHASE_IMAGE is pinned by digest from engine/phase.lock.json; Postgres by digest too (Dependabot proposes updates).
+# Deployed on Coolify (gr3g-server) as a Docker Compose application from this repository (docs/OPERATIONS.md
+# "Deploying"): base directory /deploy, this file, one branch per instance (deploy/dev, deploy/prod). Coolify clones the
+# commit, builds the Director image from the repository's Dockerfile (`build:` below, context the repository root), and
+# starts the stack; the hub and card-data run the same image with other commands. The image is tagged with the commit
+# Coolify deployed (SOURCE_COMMIT, "Include Source Commit in Build" on); CI and self-hosting pass DIRECTOR_TAG instead.
+# Secrets and settings are Coolify environment variables (deploy/coolify-setup.sh sets them; never in git).
+# PHASE_IMAGE is pinned by digest from engine/phase.lock.json (no Coolify variable overrides it, so the commit decides
+# the engine); Postgres by digest too (Dependabot proposes updates).
 #
-# Least privilege (OPS-1): the Director and Hub run as the image's `app` user (uid 999) with no capabilities;
-# deploy/deploy.sh hands their volumes to that user once. Coolify adds `env_file: .env` (every variable below,
-# secrets included) to every service, so phase-server, a third-party image, is started with only its own defaults.
+# Least privilege (OPS-1): the Director and Hub run as the image's `app` user (uid 999) with no capabilities; new
+# volumes start owned by it (the Dockerfile creates the mount points as 999). Coolify adds `env_file: .env` (every
+# variable below, secrets included) to every service, so phase-server, a third-party image, is started with only its
+# own defaults.
 #
 # Containment (SEC-11): read-only root file systems (each service writes only its volumes and a small /tmp), memory and
 # process limits (override with *_MEM_LIMIT / *_PIDS_LIMIT), every capability dropped except what an entrypoint needs,
@@ -95,7 +101,7 @@ services:
     volumes:
       - phase-data:/var/lib/phase-server
   card-data:
-    image: mtgdt-director:${DIRECTOR_TAG:-local}
+    image: mtgdt-director:${SOURCE_COMMIT:-${DIRECTOR_TAG:-local}}
     pull_policy: never
     restart: unless-stopped
     user: "999:999"
@@ -125,8 +131,12 @@ services:
     volumes:
       - phase-data:/phase-data
   director:
-    image: mtgdt-director:${DIRECTOR_TAG:-local}
-    pull_policy: never
+    # The one image the stack builds (Coolify runs `docker compose build`, then `up`); card-data and the hub run it too.
+    # The context is the repository root, so the .dockerignore allow-list decides what goes in.
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    image: mtgdt-director:${SOURCE_COMMIT:-${DIRECTOR_TAG:-local}}
     restart: unless-stopped
     user: "999:999"
     cap_drop: [ALL]
@@ -245,7 +255,7 @@ services:
         max-size: 20m
         max-file: "5"
   hub:
-    image: mtgdt-director:${DIRECTOR_TAG:-local}
+    image: mtgdt-director:${SOURCE_COMMIT:-${DIRECTOR_TAG:-local}}
     pull_policy: never
     restart: unless-stopped
     user: "999:999"
@@ -282,6 +292,9 @@ services:
       # volume) and the Director's cached unsupported-card list, all read-only.
       HUB_ENGINE_DATA_DIR: /phase-data
       HUB_UNSUPPORTED_CARDS: /director-cache/unsupported-cards.json
+      # The Director archives the booster data it runs on at every start (director-cache/booster-archive/<sha256>.json),
+      # so events from before an engine upgrade keep passing pack regeneration with no copy step at deploy.
+      HUB_BOOSTER_ARCHIVE_DIRS: /director-cache/booster-archive
       HUB_CORS_ORIGIN: "*"
       # Traefik is the only way in: per-client rate limits (sign-in, account) key on its X-Forwarded-For hop.
       HUB_TRUST_PROXY: "1"
