@@ -89,7 +89,7 @@ Defaults: `DATABASE_URL=postgres://hub:hub@127.0.0.1:5440/hub`, `HUB_DATA_DIR=tm
 | `HUB_GITHUB_MIN_ACCOUNT_DAYS` | 30 | refuse GitHub accounts younger than this (`0`: off) |
 | `HUB_TERMS_REQUIRED` | 1 | hosted play and uploads need the current terms accepted (`src/terms.ts`); `0` only for tests |
 | `MTGDT_CONTACT_URL` | none (a visible placeholder) | the contact for takedowns, privacy and conduct: in the data card and the served legal documents. Without it, the documents say requests can't be made yet |
-| `MTGDT_TERMS_URL`, `MTGDT_PRIVACY_URL`, `MTGDT_CONTENT_POLICY_URL` | the Hub's `/legal/*` | where `bench login` and the account page link the documents (on the hosted stack, the site's pages) |
+| `MTGDT_TERMS_URL`, `MTGDT_PRIVACY_URL`, `MTGDT_CONTENT_POLICY_URL` | the Hub's `/legal/*` (`deploy/compose.yaml`: the site's `/agent-bench/terms`, `/privacy`, `/content-policy`) | where `bench login` and the account page link the documents |
 | `HUB_MODERATION_HOLD` | 0 | `1`: hold bundles whose notes or deck names the content filter flags, for review (default: publish, never feature) |
 | `MTGDT_MODERATION_WORDLIST` | none | a private file of extra filter terms, one per line (`#` comments), added to the default list (public-text.ts) |
 | `HUB_TRUST_PROXY` | unset | `1`: client IP for sign-in rate limits from the last `X-Forwarded-For` hop (behind Traefik) |

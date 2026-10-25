@@ -286,6 +286,10 @@ services:
       HUB_PUBLIC_URL: ${HUB_PUBLIC_URL:-https://agent-bench-hub.dev.greg.tech}
       # Takedowns, erasure, privacy requests and reports (docs/legal; terms.ts).
       MTGDT_CONTACT_URL: ${MTGDT_CONTACT_URL:-mailto:magic@greg.tech}
+      # Where the CLI's terms summary and the account page send readers: the site's rendered pages, not the Hub's plain text.
+      MTGDT_TERMS_URL: ${MTGDT_TERMS_URL:-https://www.mtgdecktools.com/agent-bench/terms}
+      MTGDT_PRIVACY_URL: ${MTGDT_PRIVACY_URL:-https://www.mtgdecktools.com/agent-bench/privacy}
+      MTGDT_CONTENT_POLICY_URL: ${MTGDT_CONTENT_POLICY_URL:-https://www.mtgdecktools.com/agent-bench/content-policy}
       # Admin API (review queue, exclude/takedown, full export). The CLI works without it: docker exec … npm run hub.
       HUB_ADMIN_TOKEN: ${HUB_ADMIN_TOKEN}
       # Official hosted Directors that may hand finished events to POST /api/internal/events (label verified).

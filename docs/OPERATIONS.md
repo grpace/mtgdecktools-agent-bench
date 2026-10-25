@@ -62,9 +62,9 @@ Run it to create an instance (or let its first `deploy.sh` do it), and again aft
 | `PUBLIC_URL`, `HUB_PUBLIC_URL` | `coolify-setup.sh` | `https://` + the instance's hosts |
 | `SUBMIT_TOKENS` | `coolify-setup.sh`, from `submit-tokens` (one `name:token` per line) | Empty: the Director's interim submission endpoint is off |
 | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | `coolify-setup.sh` when `github-oauth-client-{id,secret}` exist, else the Coolify UI | The setup never blanks a value set in the UI |
-| `MAX_CONCURRENT_GAMES`, `MAX_QUEUE`, `EVENT_MAX_HOURS`, `QUEUE_MAX_WAIT_HOURS`, `SPECTATE_DELAY_S`, `MTGDT_CONTACT_URL`, `HUB_PLAY_CONCURRENT`, `HUB_PLAY_DAILY`, `HUB_LOBBY_CONCURRENT`, `HUB_LOBBY_DAILY`, `HUB_GITHUB_MIN_ACCOUNT_DAYS` | Empty: `compose.yaml`'s default applies | A value set in Coolify overrides it (see "Coolify Variables") |
+| `MAX_CONCURRENT_GAMES`, `MAX_QUEUE`, `EVENT_MAX_HOURS`, `QUEUE_MAX_WAIT_HOURS`, `SPECTATE_DELAY_S`, `MTGDT_CONTACT_URL`, `MTGDT_TERMS_URL`, `MTGDT_PRIVACY_URL`, `MTGDT_CONTENT_POLICY_URL` (the site's rendered pages), `HUB_PLAY_CONCURRENT`, `HUB_PLAY_DAILY`, `HUB_LOBBY_CONCURRENT`, `HUB_LOBBY_DAILY`, `HUB_GITHUB_MIN_ACCOUNT_DAYS` | Empty: `compose.yaml`'s default applies | A value set in Coolify overrides it (see "Coolify Variables") |
 | `PHASE_RUST_LOG`, `*_MEM_LIMIT`, `*_PIDS_LIMIT` | Not listed: `compose.yaml`'s default | Add the variable in Coolify to override |
-| `MTGDT_TERMS_URL`, `MTGDT_PRIVACY_URL`, `MTGDT_CONTENT_POLICY_URL`, `HUB_TRUST_PROXY_HOPS` | By hand in Coolify (production) | Every variable reaches every container through Coolify's `.env` |
+| `HUB_TRUST_PROXY_HOPS` | By hand in Coolify (production) | Every variable reaches every container through Coolify's `.env` |
 | `PHASE_IMAGE`, `DIRECTOR_TAG`, `SOURCE_COMMIT` | Never | The commit decides the engine and the image; `coolify-setup.sh` deletes them if present |
 | `SOURCE_COMMIT`, `COOLIFY_*`, `SERVICE_URL_*`, `SERVICE_FQDN_*` | Coolify, at each deploy | `SOURCE_COMMIT` tags the image and gives `/health` its version |
 
