@@ -98,10 +98,22 @@ const RULES: Rule[] = [
   [/\b(?:25[0-5]|2[0-4]\d|1?\d?\d)(?:\.(?:25[0-5]|2[0-4]\d|1?\d?\d)){3}\b/g, '[ip]'],
 ];
 
-/** A string with secrets, tokens, paths, e-mail and IP addresses replaced by placeholders. Card text is unchanged. */
+/**
+ * Invisible characters no public text keeps (HUB-36): bidi controls, zero-width spaces, word joiners and invisible
+ * operators, the byte-order mark, and Unicode tag characters, which render as nothing but language models still read
+ * (a way to hide instructions from people for anyone who feeds the data to a model). A subdivision flag emoji (a black
+ * flag, tag letters, a cancel tag) is kept whole. Zero-width joiners stay: emoji sequences and some scripts need them.
+ */
+const INVISIBLE = /(\u{1F3F4}[\u{E0030}-\u{E0039}\u{E0061}-\u{E007A}]{1,7}\u{E007F})|[\u061C\u200B\u200E\u200F\u202A-\u202E\u2060-\u2064\u2066-\u2069\uFEFF\u{E0000}-\u{E007F}]/gu;
+
+export function stripInvisible(s: string): string {
+  return s.replace(INVISIBLE, (_m, flag: string | undefined) => flag ?? '');
+}
+
+/** A string with secrets, tokens, paths, e-mail and IP addresses replaced by placeholders, invisible characters removed. Card text is unchanged. */
 export function scrubText(s: string): string {
   if (!s) return s;
-  let out = s;
+  let out = stripInvisible(s);
   for (const [re, to] of RULES) out = out.replace(re, to as string);
   return out;
 }

@@ -41,6 +41,9 @@ for (const [what, key] of secrets) {
 assert.equal(scrubText('aws_secret_access_key = wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'), 'aws_secret_access_key = [secret]');
 assert.equal(scrubText('{"api_key": "abc123secretvalue"}'), '{"api_key": "[secret]"}');
 assert.equal(scrubText('PASSWORD=hunter22x'), 'PASSWORD=[secret]');
+// HUB-36: invisible characters leave every public output, community bundles included (they never pass the Director's cleaner).
+assert.equal(scrubText(`deck\u202Ename\u2066x\u2069${String.fromCodePoint(0xe0068, 0xe0069)}`), 'decknamex');
+assert.equal(scrubText('\u{1F3F4}\u{E0067}\u{E0062}\u{E0073}\u{E0063}\u{E0074}\u{E007F} ok'), '\u{1F3F4}\u{E0067}\u{E0062}\u{E0073}\u{E0063}\u{E0074}\u{E007F} ok');
 assert.equal(scrubText('Authorization: Bearer abcdefghijklmnop0123456789'), 'Authorization: Bearer [token]');
 assert.equal(scrubText('-----BEGIN RSA PRIVATE KEY-----\nMIIEow\n-----END RSA PRIVATE KEY-----'), '[secret]');
 assert.equal(scrubText('mtgdt_con_AbCdEfGhIjKlMnOpQrStUv'), '[token]');

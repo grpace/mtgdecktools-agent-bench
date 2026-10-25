@@ -4,6 +4,7 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { z } from 'zod';
 import { CardDb } from './cards.js';
 import { directorVersion } from './provenance.js';
+import { stripInvisible } from './public-text.js';
 import { BodyTooLarge, clientIp, RateLimiter, readLimited, tooLarge } from './ratelimit.js';
 import { AgentSeat } from './seat.js';
 
@@ -33,7 +34,7 @@ const WAIT_MS = 40_000;
  * formatting characters that can disguise text for a maintainer reading a log or the review queue. Lone surrogates
  * become U+FFFD. The text goes to the event log, the spectator stream, bundles and the site.
  */
-const UNSAFE_TEXT = /[\u0000-\u0008\u000B-\u001F\u007F-\u009F\u061C\u200B\u200E\u200F\u202A-\u202E\u2066-\u2069\uFEFF]/g;
+const UNSAFE_TEXT = /[\u0000-\u0008\u000B-\u001F\u007F-\u009F]/g;
 
 /**
  * The CORS header of the Director's public reads (the report export under /data/, live streams, the lobby's public
@@ -48,7 +49,8 @@ export function publicReadCors(req: IncomingMessage): Record<string, string> {
 
 export function cleanAgentText(s: string): string {
   // String.prototype.toWellFormed (Node 20+; not in this project's TypeScript lib yet).
-  return (s as string & { toWellFormed(): string }).toWellFormed().replace(UNSAFE_TEXT, '');
+  // Invisible and bidi characters (and Unicode tag characters) go by the public scrubber's own list (public-text.ts).
+  return stripInvisible((s as string & { toWellFormed(): string }).toWellFormed().replace(UNSAFE_TEXT, ''));
 }
 
 /** Every string an agent sends with decide, cleaned (cleanAgentText); numbers and structure untouched. */
