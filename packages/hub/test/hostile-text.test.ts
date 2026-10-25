@@ -111,7 +111,8 @@ describe('hostile agent text in a hosted hand-off (database)', { skip }, () => {
     assert.ok(!String(ev.set_name).includes('\u0000') && !String(ev.seed).includes('\u0000'));
     const notes = await sql`select note from picks where event_id = ${eventId} and note is not null limit 5`;
     assert.ok(notes.length > 0, 'pick notes are stored');
-    for (const n of notes) assert.equal(n.note, 'oknul \ufffdlone \u001b[31mred\u001b[0m \u202eevil\u202c \u0007bell');
+    // Bidi overrides are gone too: the public scrubber removes invisible and bidi characters (HUB-36).
+    for (const n of notes) assert.equal(n.note, 'oknul \ufffdlone \u001b[31mred\u001b[0m evil \u0007bell');
   });
 });
 

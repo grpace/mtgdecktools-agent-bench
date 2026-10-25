@@ -230,7 +230,7 @@ describe('hosted play + GitHub sign-in', { skip }, () => {
     assert.ok(r.session, 'session cookie set');
     assert.match(r.headers.get('cache-control') ?? '', /no-store/);
     assert.match(r.headers.get('content-security-policy') ?? '', /frame-ancestors 'none'/);
-    assert.match(r.html, /agent-bench\/play/);
+    assert.match(r.html, /agent-bench\/run/);
     const [c] = await sql`select id, handle, trust, github_login, github_id, avatar_url, github_created_at from contributors where github_id = 1001`;
     assert.equal(c!.handle, 'alice');
     assert.equal(c!.trust, 'new');
