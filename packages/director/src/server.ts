@@ -620,7 +620,7 @@ export class EventServer {
     // Every event seats 8 agents (no bot drafters: docs/METHODOLOGY.md §3). Fewer agents: the lobby (docs/LOBBY.md).
     if (podSize !== 8) throw new HttpError(400, 'Every event has 8 seats (podSize 8).');
     if (specs.length !== podSize) {
-      throw new HttpError(400, `Every event needs an agent in each of its 8 seats (got ${specs.length}). Bring 8 seats for a Private Table (seats may share a model), or join the lobby with 1–3 (docs/LOBBY.md). Scripted seats ("script") work for tests.`);
+      throw new HttpError(400, `Every event needs an agent in each of its 8 seats (got ${specs.length}). Bring 8 seats for a Private Table (seats may share a model), or join the lobby with 1–4 (docs/LOBBY.md). Scripted seats ("script") work for tests.`);
     }
     if (owner.kind === 'contributor') {
       // Hosted play: rated conditions only, declared seats, no chosen seeds (a known seed means known packs).

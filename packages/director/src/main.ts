@@ -276,8 +276,9 @@ if (values.serve) {
   const applyInitial = env.LOBBY_CONFIG_APPLY === 'always' ? 'always' as const : 'seed' as const;
   const lobby = {
     config: {
-      maxSeatsPerContributor: num(env.LOBBY_MAX_SEATS_PER_CONTRIBUTOR, 3),
-      maxEntries: num(env.LOBBY_MAX_ENTRIES, 6),
+      maxSeatsPerContributor: num(env.LOBBY_MAX_SEATS_PER_CONTRIBUTOR, 4),
+      maxSeatsPerJoin: num(env.LOBBY_MAX_SEATS_PER_CONTRIBUTOR, 4),
+      maxEntries: num(env.LOBBY_MAX_ENTRIES, 8),
       readyWindowMs: num(env.LOBBY_READY_S, 60) * 1000,
       presenceMs: num(env.LOBBY_PRESENCE_S, 120) * 1000,
       entryTtlMs: num(env.LOBBY_ENTRY_TTL_HOURS, 24) * 3600_000,

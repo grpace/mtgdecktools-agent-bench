@@ -13,7 +13,7 @@
  *   bench setup --set … --seat …     flags, `--yes` to confirm in one go
  *
  * Every table has 8 agent seats. A Private Table: you bring all 8 agents and play right away; repeat models as you like.
- * Join the Lobby: bring 1–3 agents; we seat you with other people's agents and start when 8 are ready
+ * Join the Lobby: bring 1–4 agents; we seat you with other people's agents and start when 8 are ready
  * (`bench lobby join`, docs/LOBBY.md).
  *
  * Play One Table, or Keep Playing: new drafts back to back until you stop it (`bench stop <loop id>`) or a limit is
@@ -47,12 +47,12 @@ import { loadBounties, neededForYou, neededHeadline, type Needed } from './neede
 
 /** The lobby's command (docs/LOBBY.md §3, `bench lobby join`), registered by its own module. */
 const LOBBY_COMMAND = ['lobby', 'join'];
-const LOBBY_MAX_SEATS = 3;
+const LOBBY_MAX_SEATS = 4;
 
 /** The two kinds of table, in one sentence each (the same words in the CLI help, the lobby help and COMMUNITY.md). */
 export const TABLE_TEXT = {
   private: 'You bring all 8 agents and play right away; repeat models as you like.',
-  lobby: "Bring 1–3 agents; we seat you with other people's agents and start when 8 are ready.",
+  lobby: "Bring 1–4 agents; we seat you with other people's agents and start when 8 are ready.",
 } as const;
 export const MODE_TEXT = {
   once: 'One table: the draft, deckbuilding and 3 Swiss rounds, then it stops.',
@@ -916,7 +916,7 @@ export async function cmdSetup(argv: string[]) {
   else if (a.play_mode === 'continuous' && !values.agent && (values.yes || values['dry-run'])) a.rotate_sets ??= 'same';
   // Flags for scripts: without a table question answered, play one table unless Keep Playing was asked for.
   if (!values.agent && !a.play_mode && (values.yes || values['dry-run'] || !process.stdin.isTTY) && a.seats?.length) a.play_mode = 'once';
-  // Flags given without a table: the number of seats decides (1 to 3: the lobby).
+  // Flags given without a table: the number of seats decides (1 to 4: the lobby).
   if (!a.table && a.seats?.length && !values.agent) {
     try {
       a.table = expandSeatSpecs(a.seats).length <= LOBBY_MAX_SEATS ? 'lobby' : 'private';
@@ -956,7 +956,7 @@ export async function cmdSetup(argv: string[]) {
         ...(r.table_check ? { table_check: r.table_check } : {}),
         instructions: 'Ask the person these questions in plain language, with the options and the recommended answer (and why). Then run `next` with every answer so far plus the new ones in --answers (question ids are the keys; "effort:<harness>/<model>" answers go in "efforts": {"<harness>/<model>": "<level>"}; "seats" is a list of lines). Never answer for the person.'
           + (r.questions.some((q) => q.needed?.length) ? ' With the seats question, mention `needed`: the seats that are most needed right now that they can run (lead with the first one).' : '')
-          + (r.table_check ? ' Before the other questions, tell them `table_check.warning` plainly and offer `table_check.suggestions` (each has the seat lines to use as their "seats" answer; "Join the Lobby" means table "lobby" with 1-3 seats). Keeping their seats is fine: it is never refused.' : ''),
+          + (r.table_check ? ' Before the other questions, tell them `table_check.warning` plainly and offer `table_check.suggestions` (each has the seat lines to use as their "seats" answer; "Join the Lobby" means table "lobby" with 1-4 seats). Keeping their seats is fine: it is never refused.' : ''),
         next: `${BENCH} setup --agent${pass} --answers '<answers JSON>'`,
       });
     }

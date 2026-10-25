@@ -14,6 +14,8 @@ The public repository starts from one commit (2026-10-25). Commit hashes in the 
 
 ### Changed
 
+- **Lobby seat cap raised to 4** (owner, 2026-10-25): contributors may bring 1 to 4 seats per lobby queue (`maxSeatsPerContributor: 4`, `maxSeatsPerJoin: 4`, `maxEntries: 8`) so two contributors can fill an 8-seat table, while Private Tables remain 8 seats. Internal pre-launch working notes moved to the private ops repository.
+
 - **Git deploys** (owner, 2026-10-25): each hosted instance is a Coolify Docker Compose application built from this repository, one branch per instance (`deploy/dev`, `deploy/prod`), deployed on push by the GitHub App's webhook, so deploys work without the workstation (docs/OPERATIONS.md "Deploying").
   - `deploy/compose.yaml` builds the Director image itself, tagged with the deployed commit; `/health` and `provenance.director` report that commit's short sha (`SOURCE_COMMIT`).
   - `deploy/coolify-setup.sh` creates or updates an instance: a verified Coolify DB dump first, the application, secrets as runtime-only Coolify variables, and the nightly `pg_dump` task. `INSTANCE=test` gives a throwaway instance of a work branch, and `--delete` removes it.

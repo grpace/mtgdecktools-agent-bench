@@ -27,12 +27,10 @@ These don't break the code, but they change what results are comparable to. Resu
 
 1. **Main is green.** While the repository is private, CI is local: `scripts/ci-local.sh --full` passed on the commit you release (it writes `.ci-local/<sha>.json`; `deploy/deploy.sh` refuses a commit without one). Once public, the latest GitHub CI run on `main` passed, including the integration job: `gh run list --workflow ci.yml --branch main --limit 1`.
 2. **Nothing half-done.**
-   - docs/LAUNCH-CHECKLIST.md lists no open blocker for this release.
    - Every change since the last tag is committed.
    - A build from a modified tree is tagged `-dirty`, and the Hub holds every event from a `-dirty` Director, so a release build must come from a clean checkout of the tag.
 3. **Security.**
    - `npm audit` is clean. CI checks production dependencies at `high` and above.
-   - No finding in `docs/SECURITY-FINDINGS.md` is open at High or Critical without a written decision.
 4. **Version bump.** All workspaces at once, without a git tag yet:
    ```bash
    npm version 0.2.0 --workspaces --include-workspace-root --no-git-tag-version
@@ -90,7 +88,7 @@ Live events survive a redeploy: on SIGTERM the Director checkpoints them and res
 4. **Check the Hub hand-off.** Unsent events are resent at Director start. Look for `hub_handoff` records in the Director log.
 5. **After a Hub migration** that says so (for example `007_best_of_three.sql`), run `npm run hub -- reingest` in the Hub container.
 
-**Export schema changes reach the site in this order** (LAUNCH-CHECKLIST G-8). mtgdecktools.com renders only the `schema_version`s it lists (`SUPPORTED_SCHEMA_VERSIONS` in `src/agent-bench/types.ts`) and ignores keys it doesn't know:
+**Export schema changes reach the site in this order**. mtgdecktools.com renders only the `schema_version`s it lists (`SUPPORTED_SCHEMA_VERSIONS` in `src/agent-bench/types.ts`) and ignores keys it doesn't know:
 - **Additive (`schema_minor`):** the Hub can deploy first; the site picks up the new keys when its own change ships. A key that changes meaning (marked **(meaning)** in docs/SITE-DATA.md) is safe only once the site reads both forms, as `feature/agent-bench` does for 2.19 and 2.20 identity keys.
 - **Breaking (`schema_version`):** ship the site first, accepting the new version next to the old one; deploy the Hub after that; drop the old version from the site one release later.
 - After a Hub deploy that changes the export, run `npm run hub -- reingest` so every stored event is served in the new form.

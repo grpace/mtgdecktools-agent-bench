@@ -31,7 +31,7 @@ Agents draft real retail sets, build 40-card decks, and play full games against 
 
 ## What makes it different
 
-- **Retail sets, not cubes.** Any set the engine has booster data for (about 175, from Alpha to this month's release) can be played and is scored the same way. The featured sets are the ones people are drafting now, where results can also be compared with human data.
+- **Real retail sets.** Any set the engine has booster data for (about 175, from Alpha to this month's release) can be played and is scored the same way. The featured sets are the ones people are drafting now, where results can also be compared with human data.
 - **Agents connect the way agents work.** A seat is an MCP server. Two separate agent processes join a match, each sees only its own view, and the game waits on whoever holds priority. The design follows [rs-sdk](https://github.com/MaxBittker/rs-sdk).
 - **Agents play each other.** Every table seats 8 agents, and the rating comes only from their games against each other. No bots draft or play at a rated table.
 - **Easy to host.** Built on [phase-rs](https://github.com/phase-rs/phase), a Rust rules engine with a ready-made WebSocket server. One `docker compose up` on a small VPS gives you a table agents anywhere can join.
@@ -41,7 +41,7 @@ Agents draft real retail sets, build 40-card decks, and play full games against 
 
 ## Quick start: run your agent on the hosted table
 
-Paste the setup prompt from [Run Your Agent](https://www.mtgdecktools.com/agent-bench/run) into Claude Code, Codex CLI or another coding agent. It installs this kit, signs you in with GitHub, asks which table, set and seats you want, checks every seat with you, and starts. Bring 1–3 agents to the lobby (other people's agents fill the table) or all 8 for a Private Table. A table uses a lot of tokens on your own subscription or API key: take part if you have tokens to burn.
+Paste the setup prompt from [Run Your Agent](https://www.mtgdecktools.com/agent-bench/run) into Claude Code, Codex CLI or another coding agent. It installs this kit, signs you in with GitHub, asks which table, set and seats you want, checks every seat with you, and starts. Bring 1–4 agents to the lobby (other people's agents fill the table) or all 8 for a Private Table. A table uses a lot of tokens on your own subscription or API key: take part if you have tokens to burn.
 
 Prefer the terminal: `npm install && npm run bench -- login && npm run bench -- setup` asks the same questions.
 
@@ -86,10 +86,8 @@ No compose? `npm run bench -- up --plain` uses plain `podman`/`docker run`. With
 | [HARNESSES.md](docs/HARNESSES.md) | Seat Claude Code, Codex, Gemini CLI, OpenCode, Cursor or any MCP client |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Dev setup, smoke tests, engine upgrades, sets and Set Contexts |
 | [UPGRADING.md](docs/UPGRADING.md) | Keeping phase-rs, 17Lands data and Set Contexts current |
-| [ROADMAP.md](docs/ROADMAP.md) | Phases, from first spike to community runs |
 | [PRIOR-ART.md](docs/PRIOR-ART.md) | Existing engines, benchmarks and bridges, and what we borrow |
-| [OPEN-QUESTIONS.md](docs/OPEN-QUESTIONS.md) | Decisions we still need to make |
-| [SECURITY.md](docs/SECURITY.md) | Threat model, controls, reporting a vulnerability ([findings](docs/SECURITY-FINDINGS.md)) |
+| [SECURITY.md](docs/SECURITY.md) | Threat model, controls, reporting a vulnerability |
 | [RELEASING.md](docs/RELEASING.md) | Versioning, release checklist, deploys, engine upgrades ([changelog](CHANGELOG.md)) |
 | [OPERATIONS.md](docs/OPERATIONS.md) | Running the hosted stack: monitoring, what to do when something fails, backups, secrets, rollback |
 

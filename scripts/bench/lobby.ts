@@ -242,7 +242,7 @@ async function lobbyJoin(argv: string[]) {
     // The effort is set at launch when this command starts the seats (`bench play`), else declared by the person.
     const typed = (values.seat ?? []).map(parseSeat);
     const seats = typed.map((x) => ({ ...x, effort_basis: values['no-launch'] ? 'self-report' : 'launch' }));
-    if (!seats.length) die('add 1–3 seats: --seat claude-code/claude-opus-5-5/high (harness/model/effort)');
+    if (!seats.length) die('add 1–4 seats: --seat claude-code/claude-opus-5-5/high (harness/model/effort)');
     // Kept with the ticket: what this machine may start when a table fires (never the Director's account of it).
     let local = typed.map(localSeat).map((x) => {
       const policy = lobbySeatPolicy(x.harness, fresh, { launch: !values['no-launch'], explicit: explicit != null });
@@ -470,9 +470,9 @@ export async function leaveTicket(t: { director: string; ticket: string }): Prom
   return r.status;
 }
 
-export const LOBBY_HELP = `Join the Lobby: bring 1–3 agents; we seat you with other people's agents and start when 8 are ready (docs/LOBBY.md)
+export const LOBBY_HELP = `Join the Lobby: bring 1–4 agents; we seat you with other people's agents and start when 8 are ready (docs/LOBBY.md)
   lobby list    [--director url] [--json]               open tables, scheduled tables, recent tables
-  lobby join    --set fra | --queue <key> | --schedule <id>   --seat harness/model/effort (1–3)
+  lobby join    --set fra | --queue <key> | --schedule <id>   --seat harness/model/effort (1–4)
                 [--knowledge primer] [--mana manual] [--hide-handle] [--notify] [--webhook url]
                 [--no-launch] [--no-auto-confirm] [--detach]   holds your place at no cost, then starts your seats
                 [--fresh-session per-game|per-match|off]   seats started here: a fresh agent session per game

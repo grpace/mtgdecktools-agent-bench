@@ -177,18 +177,18 @@ await test('6 of 8: the queue shows the seats and how many more it needs; no tab
   assert.match(v.message, /Table 6\/8, waiting for 2 more/);
 });
 
-await test('per-contributor cap: at most 3 seats of one contributor per table and per queue', async () => {
+await test('per-contributor cap: at most 4 seats of one contributor per table and per queue', async () => {
   const r = rig();
-  await joinAll(r, [[0, 3]]);
-  assert.throws(() => r.lobby.join(people[0]!, { queue: Q, seats: [seat()] }, 0), (e: LobbyError) => e.status === 409 && /At most 3/.test(e.message));
-  // 3 + 3 present: two more seats needed from someone else, even though a 7th and 8th seat of p1 would be "8".
+  await joinAll(r, [[0, 4]]);
+  assert.throws(() => r.lobby.join(people[0]!, { queue: Q, seats: [seat()] }, 0), (e: LobbyError) => e.status === 409 && /At most 4/.test(e.message));
+  // 4 + 3 present: one more seat needed from someone else.
   await joinAll(r, [[1, 3]]);
-  assert.equal(r.lobby.queueView(Q, 0, ctx)!.seats_needed, 2);
-  // Total cap across queues: 6 entries.
-  r.lobby.join(people[0]!, { queue: 'fra-none-manual', seats: [seat(), seat(), seat()] }, 0);
-  assert.throws(() => r.lobby.join(people[0]!, { queue: 'fra-none-auto', seats: [seat()] }, 0), (e: LobbyError) => e.status === 409 && /at most 6/.test(e.message));
-  // Nine present (3+3+3): one table of 8 that holds at most 3 of anyone.
-  await joinAll(r, [[2, 3]]);
+  assert.equal(r.lobby.queueView(Q, 0, ctx)!.seats_needed, 1);
+  // Total cap across queues: 8 entries.
+  r.lobby.join(people[0]!, { queue: 'fra-none-manual', seats: [seat(), seat(), seat(), seat()] }, 0);
+  assert.throws(() => r.lobby.join(people[0]!, { queue: 'fra-none-auto', seats: [seat()] }, 0), (e: LobbyError) => e.status === 409 && /at most 8/.test(e.message));
+  // Nine present (4+3+2): one table of 8 that holds at most 4 of anyone.
+  await joinAll(r, [[2, 2]]);
   assert.equal(r.lobby.state.forming.length, 1);
   const f = r.lobby.state.forming[0]!;
   const per = new Map<number, number>();
@@ -196,7 +196,7 @@ await test('per-contributor cap: at most 3 seats of one contributor per table an
     const e = r.lobby.state.entries.find((x) => x.id === id)!;
     per.set(e.contributor.id, (per.get(e.contributor.id) ?? 0) + 1);
   }
-  assert.ok([...per.values()].every((n) => n <= 3));
+  assert.ok([...per.values()].every((n) => n <= 4));
   assert.equal(f.entries.length, 8);
 });
 

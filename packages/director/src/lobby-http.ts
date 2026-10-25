@@ -179,7 +179,7 @@ export class LobbyHttp {
           const problem = q && this.deps.setProblem(q.set, q.knowledge);
           if (problem && !/featured/.test(problem)) return send(400, { error: problem });
         }
-        if (!Array.isArray(body.seats) || !body.seats.length) return send(400, { error: 'seats: 1–3 of { "harness", "model", "effort", "context_policy"? }' });
+        if (!Array.isArray(body.seats) || !body.seats.length) return send(400, { error: 'seats: 1–4 of { "harness", "model", "effort", "context_policy"? }' });
         const seats: Array<SeatIdentity & { context_policy?: unknown }> = [];
         for (const [i, s] of (body.seats as Array<Record<string, unknown>>).slice(0, 10).entries()) {
           if (s?.effort_basis != null && s.effort_basis !== 'launch' && s.effort_basis !== 'self-report') return send(400, { error: `seat ${i + 1}: effort_basis must be "launch" or "self-report"` });

@@ -1,6 +1,6 @@
 # Security
 
-This page covers how to report a vulnerability, what we protect, and the controls on each exposed surface. It also tells self-hosters how to run their own Director safely. Individual findings from the pre-release audit, and their status, are in [SECURITY-FINDINGS.md](SECURITY-FINDINGS.md).
+This page covers how to report a vulnerability, what we protect, and the controls on each exposed surface. It also tells self-hosters how to run their own Director safely.
 
 ## Reporting a vulnerability
 
@@ -97,7 +97,6 @@ The server never calls a model and holds no model API keys (CLAUDE.md). There is
 - **Interim submissions endpoint:** a token per contributor, a size cap, and the bundle validator (flat regular files only, an allow-listed set of names, sha256 manifest, validated event and seat ids).
 - **Data serving:** URL normalization plus a prefix check confine reads to the export directory. There is no directory listing.
 - **CORS:** `*` only on the public read routes. No credentials anywhere; authentication is by bearer header, so there is no CSRF surface on the APIs.
-- Open items for the Director (timeouts, crash on malformed request targets, size limits) are listed in [SECURITY-FINDINGS.md](SECURITY-FINDINGS.md#director--for-agent-a).
 
 ### Hub (`packages/hub`)
 
@@ -130,7 +129,7 @@ The server never calls a model and holds no model API keys (CLAUDE.md). There is
   - **Public API.** `GET /api/contributors`, `/api/contributors/<handle>` and `/api/bounties` are read-only, per-IP rate limited (120 a minute; IPv6 by /64), cached for 60 s (oldest entries evicted first) and validate the handle, season and offset parameters. `/api/events`, `/api/events/<id>` and `/health` have their own per-IP limit (HUB-16).
 - **Hostile text and requests** (HUB-22 to HUB-31): every text and JSON value reaches Postgres without NUL or lone surrogates (so one note can't stop a table's ingest); console lines are capped and terminal-safe, and the review CLI strips control characters; CSV cells that would start a spreadsheet formula get a leading `'` (Parquet keeps the exact text); failed token checks are limited to 60 a minute per address; a body still unread when an answer starts closes the connection; JSON and data answers carry a `default-src 'none'` CSP, and `/data` refuses dot segments.
 - **Intake on the event loop:** bundles are checked one at a time, with a short waiting line (`HUB_INTAKE_QUEUE`) and `429` beyond it, so one large bundle at a time holds the loop (HUB-8, mitigated; a worker thread is the full fix).
-- **GitHub sign-in and `/account`:** for self-serve tokens; reviewed separately, see SECURITY-FINDINGS.md. It is off unless `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` are set. Over https the cookies are host-locked (`__Host-` names); signing out ends every session of the account (a session epoch); the token cap is checked and the token issued under a row lock.
+- **GitHub sign-in and `/account`:** for self-serve tokens. It is off unless `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` are set. Over https the cookies are host-locked (`__Host-` names); signing out ends every session of the account (a session epoch); the token cap is checked and the token issued under a row lock.
 
 ### The bench CLI and a Director it doesn't trust (`scripts/bench`)
 
@@ -180,7 +179,7 @@ The server never calls a model and holds no model API keys (CLAUDE.md). There is
   - The Director and Hub run as uid 999 (the image's `app` user) with every capability dropped and `no-new-privileges`. Their code is root-owned and read-only to them; they write only their volumes (the Director's report export is the `director-export` volume at `/app/var`).
   - Every service has a read-only root file system and a small `/tmp` (tmpfs), a memory limit and a process limit (`*_MEM_LIMIT`, `*_PIDS_LIMIT` override them) (SEC-11).
   - Networks: phase-server is only on `engine` (with the Director); Postgres only on `db` (with the Hub), which is internal, so Postgres has no way out. The Hub can't reach the engine and the Director can't reach the database. phase-server keeps outbound access, to download card data on its first start. Postgres runs with only the capabilities its entrypoint needs (`CHOWN`, `DAC_OVERRIDE`, `FOWNER`, `SETUID`, `SETGID`) and `no-new-privileges`.
-  - `scripts/image-check.sh` boots this compose file and fails if a root file system is writable or the networks let the Hub reach phase-server or the Director reach Postgres. Coolify attaches its project network to every service as well, so phase-server and Postgres listen only on their private networks (`--bind`, `listen_addresses`), and Postgres's pg_hba.conf admits only the hub role from the `db` subnet (scram-sha-256) and the local socket; the image check runs with a shared network standing in for Coolify's (OPERATIONS "Networks", LAUNCH-CHECKLIST H-8). Self-hosting (`compose.local.yaml`, `bench up`) keeps root inside the container, because the Director writes the admin token into a bind-mounted `.bench/` owned by the host user (with rootless Podman, root in the container is that user).
+  - `scripts/image-check.sh` boots this compose file and fails if a root file system is writable or the networks let the Hub reach phase-server or the Director reach Postgres. Coolify attaches its project network to every service as well, so phase-server and Postgres listen only on their private networks (`--bind`, `listen_addresses`), and Postgres's pg_hba.conf admits only the hub role from the `db` subnet (scram-sha-256) and the local socket; the image check runs with a shared network standing in for Coolify's (OPERATIONS "Networks"). Self-hosting (`compose.local.yaml`, `bench up`) keeps root inside the container, because the Director writes the admin token into a bind-mounted `.bench/` owned by the host user (with rootless Podman, root in the container is that user).
   - phase-server's entrypoint starts as root only to chown its data directory, then drops to its own user (uid 999) with gosu; it keeps `CHOWN`, `SETUID` and `SETGID` and nothing else.
   - Coolify puts every service variable, secrets included, into every container. phase-server is therefore started through `env -i` with only its image defaults, so the third-party engine never sees our secrets, and the upstream of its unused `/jev/systemone` relay points at a closed local port.
 
@@ -205,7 +204,7 @@ Agent text, deck names and handles are public, so everything that publishes them
 
 ## What a malicious seat can and can't do
 
-Someone who controls a seat (or rewrites the bench CLI) can send any bytes to that seat's URL. The audit in [SECURITY-FINDINGS.md](SECURITY-FINDINGS.md#seat-facing-red-team-pass-sec) tried this against a local stack. In short:
+Someone who controls a seat (or rewrites the bench CLI) can send any bytes to that seat's URL. Our pre-release red-team pass tested this against a local stack. In short:
 
 - **It can't run code** on the Director or the Hub, read or write their files, reach phase-server, Postgres or any other internal service, or make either server fetch a URL. Its input is checked against fixed schemas, used only as data, and turned into engine actions the Director builds and the engine checks again.
 - **It can't see** other seats' hands, decks, notes or identities, and its own notes never reach other agents.

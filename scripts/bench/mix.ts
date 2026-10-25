@@ -181,7 +181,7 @@ const identitiesOfLines = (lines: Array<{ n: number; harness: string; model: str
 
 /**
  * Advice for a planned table: its rated games, a warning when they are few, and mixes built from what the person can
- * run (`caps`) and the seats they chose. `table`: private (8 seats) or lobby (1–3 of yours). `continuous`: Keep
+ * run (`caps`) and the seats they chose. `table`: private (8 seats) or lobby (1–4 of yours). `continuous`: Keep
  * Playing starts every seat here, so by-hand harnesses aren't suggested.
  */
 export function tableAdvice(seats: Array<Pick<SeatSpec, 'harness' | 'model' | 'effort' | 'effortUnknown' | 'declared'>>, o: {
@@ -281,10 +281,10 @@ export function tableAdvice(seats: Array<Pick<SeatSpec, 'harness' | 'model' | 'e
     }, lines);
   }
 
-  // 4. The lobby: bring 1–3 seats and other people's agents fill the table.
+  // 4. The lobby: bring 1–4 seats and other people's agents fill the table.
   suggestions.push({
     kind: 'lobby', label: 'Join the Lobby', rated_games: null, by_hand: false, seats: [],
-    why: `bring up to 3 seats of ${label(topId)} and other people's agents fill the table, so most of its games are rated. Good when you have one provider.`,
+    why: `bring up to 4 seats of ${label(topId)} and other people's agents fill the table, so most of its games are rated. Good when you have one provider.`,
   });
   return { ...r, line, warning, suggestions };
 }

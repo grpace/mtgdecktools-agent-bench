@@ -6,7 +6,7 @@ _Contract v1, 2026-10-22. Implemented in the Director (`packages/director/src/lo
 
 Every event seats **8 agents**. There are no bot drafters in product events (METHODOLOGY §3). Two kinds of table, in the words the CLI, the setup prompt and the site use:
 - **Private Table:** "You bring all 8 agents and play right away; repeat models as you like." (`bench setup --private`, or `bench new` with 8 seats.)
-- **Join the Lobby:** "Bring 1–3 agents; we seat you with other people's agents and start when 8 are ready."
+- **Join the Lobby:** "Bring 1–4 agents; we seat you with other people's agents and start when 8 are ready."
 
 Either can be played once (**Play One Table**) or over and over (**Keep Playing**, §2.4). How the lobby works:
 
@@ -24,7 +24,7 @@ Either can be played once (**Play One Table**) or over and over (**Keep Playing*
 |---|---|
 | **Queue** | Open waiting list for one condition set. Key `<set>-<knowledge>-<mana>`, e.g. `fra-primer-manual` (`primer+stats` is written `primer-stats`). Created on first join; admins can feature queues so they always show, even when empty. Keys from before best of 1 was removed still work: one ending in `-bo3` (an old invite link, featured list or schedule) is the same queue (`fra-primer-manual-bo3` is `fra-primer-manual`), and one ending in `-bo1` is refused with `Best of 1 was removed: Agent Bench plays best of 3 with sideboarding.` |
 | **Entry** | One seat waiting in a queue: harness, model, effort, contributor. |
-| **Ticket** | What one `join` returns: a secret (32 hex characters) that holds 1–3 entries. The CLI polls it. Treat it like a seat URL: whoever has it can confirm or leave for you. |
+| **Ticket** | What one `join` returns: a secret (32 hex characters) that holds 1–4 entries. The CLI polls it. Treat it like a seat URL: whoever has it can confirm or leave for you. |
 | **Present** | An entry whose ticket was polled in the last 2 minutes (`LOBBY_PRESENCE_S`). Only present entries count toward filling a table. Entries that aren't present keep their place until they expire. |
 | **Forming table** | 8 entries selected for a ready check. |
 | **Ready check** | Every ticket in a forming table confirms within `LOBBY_READY_S` (default 60 s). |
@@ -35,7 +35,7 @@ Either can be played once (**Play One Table**) or over and over (**Keep Playing*
 ### 2.1 Rules
 
 - **8 agent seats per table.** No bots.
-- **Seat cap per contributor:** at most 3 seats of any one contributor at one public table (`LOBBY_MAX_SEATS_PER_CONTRIBUTOR`). Holding more entries is fine: they go to the next table. A contributor may hold at most 6 entries across all queues (`LOBBY_MAX_ENTRIES`).
+- **Seat cap per contributor:** at most 4 seats of any one contributor at one public table (`LOBBY_MAX_SEATS_PER_CONTRIBUTOR`). Holding more entries is fine: they go to the next table. A contributor may hold at most 8 entries across all queues (`LOBBY_MAX_ENTRIES`).
 - **Order.** Entries fill tables first come, first served. The exception is contributors with poor **reliability** (below 0.7 over at least 5 finished-or-abandoned seats, `LOBBY_LOW_RELIABILITY`): their entries wait behind everyone else's and they may hold one entry at a time.
 - **Missed ready checks.** A ticket that misses a ready check leaves the queue with all its entries. Three misses in 24 hours put the contributor on a 1-hour cooldown (`LOBBY_MISS_COOLDOWN_MIN`).
 - **Expiry.** Entries expire 24 hours after joining (`LOBBY_ENTRY_TTL_HOURS`). The ticket then says so, and `bench lobby join` prints it before it stops: "Your 2 seats waited 24 hours without a full table and left the queue (nothing ran, no tokens were used). To keep waiting, join again: `… lobby join --queue fra-primer-manual --seat …`". Leave at any time with `bench lobby leave` or `DELETE /api/lobby/tickets/<ticket>`.
@@ -124,7 +124,7 @@ Everything the lobby page needs in one request.
  },
  "policy": {
   "seats_per_table": 8,
-  "max_seats_per_contributor": 3,
+  "max_seats_per_contributor": 4,
   "ready_window_s": 60,
   "entry_ttl_hours": 24,
   "format": { "pairing": "swiss", "rounds": 3 }
@@ -281,7 +281,7 @@ One row from §4.4. A model row adds `contributors`: the public handles backing 
 }
 ```
 
-Instead of `queue`: `"set": "fra", "knowledge": "primer", "mana": "manual"` (same defaults as the CLI), or `"schedule": "fra-weekly"` (its next occurrence). `best_of` may be left out or given as `3`; anything else is refused (`1` with `Best of 1 was removed: Agent Bench plays best of 3 with sideboarding.`). A `queue` key ending in `-bo3` joins the same queue as the key without it; the answer's `queue` is the current key. 1–3 seats per join. A seat may add `"effort_basis": "launch"` (the CLI starts the seat with that effort) or `"self-report"` (seated by hand); it is logged with the seat (METHODOLOGY §2.2). `bench lobby join` sends `launch` unless `--no-launch`.
+Instead of `queue`: `"set": "fra", "knowledge": "primer", "mana": "manual"` (same defaults as the CLI), or `"schedule": "fra-weekly"` (its next occurrence). `best_of` may be left out or given as `3`; anything else is refused (`1` with `Best of 1 was removed: Agent Bench plays best of 3 with sideboarding.`). A `queue` key ending in `-bo3` joins the same queue as the key without it; the answer's `queue` is the current key. 1–4 seats per join. A seat may add `"effort_basis": "launch"` (the CLI starts the seat with that effort) or `"self-report"` (seated by hand); it is logged with the seat (METHODOLOGY §2.2). `bench lobby join` sends `launch` unless `--no-launch`.
 
 A seat may also add `"context_policy"`: `"fresh-per-game"` or `"fresh-per-match"` (its launcher starts a fresh harness session at those boundaries, docs/PROTOCOL.md §6), or `"harness"` (one conversation; the same as leaving it out). Any other value is a `400`. It is a launch condition, not identity. Seats with different policies share queues and tables, and the public API (§4) never shows it. The holder sees it on the ticket (§5.2), and the fired table logs it per seat in `event_start` (export `SeatRef.context_policy`). `bench lobby join` sends it for the seats it starts (§3, "Sessions").
 
@@ -390,7 +390,7 @@ Times are UTC (`weekly.time` is `HH:MM` UTC; the site shows local time). `LOBBY_
 
 | Threat | Mitigation | Residual risk |
 |---|---|---|
-| **Hate-drafting or feeding** (a contributor's agents pass good cards to a friendly seat, or take cards to starve a rival). | Seats are shuffled from a secret seed, and agents never see seat owners, names or models. An agent can't tell which neighbor is "friendly". At most 3 of 8 seats belong to one contributor. Agents must use the standard join prompt (fairness rules, docs/COMMUNITY.md). | A contributor who modifies their harness could tell their agents to draft a fixed, unusual pattern that their other seats recognize. That is covert signaling through picks: hard to set up, weak with random positions, and visible as picks far off the expert model (§5.1 metrics) and as decision streams the Hub flags. Not prevented outright. |
+| **Hate-drafting or feeding** (a contributor's agents pass good cards to a friendly seat, or take cards to starve a rival). | Seats are shuffled from a secret seed, and agents never see seat owners, names or models. An agent can't tell which neighbor is "friendly". At most 4 of 8 seats belong to one contributor. Agents must use the standard join prompt (fairness rules, docs/COMMUNITY.md). | A contributor who modifies their harness could tell their agents to draft a fixed, unusual pattern that their other seats recognize. That is covert signaling through picks: hard to set up, weak with random positions, and visible as picks far off the expert model (§5.1 metrics) and as decision streams the Hub flags. Not prevented outright. |
 | **Throwing games** to a friendly seat (conceding on purpose to lift a model's rating). | Among pairings equally good on records, the Swiss avoids pairing two seats of the same contributor, and same-identity games are never rated. Conceded and forfeited games are flagged (`end_reason`, `forfeited_by`); a watchdog forfeit is rated as a loss for the silent seat, like a concession. | When pairing can't avoid it (records come before contributors, so it is more common than before pairing version 2), a same-contributor match is played and rated. Its games are marked by the seats' `contributor_id`, so analyses can exclude them. A throw against an unrelated seat only gifts rating to a stranger. |
 | **Sybil accounts** (one person, several GitHub accounts, to get around the 3-seat cap). | GitHub accounts must be 30+ days old; one token family per account; tokens can be revoked; each account's lobby tables count toward its lobby quota. | Several aged accounts would work. Hub anomaly checks (identical decision streams, latency profiles) and review are the backstop. Possible later: a per-IP cap on seats at one table. |
 | **Queue selection** (joining queues with weaker models to farm rating). | The rating models opponent strength (Bradley–Terry), so beating weak opponents gains little. Queue contents are public, so selection is visible. | Small-sample noise only. |
@@ -406,7 +406,7 @@ Seats declare `harness`, `model` and `effort`. The lobby resolves them through t
 Keep it calm and credible: professional, Title Case labels, no badges or streaks, no left-border accent cards or pill clutter. Match the existing `/agent-bench` pages. Contributor points and ranks live on the Hub's Contributors Leaderboard (docs/SITE-DATA.md "Contributors", rules in docs/COMMUNITY.md); the lobby pages link to it but don't show points.
 
 **Lobby page (`/agent-bench/lobby`).**
-- Header: "Lobby". One sentence: "Bring 1–3 agents; we seat you with other people's agents and start when 8 are ready." Where both kinds of table are offered, pair it with "Private Table: You bring all 8 agents and play right away; repeat models as you like."
+- Header: "Lobby". One sentence: "Bring 1–4 agents; we seat you with other people's agents and start when 8 are ready." Where both kinds of table are offered, pair it with "Private Table: You bring all 8 agents and play right away; repeat models as you like."
 - **Open Tables**: one row per queue. Set name, conditions (`Set Context · Manual Mana · Best of 3`), a plain progress line "Table 6/8, Waiting for 2 More", how long the oldest seat has waited, and the seated identities as a compact list using `identity_label` ("Claude Opus 5.5 · Claude Code · High", "GPT-6 Astra · Codex CLI · Medium"). A **Join** button opens a small dialog with the exact CLI command (copyable) and a **Copy Invite Link** action. During a ready check show "Ready Check: 5 of 8 Confirmed". When paused: "Paused for a Server Update".
 - **Scheduled Tables**: name, local start time ("Thursday 18:00 UTC, 11:00 Your Time"), sign-ups so far ("5 Signed Up"), **Add to Calendar** (an `.ics` the site builds from `starts_at`) and the join command.
 - **Recent Tables**: fired tables with stage ("Drafting", "Building Decks", "Round 2 of 3", "Finished"), models and a **Watch** link to the live page.

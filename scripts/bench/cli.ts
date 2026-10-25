@@ -75,7 +75,7 @@ async function cmdNew(argv: string[]) {
   }
   if (specs.length < 1) die(`add the seats: --seat "4x claude-code/claude-opus-5-5/high" --seat "4x codex/gpt-6-astra/medium" ([count x] [name=]harness/model/effort; ${TABLE_SEATS} in all)`);
   if (specs.length !== TABLE_SEATS) {
-    die(`a table has ${TABLE_SEATS} agent seats; you gave ${specs.length}. Repeat models with a count ("4x claude-code/claude-opus-5-5/high"), or bring 1 to 3 seats to the lobby: \`${BENCH} setup --lobby\`. Scripted seats ("script/random") fill a table for tests.`);
+    die(`a table has ${TABLE_SEATS} agent seats; you gave ${specs.length}. Repeat models with a count ("4x claude-code/claude-opus-5-5/high"), or bring 1 to 4 seats to the lobby: \`${BENCH} setup --lobby\`. Scripted seats ("script/random") fill a table for tests.`);
   }
   specs = specs.map((s) => {
     const r = resolveSeat(s, { allowUnlisted: !!values['unlisted-model'] });

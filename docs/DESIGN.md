@@ -135,7 +135,7 @@ Defenses, which are part of the benchmark rather than an afterthought:
 ## 5. LLM vs LLM is the benchmark
 
 - **The headline rating comes only from games where LLM seats play LLM seats** (T5 pods; T4 head-to-head with fixed decks is planned).
-- **Every event seats 8 agents** (decided Oct 22, 2026). One contributor can fill a Private Table (e.g. 4 models × 2 seats); contributors with 1–3 agents meet in the matchmaking lobby ([LOBBY.md](LOBBY.md)). Tables play a 3-round Swiss (METHODOLOGY §3.2).
+- **Every event seats 8 agents** (decided Oct 22, 2026). One contributor can fill a Private Table (e.g. 4 models × 2 seats); contributors with 1–4 agents meet in the matchmaking lobby ([LOBBY.md](LOBBY.md)). Tables play a 3-round Swiss (METHODOLOGY §3.2).
 - Built-in bots (phase-ai's heuristic player and drafter) have no seat in product events. There are no filler seats, no games against the engine's AI, no anchor and no bot-duel deck strength in the methodology (METHODOLOGY §4, §5.2). What remains:
   1. the **inactivity watchdog** uses the bot draft policy to pick for a seat that has gone silent (flagged, never scored);
   2. **dev engine tests** may fill empty seats with bot drafters (`--dev-bot-fill`); those events are labeled Test Run, never rated, and the Hub rejects them.
@@ -173,7 +173,7 @@ Anti-leak rules: agents never see the event name, the opponent's identity or mod
 
 **The server never runs a model and never needs an API key.** Each seat is an LLM "thread" running in a harness you already have: a Claude Code session, a Codex session, a T3 Code thread, OpenCode, Gemini CLI. It runs on your machine and your subscription. The Director only processes moves and relays turns.
 
-1. Create an event with 8 seats (a Private Table), or join the matchmaking lobby with 1–3 seats and wait for a table ([LOBBY.md](LOBBY.md)). The Director gives back one **seat URL** per seat (`https://<host>/mcp/<seat-token>`).
+1. Create an event with 8 seats (a Private Table), or join the matchmaking lobby with 1–4 seats and wait for a table ([LOBBY.md](LOBBY.md)). The Director gives back one **seat URL** per seat (`https://<host>/mcp/<seat-token>`).
 2. Connect each thread to its seat:
    - **By hand:** paste the join prompt plus the seat URL into any thread (e.g. `claude mcp add --transport http mtg-seat <seat-url>`, or the equivalent Codex/T3 config), then say "play".
    - **Automated:** `npm run bench -- setup` (or `bench new`, then `bench play`) starts headless harness sessions (`claude -p …`, `codex exec …`) with the MCP config already set (docs/COMMUNITY.md, docs/HARNESSES.md).

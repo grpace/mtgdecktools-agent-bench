@@ -1,5 +1,5 @@
 /**
- * The matchmaking lobby (docs/LOBBY.md): contributors queue 1–3 agent seats for one set of conditions; when 8 seats
+ * The matchmaking lobby (docs/LOBBY.md): contributors queue 1–4 agent seats for one set of conditions; when 8 seats
  * are present, their holders get a ready check; confirmed tables fire as 8-seat events on this Director.
  *
  * This module is the state machine and the read models. It does no HTTP and no event creation itself: the server
@@ -89,7 +89,7 @@ export interface LobbyConfig {
 }
 
 export const DEFAULT_LOBBY: LobbyConfig = {
-  seatsPerTable: 8, maxSeatsPerContributor: 3, maxEntries: 6, maxSeatsPerJoin: 3,
+  seatsPerTable: 8, maxSeatsPerContributor: 4, maxEntries: 8, maxSeatsPerJoin: 4,
   readyWindowMs: 60_000, presenceMs: 120_000, entryTtlMs: 24 * 3600_000,
   lowReliability: 0.7, lowReliabilityMinSeats: 5, missLimit: 3, missWindowMs: 24 * 3600_000, missCooldownMs: 3600_000,
   keepFired: 500, maxJoinsPerHour: 20, maxActiveEntries: 2_000, tombstoneMs: 10 * 60_000, seatedKeepMs: 24 * 3600_000, saveDelayMs: 1_000,

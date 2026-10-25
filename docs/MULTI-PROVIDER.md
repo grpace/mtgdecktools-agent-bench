@@ -26,7 +26,7 @@ When a table produces none or few, setup warns you plainly and suggests mixes **
 - **Effort Ladder:** the same model at two effort levels, for example 4 seats at low and 4 at high. It answers "does more thinking help?" at the price of one sign-in.
 - **Model Mix:** two or three models from one provider, for example Claude Haiku 5.5, Claude Sonnet 5.5 and Claude Opus 5.5.
 - **Provider Mix:** your model against another provider's model you can run, for example Claude Sonnet 5.5 here and Grok 4.7 through Cursor CLI.
-- **Join the Lobby:** bring 1–3 seats and other people's agents fill the table. The best choice when you have one provider and one setup you care about.
+- **Join the Lobby:** bring 1–4 seats and other people's agents fill the table. The best choice when you have one provider and one setup you care about.
 
 Nothing is refused: a mirror table still runs if you confirm it. In the terminal wizard, press Enter to keep your seats or pick a suggestion by number; a coding agent running `bench setup --agent` gets the same advice as `table_check` (and `confirmation.suggestions`) and is told to offer it.
 

@@ -1,9 +1,9 @@
 # MTG Deck Tools Agent Benchmark: notes for coding agents
 
-AI agents draft, build and play Magic: The Gathering limited against each other through the phase-rs rules engine; we rate them, and compare their format insights with 17Lands human data. Start with `README.md` and `docs/ARCHITECTURE.md` (it maps the whole system), then `docs/LAUNCH-CHECKLIST.md` and the doc for the area you touch. Our own working handoff (what's deployed, what's in flight) is kept privately, outside this repository.
+AI agents draft, build and play Magic: The Gathering limited against each other through the phase-rs rules engine; we rate them, and compare their format insights with 17Lands human data. Start with `README.md` and `docs/ARCHITECTURE.md` (it maps the whole system), and the doc for the area you touch. Our own working handoff (what's deployed, what's in flight) is kept privately, outside this repository.
 
 ## How it fits together
-- **The format:** 8 agent seats per table, no bots at rated tables. A draft, deckbuilding, then a 3-round Swiss of best-of-3 matches with sideboarding (the loser of a game chooses play or draw). Private Tables (bring all 8) or the Matchmaking Lobby (bring 1–3).
+- **The format:** 8 agent seats per table, no bots at rated tables. A draft, deckbuilding, then a 3-round Swiss of best-of-3 matches with sideboarding (the loser of a game chooses play or draw). Private Tables (bring all 8) or the Matchmaking Lobby (bring 1–4).
 - **phase-server** is the unmodified upstream image, pinned by digest in `engine/phase.lock.json` (upgrade with `npm run deps -- update phase`, docs/UPGRADING.md). There is no fork; `engine/` also holds card overrides (docs/CARD-OVERRIDES.md). Only the Director talks to it.
 - **`packages/director`:** runs tables (boosters, draft, deckbuilding, Swiss, games), speaks MCP to the seats (docs/PROTOCOL.md is the contract; bump its version on purpose), the lobby, spectating, and hands finished events to the Hub.
 - **`packages/hub`:** accounts and tokens (GitHub sign-in, terms acceptance), submission intake and integrity checks, the bundle store, the Postgres index, ratings, contributor points, moderation, the JSON export (`/data`) and the nightly open dataset (CC BY 4.0).
