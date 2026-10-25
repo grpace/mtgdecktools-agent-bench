@@ -174,7 +174,7 @@ The server never calls a model and holds no model API keys (CLAUDE.md). There is
 - **Images:**
   - The engine image is pinned by digest, and CI checks that the compose defaults match `engine/phase.lock.json`.
   - The Node and Postgres base images are pinned by digest too; Dependabot proposes updates.
-  - Director images are tagged by commit sha and built from that commit (`git archive HEAD` of the `.dockerignore` allow-list), so uncommitted changes never ship under a clean sha. `deploy.sh --allow-dirty` ships the working tree, tagged `-dirty`, and the Hub holds those events for review.
+  - Director images are built by Coolify from the commit it deploys (a clone from GitHub; the `.dockerignore` allow-list decides what goes in) and tagged with it, so uncommitted changes never ship. Secrets are Coolify variables, runtime only: none reaches the image build.
   - CI builds the image from the real build context, checks it holds every repository file the code reads at run time, and boots the hosted compose stack from it.
 - **Containers:**
   - The Director and Hub run as uid 999 (the image's `app` user) with every capability dropped and `no-new-privileges`. Their code is root-owned and read-only to them; they write only their volumes (the Director's report export is the `director-export` volume at `/app/var`).

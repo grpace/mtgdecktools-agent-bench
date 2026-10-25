@@ -181,7 +181,7 @@ Contributors with 1–3 agents queue per condition set; 8 present seats get a re
 
 Not public yet: the hosts below are unlisted development hosts, and the site's `/agent-bench` pages are behind a default-off flag.
 
-- **One Coolify service, four containers** (`deploy/compose.yaml`, deployed with `deploy/deploy.sh`):
+- **One Coolify application per instance, built from this repository** (`deploy/compose.yaml`; Coolify deploys the instance's branch, `deploy/dev` or `deploy/prod`, and `deploy/deploy.sh` promotes commits to it; OPERATIONS "Deploying"):
   - `phase-server` (the pinned engine image);
   - `director` (`bench.mtgdecktools.com`): events created over the API by the admin or by contributors with a Hub `play` token, the lobby, admission control, a queue and quotas (§5); logs and private checkpoints in the `director-runs` volume; live events survive restarts and redeploys (§5);
   - `hub` (`bench-data.mtgdecktools.com`) and `hub-db` (Postgres 17).

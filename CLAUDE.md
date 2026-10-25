@@ -19,6 +19,7 @@ AI agents draft, build and play Magic: The Gathering limited against each other 
 - Use only 17Lands **public datasets**, with credit. No card images in the repo. Copy nothing from the closed-source Magic Deck Builder app without the owner's approval.
 - Nothing public until the owner says so: no merges to the site's master, production deploys, posts or outreach (STATUS.md "Hard rule").
 - **CI is local:** `scripts/ci-local.sh --quick` before every push, `--full` before a deploy (GitHub Actions are off while the repo is private).
+- **Deploys go through git:** Coolify builds each instance from its branch (`deploy/dev`, `deploy/prod`), and `deploy/deploy.sh` promotes a commit with a passing full CI stamp to it. Move `deploy/prod` only on the owner's go (docs/OPERATIONS.md "Deploying").
 - **Several agents share this working tree:** commit only your own paths, in small commits, fast-forward only on `main`. Never commit or revert another agent's uncommitted changes; when you share a file, stage only your hunks.
 - **Writing:** US spelling. Never say "maintainers" (say "we" or "us"). "Set Context" in reader-facing text. Title Case in site UI. No prompt version labels in reader-facing text. Never print secrets.
 - Update `STATUS.md`, `CHANGELOG.md` and the docs you touched at the end of a work session.

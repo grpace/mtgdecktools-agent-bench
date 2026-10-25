@@ -60,6 +60,7 @@ Defaults: `DATABASE_URL=postgres://hub:hub@127.0.0.1:5440/hub`, `HUB_DATA_DIR=tm
 | `HUB_ENGINE_DATA_DIR` | `data/` | where `draft-pools.json`, `card-data.json`, `unsupported-cards.json` live |
 | `HUB_DRAFT_POOLS`, `HUB_UNSUPPORTED_CARDS`, `HUB_CARD_DATA` | in the engine data dir | individual overrides |
 | `HUB_BOOSTER_ARCHIVE` | `$HUB_DATA_DIR/booster-data` | older booster sheets / unsupported lists, named `<sha256>.json` |
+| `HUB_BOOSTER_ARCHIVE_DIRS` | (none) | more archives to search, colon-separated, read-only (the hosted stack: the Director's `/director-cache/booster-archive`) |
 | `HUB_ALLOWED_ENGINE_DIGESTS` | (the pinned digest and every earlier pin in `deps/manifest.json` → `phase_rs.history` are always allowed) | more engine builds accepted without a hold |
 | `HUB_ALLOWED_CARD_DATA`, `HUB_CHECK_CARD_DATA` | (the pinned build's and earlier pins' upstream card data); on | the `provenance.card_data` check (docs/CARD-OVERRIDES.md): more upstream `card-data.json` sha256s vouched for, comma-separated; `HUB_CHECK_CARD_DATA=0` turns the check off. Card data that is neither a pinned upstream file nor one with this repository's override files holds the bundle |
 | `HUB_MAX_BUNDLE_BYTES` | 25 MB | upload cap |
@@ -201,8 +202,9 @@ Since 2026-10-22 every `event_start` names the booster data it was generated fro
 ```
 
 The hub looks the files up in `HUB_BOOSTER_ARCHIVE` (drop each published `draft-pools.json` / unsupported
-list there as `<sha256>.json`; `deploy/deploy.sh` does it before every deploy, `npm run deps -- update phase`
-locally), or uses its defaults when their
+list there as `<sha256>.json`; `npm run deps -- update phase` does it locally) and then in `HUB_BOOSTER_ARCHIVE_DIRS`
+(colon-separated, read-only: on the hosted stack the Director's own archive, `/director-cache/booster-archive`, where
+the Director keeps the data it runs on at every start), or uses its defaults when their
 hashes agree, so every check becomes `verified` or `mismatch`. Older logs (without `boosters`) regenerate
 exactly only when the hub has the same files as the Director that ran them (true for local runs and for the
 hosted Director, whose cache the hub mounts).
@@ -210,8 +212,8 @@ hosted Director, whose cache the hub mounts).
 Two rules keep this sound: (1) `BOOSTER_GENERATOR` (provenance.ts) is bumped in the same commit as any
 change to `boosters.ts`, `rng.ts`, the seat shuffle or the bots' Rng use, because the hub regenerates with
 the code it runs (`GENERATOR_VERSION` here is the same constant); (2) the Director version carries `-dirty`
-when the tree has local changes (`git describe --dirty` locally; `deploy/deploy.sh` and `bench up` put it in
-`DIRECTOR_TAG`).
+when the tree has local changes (`git describe --dirty` locally; `bench up` puts it in `DIRECTOR_TAG`; the hosted
+stack reports the commit Coolify deployed, `SOURCE_COMMIT`).
 
 ## HTTP API
 
@@ -352,17 +354,18 @@ follow the lobby's `--hide-handle`): the Director's lobby honors it.
    "Enable Device Flow" (`npm run bench -- login` uses it). Register application.
 3. Copy the Client ID. Click "Generate a new client secret" and copy it (GitHub shows it once).
 4. Give the Hub the two values. Either way works; the Coolify UI is preferred (the secret never leaves the server):
-   - **Coolify UI (preferred):** project `agent-bench` → service → Environment Variables: set `GITHUB_CLIENT_ID` and
-     `GITHUB_CLIENT_SECRET` for the `hub` container, then redeploy the service.
-   - **Local files:** `deploy/deploy.sh` passes them when these files exist on the deploy machine:
+   - **Coolify UI (preferred):** project `agent-bench-prod` (or `agent-bench`) → the application → Environment
+     Variables: set `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`, then Redeploy.
+   - **Local files:** `deploy/coolify-setup.sh` passes them when these files exist on the workstation
+     (`~/.config/mtgdt-prod/` for production):
      ```bash
      umask 077; mkdir -p ~/.config/mtgdt
      printf '%s\n' '<client id>'     > ~/.config/mtgdt/github-oauth-client-id
      printf '%s\n' '<client secret>' > ~/.config/mtgdt/github-oauth-client-secret
      chmod 600 ~/.config/mtgdt/github-oauth-client-*
      ```
-   `HUB_SESSION_SECRET` needs nothing from you: `deploy.sh` generates `~/.config/mtgdt/hub-session-secret` once and
-   always passes it.
+   `HUB_SESSION_SECRET` needs nothing from you: `deploy/coolify-setup.sh` generates `hub-session-secret` when it
+   creates the instance and sets it in Coolify.
 5. Check `https://bench-data.mtgdecktools.com/account` shows "Sign In With GitHub", and that
    `npm run bench -- login` prints a code. If the Hub's public URL changes, update the callback URL in the app to
    match `HUB_PUBLIC_URL/auth/github/callback` exactly. Device Flow must stay enabled for `bench login`.
@@ -419,7 +422,7 @@ Log me in to the MTG Deck Tools Agent Bench so I can run hosted events.
 - **Endpoint:** `POST $HUB_URL/api/internal/events` (in the Coolify stack `HUB_URL=http://hub:8787`, on
   the internal network; the public URL works too).
 - **Auth:** `Authorization: Bearer $HUB_SERVICE_TOKEN` (a token listed in the hub's `HUB_SERVICE_TOKENS`
-  as `worker-1:<token>`; deploy/deploy.sh generates it into `~/.config/mtgdt/hub-service-token`).
+  as `worker-1:<token>`; deploy/coolify-setup.sh generates it into `~/.config/mtgdt/hub-service-token`).
 - **Body:** a results bundle exactly as `npm run bench -- bundle` builds it (`bundle_version` 1:
   `bundle.json`, `events.jsonl`, `summary.json`, `seats-meta.json`, `usage-<seat>.json`, usage-only
   `transcript-<seat>.jsonl`). `Content-Type: application/gzip`.

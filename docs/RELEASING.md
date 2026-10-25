@@ -67,10 +67,9 @@ These don't break the code, but they change what results are comparable to. Resu
 
 Images are tagged immutably. We never re-push or overwrite an image tag (`CLAUDE.md`).
 
-- **Director and Hub image** (`mtgdt-director`, one image, two commands): `deploy/deploy.sh` builds it on the host from the commit (`git archive HEAD` of the `.dockerignore` allow-list).
-  - It tags the image `mtgdt-director:<short sha>` and the compose file runs exactly that tag (`DIRECTOR_TAG`, also baked into the image and reported by `/health`). Only `--allow-dirty` builds the working tree, tagged `<short sha>-dirty`.
-  - It also moves `:latest`. Nothing deploys from `:latest`.
-  - For a release, deploy from the tag's commit, so the image tag is the release commit's sha and every event records it as `provenance.director`.
+- **Director and Hub image** (`mtgdt-director`, one image, three services): Coolify builds it on the host from the commit it deploys (a clone from GitHub; the `.dockerignore` allow-list decides what goes in), so only pushed commits ship and the working tree never does.
+  - It is tagged `mtgdt-director:<commit>` (Coolify's `SOURCE_COMMIT`), and the compose file runs exactly that tag. `/health` and every event's `provenance.director` report the commit's short sha.
+  - For a release, deploy the tag's commit, so every event records the release commit.
 - **Self-hosters** build the same image locally (`npm run up`). The image is tagged `mtgdt-director:local`, and their events record the git sha of their checkout.
 - **If we ever publish images** (e.g. `ghcr.io/…/mtgdt-director`):
   - Publish from CI, on tag pushes only.
@@ -80,16 +79,15 @@ Images are tagged immutably. We never re-push or overwrite an image tag (`CLAUDE
 
 ## Deploying
 
-The hosted stack (phase-server, Director, Hub and the Hub's Postgres) runs on Coolify, and `deploy/deploy.sh` deploys it. It refuses a commit without a passing `scripts/ci-local.sh --full` stamp while the repository is private. Monitoring, failures, backups, secrets and rollback: [OPERATIONS.md](OPERATIONS.md).
+The hosted stack (phase-server, Director, Hub and the Hub's Postgres) runs on Coolify, which builds and deploys it from the instance's deploy branch (`deploy/dev`, `deploy/prod`; OPERATIONS.md "Deploying"). `deploy/deploy.sh` promotes a commit to that branch: it refuses a commit without a passing `scripts/ci-local.sh --full` stamp while the repository is private, and production only takes commits on `main`. Monitoring, failures, backups, secrets and rollback: [OPERATIONS.md](OPERATIONS.md).
 
 Live events survive a redeploy: on SIGTERM the Director checkpoints them and resumes them at start (drafts at the current pick, games re-attached on phase-server; docs/ARCHITECTURE.md §5). A game whose seats can't be re-attached within phase-server's 120-second grace is voided and replayed, never scored. Draining keeps that to a minimum:
 
 1. **Drain.** `deploy/deploy.sh --drain [minutes]` stops admitting events, forming lobby tables and starting games, waits (30 minutes by default) until no game is in progress, then deploys; queued events start afterwards. If the wait times out it deploys anyway and the games resume. Plain `deploy/deploy.sh` skips the wait and relies on resume (tested mid-draft and mid-game on the dev stack: OPERATIONS.md, "A deploy while events are live"). For an engine upgrade, `deploy/deploy.sh --drain-events [minutes]` waits until nothing is live at all (UPGRADING.md, "Deploying an Engine Upgrade"); `deploy.sh` refuses an engine change while events are live without it.
 2. **Tell anyone seating agents** if you expect a long drain.
-3. **Commit everything,** then run `deploy/deploy.sh --drain`.
-   - It ships the committed image inputs (uncommitted changes are listed and left out), builds the image on the host and backs up the Coolify database. A backup that fails verification stops the deploy before anything restarts.
-   - It updates the service with secrets from `~/.config/mtgdt/` (mode 600, never printed). They are generated only when the service is created; a missing one on an existing service stops the deploy (`--recover-secrets` copies it back from the running containers).
-   - Then it waits until `/health` on the Director and the Hub reports the new sha.
+3. **Commit and push,** then run `deploy/deploy.sh --drain` (`INSTANCE=prod` for production).
+   - It pushes the commit to the deploy branch. Coolify, through the GitHub App's webhook, builds the image from that commit and restarts the stack; secrets stay in Coolify's variables (`deploy/coolify-setup.sh` sets them).
+   - Then it follows Coolify's deployment and waits until `/health` on the Director and the Hub reports the new sha. A failed build leaves the running stack as it was.
 4. **Check the Hub hand-off.** Unsent events are resent at Director start. Look for `hub_handoff` records in the Director log.
 5. **After a Hub migration** that says so (for example `007_best_of_three.sql`), run `npm run hub -- reingest` in the Hub container.
 
@@ -102,14 +100,14 @@ Live events survive a redeploy: on SIGTERM the Director checkpoints them and res
 - Make them additive: new columns nullable or defaulted.
 - A destructive migration needs a manual `pg_dump` first. The nightly dump in `hub-pgdump` may be up to a day old.
 
-**Rollback:** redeploy the previous release's commit, which rebuilds that sha's image, or retag the old image on the host. Migrations don't roll back, so a release with a migration must keep working with the previous code until it's verified. Rolling back across an engine upgrade has its own steps (UPGRADING.md, "Rollback").
+**Rollback:** `deploy/deploy.sh --rollback --ref <previous release commit>` moves the deploy branch back and Coolify rebuilds that commit. Migrations don't roll back, so a release with a migration must keep working with the previous code until it's verified. Rolling back across an engine upgrade has its own steps (UPGRADING.md, "Rollback").
 
 ## Upgrading the engine (phase-rs)
 
 phase-rs ships almost daily. We run the unmodified upstream image, pinned by digest. A new engine build is not a release by itself, but it changes `provenance.engine` for every new event. The full procedure is in [UPGRADING.md](UPGRADING.md) ("phase-rs Upgrades" and "Deploying an Engine Upgrade"); in short:
 
 1. **Upgrade in its own pull request.** `npm run deps -- update phase --dry-run`, then without `--dry-run` (or merge the pull request the weekly Dependencies workflow opens). It wraps `scripts/upgrade-phase.sh`: pull, protocol and data report, smoke event against the candidate, and only then the new pin in `engine/phase.lock.json`, the compose defaults and `deps/manifest.json`. CI runs the smoke event again on the branch.
-2. **Old events stay verifiable without manual steps.** `deploy/deploy.sh` archives the running engine's `draft-pools.json` and unsupported-card list in the Hub's `HUB_BOOSTER_ARCHIVE` as `<sha256>.json` before it restarts anything, and the Hub accepts every earlier pin recorded in `deps/manifest.json` → `phase_rs.history` (plus `HUB_ALLOWED_ENGINE_DIGESTS`).
+2. **Old events stay verifiable without manual steps.** The Director archives the booster data it runs on at every start (`director-cache/booster-archive/<sha256>.json`), and the Hub reads that archive (`HUB_BOOSTER_ARCHIVE_DIRS`) besides its own. The Hub accepts every earlier pin recorded in `deps/manifest.json` → `phase_rs.history` (plus `HUB_ALLOWED_ENGINE_DIGESTS`).
 3. **Deploy with `deploy/deploy.sh --drain-events`, until nothing is live** (UPGRADING.md, step 1). `deploy.sh` refuses an engine change while events are live unless it waits them out this way or `--force` says so. phase-server restarts on the new digest: a running game can't continue across builds, and an event that resumes on the new build keeps the old build in its `event_start.provenance.engine` (its `event_resume.provenance` records the new one) while its packs still come from its own archived booster data. The Director rebuilds its unsupported-card list for the new card data by itself.
 4. **Changelog:** add a line under **Unreleased** with the server version, protocol version and digest.
 
@@ -164,7 +162,7 @@ Standard GitHub-hosted runners are free and unlimited for public repositories (j
    - `.github/dependabot.yml`: set `open-pull-requests-limit` back (npm 2, the others 5).
 2. **Outside contributors:** Settings → Actions → General → "Fork pull request workflows from outside collaborators" → **Require approval for all outside collaborators**. Fork pull requests run with a read-only `GITHUB_TOKEN` and no secrets (GitHub's default for `pull_request`; never add a `pull_request_target` workflow that checks out fork code). Third-party actions stay pinned by commit SHA.
 3. **Protect `main` and release tags** (below).
-4. The deploy gate can then also accept a green GitHub run; until someone changes `deploy.sh`, keep using the local stamp.
+4. **Gate the deploy branches:** a ruleset on `deploy/*` that requires the CI checks above and blocks force pushes for everyone but the owner (rollbacks), so a push of an unchecked commit is refused wherever it comes from (OPERATIONS.md "Deploying"). The deploy gate in `deploy.sh` can then also accept a green GitHub run; until someone changes it, keep using the local stamp.
 
 ## Launch-day extras (first public release)
 

@@ -1,12 +1,113 @@
 # Operations Runbook
 
-How to watch the hosted stack, and what to do when part of it fails. The stack is one Coolify service, `agent-bench`, on `gr3g-server` with five containers: `card-data` (stages the engine's card data with the card overrides, then idles), `phase-server` (the rules engine), `director` (https://agent-bench.dev.greg.tech), `hub` (https://agent-bench-hub.dev.greg.tech) and `hub-db` (Postgres 17). Architecture: [ARCHITECTURE.md](ARCHITECTURE.md). Deploys and releases: [RELEASING.md](RELEASING.md). Security reports and threat model: [SECURITY.md](SECURITY.md).
+How to deploy and watch the hosted stack, and what to do when part of it fails. Each instance is one Coolify application on `gr3g-server`, built from this repository ("Deploying" below), with five containers: `card-data` (stages the engine's card data with the card overrides, then idles), `phase-server` (the rules engine), `director` (https://agent-bench.dev.greg.tech), `hub` (https://agent-bench-hub.dev.greg.tech) and `hub-db` (Postgres 17). Architecture: [ARCHITECTURE.md](ARCHITECTURE.md). Deploys and releases: [RELEASING.md](RELEASING.md). Security reports and threat model: [SECURITY.md](SECURITY.md).
 
 Conventions below:
 - `ssh gr3g-server` reaches the host (see `~/Coding Projects/Server Config`). Coolify names containers `<service>-<uuid>`: find them with `ssh gr3g-server "docker ps --format '{{.Names}}' | grep -E '^(card-data|director|hub|hub-db|phase-server)-'"`. Below, `<card-data>`, `<hub>`, `<hub-db>`, `<director>` and `<phase>` mean those names.
 - Admin calls read the token from a file, never from the command line: `curl -H @<(printf 'Authorization: Bearer %s\n' "$(cat ~/.config/mtgdt/admin-token)") …`. Below that is `admin_curl`.
 - Hub admin commands run inside the container: `ssh gr3g-server docker exec <hub> npm run hub -- <command>` (the list is in [packages/hub/README.md](../packages/hub/README.md)).
 - Never print a secret, and stop processes by PID, never by pattern.
+
+## Deploying
+
+Each instance is a Coolify **application** (Docker Compose build pack) built from GitHub, so a deploy works from anywhere and needs nothing from a workstation:
+
+| Instance | Coolify project and application | Branch Coolify deploys | Director, Hub | Workstation copy of its secrets |
+|---|---|---|---|---|
+| dev | `agent-bench` | `deploy/dev` | agent-bench.dev.greg.tech, agent-bench-hub.dev.greg.tech | `~/.config/mtgdt/` |
+| prod | `agent-bench-prod` | `deploy/prod` | bench.mtgdecktools.com, bench-data.mtgdecktools.com | `~/.config/mtgdt-prod/` |
+| test (throwaway) | `agent-bench-git-test` | a work branch | agent-bench-git-test(-hub).dev.greg.tech | `~/.config/mtgdt-test/` |
+
+How it works: the repository is `grpace/mtgdecktools-agent-bench`, read through Coolify's `grpace-github` GitHub App (installed on all of the owner's repositories, so it already sees this one). The application's base directory is `/deploy` and its compose file `compose.yaml`. A push to the instance's branch reaches Coolify through the App's webhook (auto-deploy is on). Coolify then:
+1. Clones that commit.
+2. Builds the Director image from the repository's `Dockerfile`, with the `.dockerignore` allow-list deciding what goes in, and tags it `mtgdt-director:<commit>`.
+3. Stops the old containers. The Director checkpoints live events on SIGTERM.
+4. Starts the new stack. phase-server runs the digest the commit pins in `engine/phase.lock.json`.
+
+The build comes before the stop, so the stack is down only for the restart. `/health` on the Director and the Hub reports the commit's short sha (`SOURCE_COMMIT`). **A deploy is moving a deploy branch.** Branches rather than tags, because Coolify follows a branch and its webhook fires on pushes to it. One branch per instance means dev and prod move independently. The branch history shows what ran when, and rollback is moving it back.
+
+**From the workstation** (the usual way): `INSTANCE=dev|prod deploy/deploy.sh [--drain | --drain-events] [--ref <commit>]`. It:
+1. Refuses a commit without a passing `scripts/ci-local.sh --full` stamp. For prod, it also refuses a commit that isn't on `origin/main`.
+2. Refuses an engine-pin or card-override change while events are live, unless `--drain-events` waits them out or `--force` says so. It drains first when asked.
+3. Pushes the commit to the deploy branch, and follows Coolify's deployment until `/health` on both hosts reports the commit.
+4. Installs that commit's `scripts/ops-check.sh` on the host.
+
+An instance's first deploy also creates its Coolify application (`deploy/coolify-setup.sh`, below). `--redeploy` rebuilds the branch's current commit. A deploy takes about a minute when the dependency layer is cached (a fresh build is a few minutes). The public `/health` is down about 20 seconds of it: 19 s of 503s, measured 2026-10-25.
+
+**Remotely, without the workstation:**
+- **A new commit:** from any checkout with push access, `git push origin <sha>:refs/heads/deploy/prod`. Coolify deploys it within seconds. Only push a commit that passed CI (below), and for an engine or card-override change only when `https://<director>/api/capacity` shows `live.events` at 0.
+- **The same commit again** (a restart with a fresh build, or after changing a variable): Coolify UI (coolify.greg.tech, behind Cloudflare Access) → the project → the application → **Redeploy**.
+- **A failed deploy** leaves the previous containers running only if the build failed. Coolify > the application > **Deployments** shows each deployment's log.
+
+**The CI gate.** While the repository is private, the gate is `deploy.sh`'s check of the local CI stamp; a hand push skips it, so the rule is: a deploy branch only ever moves to a commit that passed `scripts/ci-local.sh --full`. Coolify itself can't run the check (it only builds and starts). Recommended once the repository is public and GitHub CI runs on `main`: a ruleset on `deploy/*` that requires the CI checks ("Typecheck and unit tests", "Smoke event and Hub e2e", "Image builds and boots") and blocks force pushes for everyone but the owner. GitHub then refuses a push of an unchecked commit from anywhere, and `deploy.sh` can accept a green GitHub run in place of the stamp.
+
+### Setting Up or Changing an Instance
+
+`INSTANCE=<instance> deploy/coolify-setup.sh [--deploy]` creates or updates the Coolify application (over SSH, through `php artisan tinker`, like `server-ops`). Each run first takes a verified dump of Coolify's database to `~/documents/backup/pre-clone/` on the host (Server Config rule; the last 10 per instance are kept). It sets:
+- the repository, branch, base directory and compose file;
+- the domains (`https://<host>:8787` for `director` and `hub`);
+- auto-deploy on, "Include Source Commit in Build" on, Dockerfile ARG injection off;
+- the variables below;
+- the nightly `pg_dump` scheduled task on `hub-db`.
+
+Run it to create an instance (or let its first `deploy.sh` do it), and again after changing a secret, a domain or the branch, then redeploy. It generates secrets only for an instance that doesn't exist yet. If one is missing for an instance that does, it refuses; `--recover-secrets` copies the missing ones back from the running containers.
+
+**Coolify variables** (Coolify > the application > Environment Variables; all runtime only, none reaches the image build):
+
+| Variable | Set by | Notes |
+|---|---|---|
+| `ADMIN_TOKEN`, `HUB_ADMIN_TOKEN`, `HUB_DB_PASSWORD`, `HUB_SERVICE_TOKEN`, `HUB_SESSION_SECRET`, `MTGDT_CONTRIBUTOR_SALT` | `coolify-setup.sh`, from the instance's secret folder | Never regenerate `contributor-salt`; change `hub-db-password` only with `ALTER USER` first ("Rotating Secrets") |
+| `PUBLIC_URL`, `HUB_PUBLIC_URL` | `coolify-setup.sh` | `https://` + the instance's hosts |
+| `SUBMIT_TOKENS` | `coolify-setup.sh`, from `submit-tokens` (one `name:token` per line) | Empty: the Director's interim submission endpoint is off |
+| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | `coolify-setup.sh` when `github-oauth-client-{id,secret}` exist, else the Coolify UI | The setup never blanks a value set in the UI |
+| `MAX_CONCURRENT_GAMES`, `MAX_QUEUE`, `EVENT_MAX_HOURS`, `QUEUE_MAX_WAIT_HOURS`, `SPECTATE_DELAY_S`, `MTGDT_CONTACT_URL`, `HUB_PLAY_CONCURRENT`, `HUB_PLAY_DAILY`, `HUB_LOBBY_CONCURRENT`, `HUB_LOBBY_DAILY`, `HUB_GITHUB_MIN_ACCOUNT_DAYS` | Empty: `compose.yaml`'s default applies | A value set in Coolify overrides it (see "Coolify Variables") |
+| `PHASE_RUST_LOG`, `*_MEM_LIMIT`, `*_PIDS_LIMIT` | Not listed: `compose.yaml`'s default | Add the variable in Coolify to override |
+| `MTGDT_TERMS_URL`, `MTGDT_PRIVACY_URL`, `MTGDT_CONTENT_POLICY_URL`, `HUB_TRUST_PROXY_HOPS` | By hand in Coolify (production, LAUNCH-DAY step 3) | Every variable reaches every container through Coolify's `.env` |
+| `PHASE_IMAGE`, `DIRECTOR_TAG`, `SOURCE_COMMIT` | Never | The commit decides the engine and the image; `coolify-setup.sh` deletes them if present |
+| `SOURCE_COMMIT`, `COOLIFY_*`, `SERVICE_URL_*`, `SERVICE_FQDN_*` | Coolify, at each deploy | `SOURCE_COMMIT` tags the image and gives `/health` its version |
+
+### What Every Deploy Does Inside the Stack
+
+What `deploy.sh` used to do on the workstation now happens in the containers, so a deploy from Coolify or a bare push is complete:
+- **The image** is built by Coolify from the commit (no image built elsewhere). Coolify's nightly cleanup removes images no container uses.
+- **Booster data for old events:** the Director archives the booster data it runs on at every start (`director-cache/booster-archive/<sha256>.json`). The Hub reads that archive (`HUB_BOOSTER_ARCHIVE_DIRS`) as well as its own `HUB_BOOSTER_ARCHIVE`, so events from before an engine upgrade keep passing pack regeneration with no copy step.
+- **Card data:** the `card-data` service stages the pinned data and the card overrides at every start (as before).
+- **Volume ownership:** new volumes start owned by uid 999 (the Dockerfile creates the mount points so). The one-time hand-over of root-owned volumes (OPS-1) was done on dev on 2026-10-22. A volume restored from an older backup may need it again: stop the stack, then `docker run --rm --user 0 -v <volume>:/v --entrypoint chown mtgdt-director:<commit> -R 999:999 /v`.
+- **The nightly Hub dump** is a Coolify scheduled task of the application (`coolify-setup.sh` creates it).
+- **Not in the stack:** the ops check runs from the host's crontab. `deploy.sh` installs the deployed commit's copy; a deploy without it leaves the installed copy, which keeps working (it reads only URLs, labels and volume names). Coolify's database is dumped before every configuration change (`coolify-setup.sh`); a deploy changes no configuration, and Coolify's own nightly backup (7 kept) covers the rest.
+
+### Rollback
+
+`deploy/deploy.sh --rollback --ref <older commit>` moves the deploy branch back (with `--force-with-lease`), and Coolify builds and deploys that commit. Remotely: `git push --force-with-lease origin <older sha>:refs/heads/deploy/prod`. Migrations don't roll back (below, "Rollback").
+
+### Moving Dev to Git Deploys
+
+Dev still runs as the Coolify **service** `agent-bench` (uuid `hmzjhfic5gfbytn2wt5iao5h`) that the old `deploy.sh` created. Its data is in the volumes `hmzjhfic5gfbytn2wt5iao5h_<name>` for `phase-data`, `director-runs`, `director-cache`, `director-export`, `hub-pgdata`, `hub-pgdump` and `hub-data`. The new application gets new volumes, `<application uuid>_<name>`, so the data is copied once while both stacks are stopped. The old volumes stay as the fallback. About 15 minutes, most of it the copy.
+
+1. **Merge** this change to `main` with a passing full CI, and create the branch without deploying anything: `git push origin <sha>:refs/heads/deploy/dev` (no application follows it yet).
+2. **Drain dev until nothing is live:** `curl -X POST -H @<(printf 'Authorization: Bearer %s\n' "$(cat ~/.config/mtgdt/admin-token)") -H 'Content-Type: application/json' -d '{"drain":true,"games":false}' https://agent-bench.dev.greg.tech/api/admin/drain`, then wait until `https://agent-bench.dev.greg.tech/api/capacity` shows `live.events` 0.
+3. **Back up:** the Hub database (LAUNCH-DAY "Before the Day" step 7: `pg_dump -Fc` to `~/backups/agent-bench-dev-<date>.dump`) and the secrets folder.
+4. **Stop the old service** in Coolify (Stop, not Delete).
+5. **Create the application without deploying:** `INSTANCE=dev deploy/coolify-setup.sh` (it reuses the `agent-bench` project and `~/.config/mtgdt`). Note the application uuid it prints.
+6. **Copy the volumes** on the host, as root in a throwaway container so ownership is kept:
+   ```bash
+   old=hmzjhfic5gfbytn2wt5iao5h; new=<application uuid>
+   for v in phase-data director-runs director-cache director-export hub-pgdata hub-pgdump hub-data; do
+     docker volume create "${new}_$v" >/dev/null
+     docker run --rm --network none -v "${old}_$v:/from:ro" -v "${new}_$v:/to" docker.io/library/postgres:17-alpine sh -c 'cp -a /from/. /to/ && du -s /from /to'
+   done
+   ```
+   Both `du` sizes should match for each volume.
+7. **Deploy:** `INSTANCE=dev deploy/deploy.sh --redeploy`. It waits for `/health` to report the commit.
+8. **Check:**
+   - The Hub's `/data/index.json` lists the same events as before.
+   - `npm run hub -- open-data status` is fine.
+   - `scripts/ops-check.sh --server` passes.
+   - The "Networks" checks below pass.
+   - The nightly dump appears the next morning.
+9. **After a week:** delete the old service in Coolify **without** its volumes, and its scheduled task with it. Once a nightly volume backup has the new volumes, remove the old ones (`docker volume rm hmzjhfic5gfbytn2wt5iao5h_<name>`).
+
+**If it goes wrong:** stop the application and start the old service again. Its volumes are untouched; anything written to the new stack in between is lost.
 
 ## Monitoring
 
@@ -18,7 +119,7 @@ Conventions below:
 */5 * * * * SSH_HOST=local $HOME/documents/agent-bench-ops/ops-check.sh --server --alert >/dev/null 2>&1
 ```
 
-`deploy/deploy.sh` installs the script from the commit it deploys and adds that line if it's missing (never touching other cron lines). With `--alert` it e-mails the address in `~/.config/agent-bench-ops/alert-to` on the host (or `ALERT_TO`; the address is kept out of the repository) through Postal on the host (127.0.0.1:25, with Coolify's saved SMTP login; credentials are piped, never printed), the path the server's nightly PHP check uses, because Coolify's own e-mail can't reach `postal.greg.tech:25` behind Cloudflare. It alerts after two failing runs in a row (so a deploy's restart doesn't), again every 6 hours while checks keep failing or when another check fails, and once when everything passes again. The e-mail lists the failing checks, the whole output and a prompt to paste into an agent. Log: `journalctl -t agent-bench-ops`; the last run: `~/.local/state/agent-bench-ops/last-run.txt` on the host. Test the path: `~/documents/agent-bench-ops/ops-check.sh --test-email` (sent 2026-10-22, with a simulated failure and recovery). From a workstation, `scripts/ops-check.sh --server` runs the same checks over SSH.
+`deploy/deploy.sh` installs the script from the commit it deploys and adds that line if it's missing (never touching other cron lines); a deploy that doesn't go through it leaves the installed copy as it was. With `--alert` it e-mails the address in `~/.config/agent-bench-ops/alert-to` on the host (or `ALERT_TO`; the address is kept out of the repository) through Postal on the host (127.0.0.1:25, with Coolify's saved SMTP login; credentials are piped, never printed), the path the server's nightly PHP check uses, because Coolify's own e-mail can't reach `postal.greg.tech:25` behind Cloudflare. It alerts after two failing runs in a row (so a deploy's restart doesn't), again every 6 hours while checks keep failing or when another check fails, and once when everything passes again. The e-mail lists the failing checks, the whole output and a prompt to paste into an agent. Log: `journalctl -t agent-bench-ops`; the last run: `~/.local/state/agent-bench-ops/last-run.txt` on the host. Test the path: `~/documents/agent-bench-ops/ops-check.sh --test-email` (sent 2026-10-22, with a simulated failure and recovery). From a workstation, `scripts/ops-check.sh --server` runs the same checks over SSH.
 
 Still worth adding: an external uptime monitor on `https://agent-bench.dev.greg.tech/health`, `https://agent-bench-hub.dev.greg.tech/health` and the site's `/agent-bench`, so a dead host is noticed even when its own cron can't run (Owner: pick a service).
 
@@ -58,9 +159,10 @@ Each entry: the symptom, how to confirm it, the fix, and who to tell.
 - **Fix, in this order:** remove unused Director images (`docker image prune` removes dangling ones; old `mtgdt-director:<sha>` tags can go once a newer build is healthy; Coolify's nightly cleanup also removes unused tags); if someone set `PHASE_LOG_DIR`, delete its files older than 7 days inside `phase-data`; check that accepted events' logs are gzipped (`ls director-runs/*/events.jsonl` lists only events not yet handed off). Never delete `hub-pgdata`, `hub-data` or `director-runs` wholesale.
 
 ### A deploy while events are live
-- **What happens:** plain `deploy/deploy.sh` (no drain) builds, backs up Coolify's database and has Coolify recreate every container, phase-server included. The Director checkpoints on SIGTERM; phase-server keeps its games (on disk) and each seat's place for 120 s; the new Director starts once phase-server's healthcheck passes, resumes every live event (drafts at the current pick, decks from the log) and re-attaches each game in progress (`game_reconnect`, `after: "restart"`; retried with backoff if phase-server isn't answering yet). Seats see calls fail with 502/503 for about 10 seconds and carry on; `bench play` and the scripted agent wait out up to 10 minutes. The watchdog forfeits nobody while the Director stops, and gives every seat 15 minutes after the resume.
+- **What happens:** a deploy without a drain (plain `deploy/deploy.sh`, a push to the deploy branch, Coolify's Redeploy) has Coolify build the image, then stop and recreate every container, phase-server included. The Director checkpoints on SIGTERM; phase-server keeps its games (on disk) and each seat's place for 120 s; the new Director starts once phase-server's healthcheck passes, resumes every live event (drafts at the current pick, decks from the log) and re-attaches each game in progress (`game_reconnect`, `after: "restart"`; retried with backoff if phase-server isn't answering yet). Seats see calls fail with 502/503 for about 10 seconds and carry on; `bench play` and the scripted agent wait out up to 10 minutes. The watchdog forfeits nobody while the Director stops, and gives every seat 15 minutes after the resume.
 - **Tested 2026-10-22 on the dev stack** (build `24a3470`, an 8-seat FRA Private Table of scripted seats at 2 s per decision, `2026-10-22-22-34-06-fra-905e`): a baseline deploy with nothing live took 35 s end to end (`--drain-events`, nothing to wait for). Redeployed mid-draft (pick 122 of 336): the deploy took 32 s; the public `/health` was down about 10 s (no answer, then 503, then 200); `event_resume.downtime_ms` 7.6 s; the draft carried on at the same pick, five seats saw one 502 and retried. Redeployed mid-game (4 games of round 1 in progress, each on turn 9): 32 s; `/health` down about 10 s; `downtime_ms` 7.9 s; all 4 games re-attached on the first try within 80 ms of the resume. The event then played to its end (45 minutes in all, 26 games, 12 matches): **no forfeits, no voids, no failed games, no reconnect retries**; the Hub took it in with pack regeneration verified (the resumed draft's packs match) and no holds; its 44 MB log is kept as a 5.0 MB `events.jsonl.gz`. The ops check (every 5 minutes) didn't alert: each outage was shorter than one run.
-- **For an engine upgrade** use `--drain-events` (UPGRADING.md); `deploy.sh` refuses an engine change while events are live otherwise.
+- **Tested again 2026-10-25 with the git deploy** (throwaway application `agent-bench-git-test`, build `d03decc` → `60f931b`, an 8-seat FRA table of scripted seats in round 1 with 4 games in progress): the push reached Coolify through the webhook, the deployment took 55 s (cached build) and `deploy.sh` 70 s end to end; the Director logged `resumed 1 live event(s)`, 3 games re-attached (`game_reconnect`, `after: "restart"`), and the event played to its end (12 matches, 28 games, no forfeits, voids or failed games) and was handed to the Hub with pack regeneration verified and no holds. `/health` was down 19 s once `card-data` stopped promptly (it had held each deploy for Coolify's 30 s stop grace).
+- **For an engine upgrade** use `--drain-events` (UPGRADING.md); `deploy.sh` refuses an engine change while events are live otherwise. A bare push to the deploy branch has no such guard: check `/api/capacity` first.
 
 ### A bad deploy
 - **Symptom:** a container crash-loops, `/health` reports the wrong version, or errors start right after a deploy.
@@ -98,13 +200,13 @@ npm run bench -- setup --private --hosted --set sos --once --dry-run \
 
 The dry run starts each harness once with a one-word task (cents, not a table) and creates nothing. Every seat should read "model verified". "answered, but the harness log isn't in a format this version reads", "no token counts" or "$0 with tokens" means the harness changed: fix `packages/director/src/usage.ts` (or the effort detection) before anyone runs a table with it.
 
-## Coolify variables
+## Coolify Variables
 
-Coolify saves each `${VAR:-default}` in `deploy/compose.yaml` as the service's value the first time it parses the service, and keeps that value: changing a default in compose.yaml later doesn't change the running service. (So `HUB_PLAY_DAILY` stayed 4 after the default became 6, until 2026-10-23.) Every deploy now prints `warning: env X is … in Coolify, but compose.yaml's default is …` for each such variable (names only for secrets). When the default should apply, set it in Coolify's environment UI (or through `artisan tinker`) and redeploy; when the stored value is intended, leave it. The values `deploy.sh` passes itself (image tags, URLs, secrets) and the GitHub OAuth variables are not compared.
+On the application (git deploys), Coolify creates an empty variable for each `${VAR:-default}` in `deploy/compose.yaml`'s `environment:` entries. Empty, the compose default applies, so a changed default ships with its commit. A value typed into Coolify overrides the default until it is cleared, and `coolify-setup.sh` prints `note: env X is … in Coolify, overriding compose.yaml's default …` for each one (names only for secrets). The full list is in "Deploying" above. (The old Coolify service stored each default as a value at its first parse and kept it, so `HUB_PLAY_DAILY` stayed 4 after the default became 6, until 2026-10-23.)
 
 ## Networks
 
-Coolify puts every container of the service, and `coolify-proxy` (Traefik), on the service's project network (named after the service uuid, `hmzjhfic5gfbytn2wt5iao5h` on the dev host) besides the networks `deploy/compose.yaml` defines, and the service names resolve on it. So the separation is enforced by where each service listens, not only by which networks it's on (LAUNCH-CHECKLIST H-8):
+Coolify puts every container of the application, and `coolify-proxy` (Traefik), on its project network (named after the application's uuid; `hmzjhfic5gfbytn2wt5iao5h` for dev's old service) besides the networks `deploy/compose.yaml` defines, and the service names resolve on it. The git-deployed application keeps the same layout (checked 2026-10-25 on the throwaway application: the director on default and engine, the hub on default and db, phase-server only on engine, hub-db only on db, card-data only on default, each also on the project network; `db` internal; every reachability check below as expected). So the separation is enforced by where each service listens, not only by which networks it's on (LAUNCH-CHECKLIST H-8):
 
 | From | To | How | Allowed |
 |---|---|---|---|
@@ -122,7 +224,7 @@ Coolify puts every container of the service, and `coolify-proxy` (Traefik), on t
 
 ## Backups and Restore
 
-- **What is backed up:** the Hub database (`pg_dump` nightly at 02:20 server time, America/Chicago, to `/dumps/hub-<Day>.dump` in `hub-db`, a rolling 7 days; a Coolify scheduled task), and every Docker volume, `director-runs`, `hub-data`, `hub-pgdump` and `phase-data` included (checked 2026-10-22): `/opt/backup/backup.sh` at 03:00 server time tars each volume, encrypts and uploads them to Google Drive (14 dailies, Sundays for 90 days, the 1st of each month kept), after the dump and before the 03:30 open-data build. `ops-check.sh --server` alerts when that backup is over 30 hours old or misses those volumes. Secrets live in `~/.config/mtgdt/` on the owner's workstation and in Coolify's environment: back that folder up separately, encrypted. `deploy.sh` generates secrets only when it creates the service; when one is missing and the service exists it refuses, and `deploy/deploy.sh --recover-secrets` copies the missing files back from the running containers (never printed). A new `contributor-salt` or `hub-db-password` would break the deployment.
+- **What is backed up:** the Hub database (`pg_dump` nightly at 02:20 server time, America/Chicago, to `/dumps/hub-<Day>.dump` in `hub-db`, a rolling 7 days; a Coolify scheduled task), and every Docker volume, `director-runs`, `hub-data`, `hub-pgdump` and `phase-data` included (checked 2026-10-22): `/opt/backup/backup.sh` at 03:00 server time tars each volume, encrypts and uploads them to Google Drive (14 dailies, Sundays for 90 days, the 1st of each month kept), after the dump and before the 03:30 open-data build. `ops-check.sh --server` alerts when that backup is over 30 hours old or misses those volumes. Secrets live in Coolify's variables, with a copy in `~/.config/mtgdt/` (`~/.config/mtgdt-prod/`) on the owner's workstation: back that folder up separately, encrypted. `deploy/coolify-setup.sh` generates secrets only when it creates the instance; when one is missing and the instance exists it refuses, and `deploy/coolify-setup.sh --recover-secrets` copies the missing files back from the running containers (never printed). A new `contributor-salt` or `hub-db-password` would break the deployment.
 - **Before a deploy that runs a migration:** `docker exec <hub-db> pg_dump -U hub -Fc -f /dumps/pre-<sha>.dump hub`.
 - **Restore the Hub database:** stop `hub`; `docker exec <hub-db> pg_restore -U hub -d hub --clean --if-exists /dumps/<file>.dump`; start `hub`; `npm run hub -- reingest` if the bundles in `hub-data` are newer than the dump; check `/health` and the export.
 - **Drill:** `scripts/restore-drill.sh` copies the newest nightly dump, restores it into a throwaway Postgres container on this machine (never the live database), migrates it forward with this checkout's Hub code, compares the row counts of events, seats, games, picks and contributors from before the dump with production, prints the timings, and removes the container and the dump copy. Run it before launch, monthly, and after any change to the backup path.
@@ -132,18 +234,18 @@ Coolify puts every container of the service, and `coolify-proxy` (Traefik), on t
 
 | Secret | Where | How to rotate | What breaks |
 |---|---|---|---|
-| `admin-token` (Director admin API) | `~/.config/mtgdt/` | Write a new value, `deploy/deploy.sh` | Admin scripts until they read the new file |
-| `hub-admin-token` | `~/.config/mtgdt/` | Same | `bench play` for admin tables needs the new one |
-| `hub-service-token` (Director → Hub hand-off) | `~/.config/mtgdt/` | Same; both sides change in one deploy | Hand-offs in flight retry at the next start |
-| `hub-session-secret` | `~/.config/mtgdt/` | Same | Everyone signed in to the Hub signs in again; contributor tokens keep working |
-| GitHub OAuth client secret | Coolify environment | New secret in the GitHub OAuth app, then Coolify, then restart `hub` | Sign-in until the Hub restarts |
+| `admin-token` (Director admin API) | Coolify; copy in `~/.config/mtgdt/` | Write a new value to the file, `deploy/coolify-setup.sh`, then Redeploy | Admin scripts until they read the new file |
+| `hub-admin-token` | Same | Same | `bench play` for admin tables needs the new one |
+| `hub-service-token` (Director → Hub hand-off) | Same | Same; both sides change in one deploy | Hand-offs in flight retry at the next start |
+| `hub-session-secret` | Same | Same | Everyone signed in to the Hub signs in again; contributor tokens keep working |
+| GitHub OAuth client secret | Coolify (or `github-oauth-client-secret`) | New secret in the GitHub OAuth app, then Coolify, then Redeploy | Sign-in until the Hub restarts |
 | Contributor tokens | Hub database | The contributor at `/account`, or `npm run hub -- token revoke <id>` | That token, within 60 s |
-| `hub-db-password` | `~/.config/mtgdt/` | `ALTER USER hub PASSWORD …` in `hub-db` first, then the file, then deploy | The Hub, if the file changes without the `ALTER USER` |
-| `contributor-salt` | `~/.config/mtgdt/` | **Never rotate** | Every contributor's key in the public exports |
+| `hub-db-password` | Coolify; copy in `~/.config/mtgdt/` | `ALTER USER hub PASSWORD …` in `hub-db` first, then the file, `coolify-setup.sh`, Redeploy | The Hub, if the variable changes without the `ALTER USER` |
+| `contributor-salt` | Same | **Never rotate** | Every contributor's key in the public exports |
 
 ## Rollback
 
-- **Director and Hub:** check out the previous good commit in a clean worktree, run `scripts/ci-local.sh --full` there (the stamp is per checkout), and `deploy/deploy.sh --drain` from it. Don't retag old images on the host: Coolify's nightly cleanup deletes unused tags.
+- **Director and Hub:** `deploy/deploy.sh --rollback --ref <previous good commit> --drain` (it passed CI when it was deployed, so its stamp is there), or remotely `git push --force-with-lease origin <sha>:refs/heads/deploy/<instance>`. Coolify rebuilds that commit; don't retag old images on the host.
 - **Database:** migrations only go forward (005 renames columns, 007 rewrites comparability groups), so going back past one means restoring the `pre-<sha>` dump.
 - **Open data:** the Hub keeps the current build and the one before it under `open-data/builds/`; until a rollback command exists, point the `site/open` symlink in `hub-data` back at the previous build by hand.
 - **The site:** Vercel's Instant Rollback. Turning `VITE_AGENT_BENCH_ENABLED` off needs a rebuild (it's fixed at build time).

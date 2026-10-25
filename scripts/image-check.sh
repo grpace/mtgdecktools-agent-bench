@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build the Director/Hub image from the real build context and boot it as the hosted stack runs (CI-1).
-#   1. `docker build .`: the .dockerignore allow-list applies, exactly as deploy/deploy.sh builds it.
+#   1. `docker build .`: the .dockerignore allow-list applies, exactly as Coolify builds it (deploy/compose.yaml `build:`).
 #   2. Every repository file the code reads at run time is in the image (scripts/image-files.mjs derives the list).
 #   3. phase-server's environment allow-list in deploy/compose.yaml still carries the pinned image's own defaults.
 #   4. deploy/compose.yaml + deploy/compose.ci.yaml up (fresh volumes, users, capabilities as on Coolify): the Director

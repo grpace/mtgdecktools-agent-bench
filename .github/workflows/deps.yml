@@ -246,7 +246,7 @@ jobs:
             echo "## Summary"
             cat tmp/summary-phase.md
             echo
-            echo "Before merging, read docs/UPGRADING.md (\"phase-rs upgrades\" and \"Deploying an engine upgrade\"): drain, then deploy; deploy.sh archives the outgoing booster data in the Hub."
+            echo "Before merging, read docs/UPGRADING.md (\"phase-rs upgrades\" and \"Deploying an engine upgrade\"): drain, then deploy (deploy.sh --drain-events); the Director's booster archive keeps the outgoing data for the Hub."
           } > tmp/change/pr-body.md
           echo "version=$version" >> "$GITHUB_OUTPUT"
       - if: steps.change.outputs.version != ''

@@ -2,10 +2,11 @@
 
 The go-live runbook, in order. Each step says who does it (**Owner** or **Us**), the command or setting, and the check
 that proves it worked. The checklist behind it is [LAUNCH-CHECKLIST.md](LAUNCH-CHECKLIST.md); GitHub settings are in
-[RELEASING.md](RELEASING.md) "Going public" and "Launch-day extras". Audited 2026-10-24 against `feeff3a` (dev); seed tables and contact updated later that day.
+[RELEASING.md](RELEASING.md) "Going public" and "Launch-day extras". Audited 2026-10-24 against `feeff3a` (dev); seed tables and contact updated later that day; git deploys 2026-10-25.
 
-Production is a **new stack** (`INSTANCE=prod`): its own Coolify service, database, volumes and secrets
-(`~/.config/mtgdt-prod`). Nothing from dev is copied (LAUNCH-CHECKLIST B-11). Dev stays up for testing.
+Production is a **new stack** (`INSTANCE=prod`): its own Coolify application (`agent-bench-prod`, deployed from the
+`deploy/prod` branch of the repository; OPERATIONS "Deploying"), database, volumes and secrets (`~/.config/mtgdt-prod`).
+Nothing from dev is copied (LAUNCH-CHECKLIST B-11). Dev stays up for testing.
 
 ## Before the Day
 
@@ -25,6 +26,10 @@ Production is a **new stack** (`INSTANCE=prod`): its own Coolify service, databa
    end to end without spending tokens. The real tables are the seed tables on production (The Day, step 6).
 5b. ~~History~~ Done 2026-10-25: the public repository starts from one commit (RELEASING "Before going public: the
    history"); the old history is a private archive.
+5c. **Git deploys** (OPERATIONS "Deploying"): the `coolify-git` branch merged into `main`. Production starts on them:
+   Coolify builds the stack from the `deploy/prod` branch. Nothing for the owner to click: the `grpace-github` GitHub
+   App is installed on all of the owner's repositories and already sees this one, and its webhook already deploys
+   other apps on push (checked 2026-10-25). Dev moves over separately (OPERATIONS "Moving Dev to Git Deploys").
 6. **Us: freeze and check.** `main` has a passing `scripts/ci-local.sh --full` stamp; `npm run deps -- check` and
    `npm run overrides -- upstream` show nothing urgent (phase-rs ships often); the outside critics' findings are
    resolved or accepted (audits folder, round 3).
@@ -40,22 +45,25 @@ Production is a **new stack** (`INSTANCE=prod`): its own Coolify service, databa
    `HOSTED_DIRECTOR_URL` and `DEFAULT_HUB_URL` and the contributor docs name bench.mtgdecktools.com and
    bench-data.mtgdecktools.com; the README says live). The workflows stay off until step 7. In the site repo,
    `node scripts/sync-agent-bench-data.mjs --methodology-only` brings the prompts, legal pages and methodology across.
-2. **Us: deploy production.**
+2. **Us: deploy production.** From the `main` checkout, at the commit with the passing full CI stamp:
    ```bash
-   INSTANCE=prod DOMAIN=bench.mtgdecktools.com HUB_DOMAIN=bench-data.mtgdecktools.com deploy/deploy.sh
+   INSTANCE=prod deploy/deploy.sh
    ```
-   The first run creates the service and generates its secrets in `~/.config/mtgdt-prod`. **Owner: back that folder up
-   (encrypted) right away** (H-2): a lost `contributor-salt` re-keys every contributor, a lost `hub-db-password` locks
-   the Hub out of its database. Check: the script ends with `LIVE:` and `HUB:` lines naming the commit, and no
-   `warning: env …` lines.
-3. **Us: the Hub's launch settings** in Coolify (service `agent-bench-prod`, Hub container), then redeploy with the
-   same command:
+   It pushes the commit to `deploy/prod` (only commits on `origin/main`). As this is production's first deploy, it then
+   creates the Coolify application `agent-bench-prod`, with a verified Coolify database dump first; the GitHub OAuth
+   files already in `~/.config/mtgdt-prod` are passed. It generates the other secrets in `~/.config/mtgdt-prod`,
+   deploys, and waits for both hosts. **Owner: back that folder up (encrypted) right away** (H-2): Coolify holds the
+   live copy, but a lost `contributor-salt` re-keys every contributor, and a lost `hub-db-password` locks the Hub out
+   of its database. Check: the script ends with `LIVE:` and `HUB:` lines naming the commit, and no
+   `note: env …` lines.
+3. **Us: the Hub's launch settings** in Coolify (project and application `agent-bench-prod` → Environment Variables),
+   then Coolify's **Redeploy** (or `INSTANCE=prod deploy/deploy.sh --redeploy`):
    - `MTGDT_TERMS_URL`, `MTGDT_PRIVACY_URL`, `MTGDT_CONTENT_POLICY_URL` (the site's
      legal pages), `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` if not passed from the files.
    - With Cloudflare proxied in front of the Hub (C-1): `HUB_TRUST_PROXY_HOPS=2`.
-4. **Us: the nightly database dump** for the production `hub-db`, the same Coolify scheduled task as dev's
-   (OPERATIONS "Backups and Restore"). Check: the next morning's `/dumps/hub-<Day>.dump` exists; the ops check reports
-   the backup age.
+4. **Us: the nightly database dump** for the production `hub-db`: created with the application (Coolify scheduled task
+   "hub-db nightly pg_dump"; OPERATIONS "Backups and Restore"). Check: the next morning's `/dumps/hub-<Day>.dump`
+   exists; the ops check reports the backup age.
 5. **Us: verify production** (read-only):
    - `curl https://bench.mtgdecktools.com/health` and `https://bench-data.mtgdecktools.com/health`: `ok`, the commit.
    - `https://bench-data.mtgdecktools.com/data/index.json`: no events yet (the seed tables come next).
@@ -96,13 +104,16 @@ Production is a **new stack** (`INSTANCE=prod`): its own Coolify service, databa
   (OPERATIONS "Suspected fake or manipulated results").
 - Quota pressure or abuse: `npm run hub -- contributor quota …`; capacity is on `/api/capacity`.
 - New phase-rs releases: check before each deploy (`npm run deps -- check`); never deploy an engine change while
-  events are live (`deploy.sh` refuses without `--drain-events`).
+  events are live (`deploy.sh` refuses without `--drain-events`; a bare push to `deploy/prod` doesn't check).
+- Deploying from anywhere: push a commit that passed CI to `deploy/prod`, or Coolify's Redeploy (OPERATIONS
+  "Deploying").
 
 ## Rollback
 
 - **Site:** set `VITE_AGENT_BENCH_ENABLED=false` and redeploy (the section disappears; nothing else changes), or
   revert the merge.
-- **Services:** check out the previous release's commit and run the same `INSTANCE=prod … deploy/deploy.sh`.
+- **Services:** `INSTANCE=prod deploy/deploy.sh --rollback --ref <previous release commit>`, or from anywhere
+  `git push --force-with-lease origin <sha>:refs/heads/deploy/prod`; Coolify rebuilds and deploys that commit.
   Migrations don't roll back, so a release with a migration must keep working with the old code (RELEASING).
 - **Data:** restore the newest nightly dump (OPERATIONS "Restore the Hub database"), then
   `npm run hub -- reingest`.
