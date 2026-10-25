@@ -382,6 +382,9 @@ export class EventServer {
     return undefined;
   }
 
+  /** Per set: the cards its packs can't contain (the unsupported list is fixed for the process's life). */
+  private notInPacksCache = new Map<string, string[]>();
+
   private lobbyContext(): ViewContext {
     return {
       publicUrl: this.cfg.publicUrl,
@@ -393,6 +396,17 @@ export class EventServer {
         } catch {
           return undefined;
         }
+      },
+      notInPacks: (code) => {
+        const k = code.toLowerCase();
+        if (!this.notInPacksCache.has(k)) {
+          try {
+            this.notInPacksCache.set(k, this.factory.swappedOut(k));
+          } catch {
+            this.notInPacksCache.set(k, []);
+          }
+        }
+        return this.notInPacksCache.get(k)!;
       },
       capacity: () => ({ ...this.admission.status() }),
       eventInfo: (id) => {

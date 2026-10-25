@@ -1293,6 +1293,8 @@ export class Lobby {
       // best_of stays in the view for older clients; every queue plays best of 3, so nothing splits on it.
       mana: spec.mana, best_of: BEST_OF, prompt_version: ctx.promptVersion, group: `kn=${spec.knowledge};mana=${spec.mana};prompt=${ctx.promptVersion}`,
       featured: this.state.config.featured.includes(key), schedule: null,
+      // The set's cards this table's packs can't contain (the engine can't run them yet), so nobody joins expecting them.
+      not_in_packs: ctx.notInPacks?.(spec.set) ?? [],
       seats_per_table: this.cfg.seatsPerTable, seats_filled: counts.filled, seats_needed: counts.needed, seats_away: counts.away,
       // §10: what the next table needs (setups at the cap, rated games), additive to api_version 1.
       needs: this.needs(key, now),
@@ -1437,6 +1439,8 @@ export interface ViewContext {
   siteUrl: string;
   promptVersion: string;
   setName(code: string): string | undefined;
+  /** The set's cards its packs can't contain (the engine can't run them yet; BoosterFactory.swappedOut). */
+  notInPacks?(code: string): string[];
   capacity(): Record<string, unknown>;
   eventInfo(eventId: string): { stage: string; queue_position: number | null; seatUrl(name: string): string | null } | undefined;
 }

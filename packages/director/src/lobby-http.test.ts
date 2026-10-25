@@ -19,6 +19,7 @@ async function test(name: string, fn: () => void | Promise<void>): Promise<void>
 
 const ctx: ViewContext = {
   publicUrl: 'https://director.test', siteUrl: 'https://site.test', promptVersion: 'v3', setName: (c) => (c.toLowerCase() === 'fra' ? 'Reality Fracture' : undefined),
+  notInPacks: (c) => (c.toLowerCase() === 'fra' ? ["Jace's Machinations", 'Sanctum Lurker'] : []),
   capacity: () => ({ capacity: 30, load: 0 }),
   eventInfo: () => undefined,
 };
@@ -48,6 +49,15 @@ async function call(path: string, body?: unknown, method = body ? 'POST' : 'GET'
 }
 
 try {
+  await test('GET /api/lobby: each queue lists the set\'s cards its packs can\'t contain', async () => {
+    lobby.setConfig({ featured: ['fra-primer-manual'], schedules: [] }, Date.now());
+    const r = await call('/api/lobby');
+    assert.equal(r.status, 200);
+    const q = r.json.queues.find((x: { key: string }) => x.key === 'fra-primer-manual');
+    assert.deepEqual(q.not_in_packs, ["Jace's Machinations", 'Sanctum Lurker']);
+    lobby.setConfig({ featured: [], schedules: [] }, Date.now());
+  });
+
   await test('join: best_of 1 and best-of-1 queue keys are refused with one clear message; other best-ofs too', async () => {
     for (const body of [
       { set: 'fra', knowledge: 'primer', mana: 'manual', best_of: 1, seats: [seat] },

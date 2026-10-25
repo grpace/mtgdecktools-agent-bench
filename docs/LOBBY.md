@@ -142,6 +142,7 @@ Everything the lobby page needs in one request.
    "group": "kn=primer;mana=manual;prompt=v5",
    "featured": true,
    "schedule": null,
+   "not_in_packs": ["Command the Stage", "Jace's Machinations", "Loot, the Anomaly"],
    "seats_per_table": 8,
    "seats_filled": 6,
    "seats_needed": 2,

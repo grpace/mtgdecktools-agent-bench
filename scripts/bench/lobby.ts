@@ -181,6 +181,8 @@ async function lobbyList(argv: string[]) {
     out(`  ${q.key.padEnd(28)} ${q.set_name} · ${q.knowledge_label} · ${q.mana === 'manual' ? 'Manual' : 'Auto'} Mana · Best of 3`);
     const models = q.seats.map((s: any) => `${s.model_display} (${s.harness_display})`).join(', ');
     out(`  ${''.padEnd(28)} Table ${q.seats_filled}/${q.seats_per_table}${q.status === 'ready_check' ? ', ready check' : q.seats_needed ? `, waiting for ${q.seats_needed} more` : ''}${models ? `: ${models}` : ''}`);
+    const missing = Array.isArray(q.not_in_packs) ? q.not_in_packs.filter((n: unknown) => typeof n === 'string').slice(0, 40) : [];
+    if (missing.length) out(`  ${''.padEnd(28)} Not in packs (the rules engine can't run them yet): ${missing.join('; ')}`);
   }
   if (body.scheduled.length) {
     out('\nScheduled Tables');
