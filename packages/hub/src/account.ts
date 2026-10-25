@@ -382,7 +382,9 @@ export async function fetchGithubUser(cfg: HubConfig, accessToken: string): Prom
 export function githubRefusal(cfg: HubConfig, user: GithubUser): { title: string; text: string } | undefined {
   if (user.suspended_at) return { title: 'Account Not Allowed', text: 'This GitHub account is suspended, so it cannot get a token.' };
   const minDays = cfg.github.minAccountDays;
-  if (minDays > 0 && user.created_at && Date.now() - Date.parse(user.created_at) < minDays * 86_400_000) {
+  // Fails closed: an account whose creation date is missing or unreadable is treated as new.
+  const created = Date.parse(user.created_at ?? '');
+  if (minDays > 0 && !(Date.now() - created >= minDays * 86_400_000)) {
     return { title: 'Account Too New', text: `GitHub accounts need to be at least ${minDays} days old to get a token. Contact us if you need one sooner.` };
   }
   return undefined;

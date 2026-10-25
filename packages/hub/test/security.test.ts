@@ -12,6 +12,7 @@ import { toCsv } from '../src/open-data/formats.js';
 import type { TableDef } from '../src/open-data/tables.js';
 import { clientIp, isCloudflare } from '../src/ratelimit.js';
 import { jsonDepth, SHAPE_LIMITS, shapeErrors } from '../src/shape.js';
+import { githubRefusal } from '../src/account.js';
 
 const MB = 2 ** 20;
 const ok = (files: Record<string, string>) => packTarGz(new Map(Object.entries(files).map(([k, v]) => [k, Buffer.from(v)])));
@@ -159,4 +160,15 @@ test('HUB-33: bundles nested too deep or holding too many records are refused be
   const many = '{"t":1,"type":"x"}\n'.repeat(SHAPE_LIMITS.records + 1);
   assert.match(shapeErrors(files(many)).join(), /more than 250000 records/);
   assert.deepEqual(shapeErrors(files('{"t":1,"type":"x"}\n\n\n'.repeat(1000))), [], 'blank lines are not records');
+});
+
+test('HUB-34: the GitHub account-age gate fails closed', () => {
+  const cfg = (minAccountDays: number) => ({ github: { minAccountDays } }) as unknown as Parameters<typeof githubRefusal>[0];
+  const user = (created_at?: string | null) => ({ id: 1, login: 'x', created_at });
+  const daysAgo = (d: number) => new Date(Date.now() - d * 86_400_000).toISOString();
+  assert.equal(githubRefusal(cfg(30), user(daysAgo(400))), undefined, 'an old account passes');
+  assert.equal(githubRefusal(cfg(30), user(daysAgo(2)))?.title, 'Account Too New');
+  assert.equal(githubRefusal(cfg(30), user(undefined))?.title, 'Account Too New', 'no creation date: refused');
+  assert.equal(githubRefusal(cfg(30), user('not a date'))?.title, 'Account Too New', 'an unreadable date: refused');
+  assert.equal(githubRefusal(cfg(0), user(undefined)), undefined, 'the gate off (0): anyone passes');
 });
