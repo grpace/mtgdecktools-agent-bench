@@ -18,10 +18,30 @@ export type SeatResolution =
   | { ok: true; seat: SeatSpec; /** false: not in the registry (unrated, own tables only). */ listed: boolean; test: boolean; warnings: string[] }
   | { ok: false; error: string; suggestions: string[] };
 
+/**
+ * A listed model on a harness that can't run it ("Claude Code / GPT-6 Astra"): the error, or undefined. Only harnesses
+ * the CLI starts by itself are checked, against the registry's launch strings (`modelsForHarness`); apps seated by hand
+ * and scripted players aren't.
+ */
+export function pairProblem(harness: string, model: string | undefined): string | undefined {
+  const h = registry.resolveHarness(harness);
+  if (!h.ok || h.harness.seated !== 'headless' || !model || !registry.model(model)) return undefined;
+  const runs = modelsForHarness(h.id);
+  if (!runs.length || runs.some((m) => m.id === model)) return undefined;
+  const elsewhere = registry.harnesses.filter((x) => x.seated === 'headless' && modelsForHarness(x.id).some((m) => m.id === model)).map((x) => x.display);
+  const list = (xs: string[], and: string) => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} ${and} ${xs.at(-1)}` : xs[0] ?? '');
+  const names = runs.map((m) => m.display);
+  const shown = names.length > 8 ? `${names.slice(0, 8).join(', ')} and ${names.length - 8} more` : list(names, 'and');
+  return `${h.harness.display} can't run ${registry.modelDisplay(model)}. ${h.harness.display} runs ${shown}.`
+    + (elsewhere.length ? ` Did you mean ${list(elsewhere.map((x) => `${x} / ${registry.modelDisplay(model)}`), 'or')}?` : '');
+}
+
 export function resolveSeat(seat: SeatSpec, opts: { allowUnlisted: boolean }): SeatResolution {
   const declared = seat.declared ?? { harness: seat.harness, model: seat.model, effort: seat.effort };
   const r = resolveDeclared(declared, { allowUnlisted: opts.allowUnlisted, at: Date.now() });
   if (!r.ok) return { ok: false, error: r.error, suggestions: r.suggestions };
+  const pair = pairProblem(r.seat.harness, r.seat.model);
+  if (pair) return { ok: false, error: pair, suggestions: [] };
   return {
     ok: true, listed: r.listed, test: r.test, warnings: r.warnings,
     seat: {

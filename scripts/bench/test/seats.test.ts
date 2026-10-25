@@ -1,8 +1,8 @@
 // Seat specs as people type them: `bench setup --seat …`, `bench new --seat …` (node --import tsx --test).
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { antigravityFiles, expandSeatSpecs, harnessFor, normalizeHarness, opencodeConfig, opencodeFreeModel, parseSeatSpec as parseWithDeclared, seatNames } from '../harnesses.js';
-import { effortChoice, launchFor, resolveSeat } from '../models.js';
+import { antigravityFiles, expandSeatSpecs, harnessFor, harnessSupportLine, normalizeHarness, opencodeConfig, opencodeFreeModel, parseSeatSpec as parseWithDeclared, seatNames } from '../harnesses.js';
+import { effortChoice, launchFor, pairProblem, resolveSeat } from '../models.js';
 import { normalizeKnowledge, seatLineText } from '../setup.js';
 
 /** The parsed seat without the as-typed strings (checked separately). */
@@ -144,4 +144,25 @@ test('the Confirmation names every seat as model · harness · effort, scripted 
   assert.equal(line('random', 'Scripted random player', null, 'default', 'No Effort Setting'), 'random · Scripted random player · No Effort Setting');
   // No label: the registry's name for the level, never an empty effort.
   assert.match(line('M', 'H', null, 'high', ''), /^M · H · \S/);
+});
+
+test('a listed model on a harness that can\'t run it is refused at entry, with the harnesses that can', () => {
+  const astra = resolveSeat({ harness: 'claude-code', model: 'gpt-6-astra', effort: 'high' }, { allowUnlisted: false });
+  assert.equal(astra.ok, false);
+  assert.match(!astra.ok ? astra.error : '', /^Claude Code can't run GPT-6 Astra\. Claude Code runs Claude Fable 5\.1, .*Claude Haiku 5\.5\. Did you mean Codex CLI \/ GPT-6 Astra or OpenCode \/ GPT-6 Astra\?$/);
+  const argon = resolveSeat({ harness: 'Gemini CLI', model: 'Gemini 4 Argon', effort: 'high' }, { allowUnlisted: false });
+  assert.match(!argon.ok ? argon.error : '', /^Gemini CLI can't run Gemini 4 Argon/);
+  assert.equal(pairProblem('claude-code', 'claude-opus-5-5'), undefined);
+  assert.equal(pairProblem('opencode', 'gpt-6-astra'), undefined);
+  assert.equal(pairProblem('claude-desktop', 'gpt-6-astra'), undefined, 'apps seated by hand are not checked');
+  assert.equal(pairProblem('script', 'random'), undefined);
+  assert.equal(resolveSeat({ harness: 'claude-code', model: 'my-own-model', effort: 'high' }, { allowUnlisted: true }).ok, true, 'unlisted models are not checked');
+});
+
+test('harness support is said up front: tested on real tables, or supported but untested', () => {
+  assert.equal(harnessFor('claude-code')?.support, 'tested');
+  assert.equal(harnessFor('codex')?.support, 'untested');
+  assert.equal(harnessFor('gemini-cli')?.support, 'untested');
+  const line = harnessSupportLine();
+  assert.match(line, /^Tested on real tables: Claude Code, OpenCode, Cursor CLI\. Supported but untested \(not yet run on a real install, so expect problems\): Codex CLI, Gemini CLI\.$/);
 });

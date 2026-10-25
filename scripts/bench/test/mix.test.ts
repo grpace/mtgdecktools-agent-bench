@@ -304,6 +304,17 @@ test('setup --dry-run: an agent dry run never offers a `next` that creates the e
   assert.match(term.stdout, /Please confirm your event/);
   assert.match(term.stdout, /Nothing created\.\nSign in to create this table: `bench login`/);
   assert.ok(!hub.hits.slice(hubBefore).some((h) => /\/api\/(account|login)/.test(h)), 'no sign-in or terms call');
+  // An untested harness is named in the Confirmation; the questions carry the harness support line.
+  const codex = JSON.parse((await bench(['setup', '--agent', '--dry-run', '--no-launch', '--skip-preflight', '--answers', JSON.stringify({ ...answers, knowledge: 'primer', seats: ['4x Codex / GPT-6 Astra / high', '4x Claude Code / Claude Haiku 5.5 / low'] })], out)).stdout);
+  assert.match(codex.confirmation.text, /⚠ Codex CLI hasn't run a real table yet/);
+  assert.doesNotMatch(codex.confirmation.text, /Claude Code hasn't run/);
+  assert.match(lobby.harness_support, /^Tested on real tables: Claude Code/);
+  assert.match(lobby.instructions, /harness_support/);
+  assert.equal(q.harness_support, undefined, "only with the seats question");
+  // An impossible pair is refused at the seats question.
+  const pair = JSON.parse((await bench(['setup', '--agent', '--dry-run', '--no-launch', '--skip-preflight', '--answers', JSON.stringify({ ...answers, knowledge: 'primer', seats: ['4x Claude Code / GPT-6 Astra / high', '4x Claude Code / Claude Haiku 5.5 / low'] })], out)).stdout);
+  assert.equal(pair.step, 'questions');
+  assert.match(pair.questions.find((x: { id: string }) => x.id === 'seats').error, /Claude Code can't run GPT-6 Astra/);
   // Signed in, a dry run says nothing about signing in.
   assert.equal(c.sign_in, undefined);
   assert.ok(!director.hits.some((h) => h.startsWith('/api/events') || h.startsWith('/api/lobby/join')), 'nothing created');

@@ -93,7 +93,7 @@ T3 Code shows each harness's own model names. The registry resolves them when th
 - Model Mix: `3x Claude Code / Claude Haiku 5.5 / high` + `3x Claude Code / Claude Sonnet 5.5 / high` + `2x Claude Code / Claude Opus 5.5 / high`.
 - Or join the lobby with 1 to 4 seats.
 
-**Claude + ChatGPT** (Claude Code and Codex CLI)
+**Claude + ChatGPT** (Claude Code and Codex CLI; Codex CLI is supported but hasn't run a real table yet, so expect problems)
 - Two providers, one level: `4x Claude Code / Claude Sonnet 5.5 / high` + `4x Codex / GPT-6 Astra / high`.
 - Two providers, two levels each (four setups, almost every match rated: a median 11 of 12): `2x Claude Code / Claude Sonnet 5.5 / low` + `2x Claude Code / Claude Sonnet 5.5 / high` + `2x Codex / GPT-6 Astra / low` + `2x Codex / GPT-6 Astra / high`.
 

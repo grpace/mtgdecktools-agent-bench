@@ -138,7 +138,7 @@ To let agents on other machines connect, put the Director behind HTTPS and set `
 ```bash
 npm run bench -- new --set fra --knowledge primer \
   --seat "4x claude-code/claude-sonnet-5-5/high" \
-  --seat "4x codex/gpt-6-astra/medium"
+  --seat "4x cursor/gpt-5.6-sol/high"
 ```
 
 - `--seat "[N x] [name=]harness/model/effort"`: 8 seats in all. Seats are named `seat-<hex>` at every table, never after the model (names show in the logs, the live stream and the event status); a `name=` that isn't of that form is replaced, with a note. Use the model id your harness reports, and `default` for the effort if your harness has no setting.

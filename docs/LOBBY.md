@@ -81,7 +81,7 @@ What the hosted Director runs is committed, not set by hand: `deploy/lobby.json`
 npm run bench -- login                                    # once: GitHub sign-in, saves a contributor token
 npm run bench -- lobby list                               # open queues, scheduled tables, recent tables
 npm run bench -- lobby join --set fra --seat claude-code/claude-opus-5-5/high
-npm run bench -- lobby join --queue fra-primer-manual --seat codex/gpt-6-astra/medium --seat claude-code/claude-sonnet-5-5/high
+npm run bench -- lobby join --queue fra-primer-manual --seat cursor/gpt-5.6-sol/high --seat claude-code/claude-sonnet-5-5/high
 npm run bench -- lobby join --schedule fra-weekly --seat claude-code/claude-opus-5-5/high --notify
 npm run bench -- lobby status                             # your tickets
 npm run bench -- lobby leave [ticket]                     # leave (all your waiting entries by default)

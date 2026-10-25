@@ -16,7 +16,7 @@ import { homedir, tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { NEUTRAL_SEAT_RE, neutralSeatName } from '../../packages/director/src/seat-names.js';
 import { under } from './trust.js';
-import { CONCRETE_EFFORTS, launchSpec } from '../../packages/registry/src/index.js';
+import { CONCRETE_EFFORTS, launchSpec, registry } from '../../packages/registry/src/index.js';
 
 /** The seat's tools: v4 events offer get_set_context, older ones get_set_primer; allowing both is harmless. */
 export const MCP_TOOLS = ['wait_for_decision', 'decide', 'get_view', 'get_card', 'get_game_log', 'get_set_context', 'get_set_primer', 'report_rules_issue'];
@@ -79,6 +79,11 @@ export interface HarnessInfo {
   test?: boolean;
   /** How far `bench play` can shut the seat in (launchable harnesses). */
   isolation?: Isolation;
+  /**
+   * Launchable harnesses: whether `bench play` has started this harness for a real table (`tested`), or it is supported
+   * from its documentation but has never run on a real install (`untested`). Said up front in `check` and `setup`.
+   */
+  support?: 'tested' | 'untested';
   /** Variables of yours its sign-in needs, on top of BASE_ENV_ALLOW (seatEnv). */
   envAllow?: EnvAllow;
   launch?: (seat: Seat, prompt: string, opts: LaunchOpts) => Launch;
@@ -333,6 +338,7 @@ function antigravitySnippet(s: Seat): string {
 export const HARNESSES: HarnessInfo[] = [
   {
     id: 'claude-code',
+    support: 'tested',
     aliases: ['claude', 'claude-code', 'cc'],
     label: 'Claude Code',
     effortNote: '--effort <low|medium|high|xhigh|max>',
@@ -380,12 +386,13 @@ export const HARNESSES: HarnessInfo[] = [
   },
   {
     id: 'codex',
+    support: 'untested',
     aliases: ['codex', 'codex-cli'],
     label: 'Codex CLI',
     effortNote: '-c model_reasoning_effort=<minimal|low|medium|high>',
     isolation: {
       level: 'partial',
-      note: "shell, web search and image tools are switched off in a private CODEX_HOME; apply_patch can't be switched off (the read-only sandbox refuses its writes). Not yet run on a real Codex install",
+      note: "shell, web search and image tools are switched off in a private CODEX_HOME; apply_patch can't be switched off (the read-only sandbox refuses its writes)",
     },
     // The sign-in is the linked auth.json; an API key only with --use-api-key.
     envAllow: { apiKey: ['OPENAI_API_KEY', 'CODEX_API_KEY', 'OPENAI_BASE_URL'] },
@@ -417,12 +424,13 @@ export const HARNESSES: HarnessInfo[] = [
   },
   {
     id: 'gemini-cli',
+    support: 'untested',
     aliases: ['gemini', 'gemini-cli'],
     label: 'Gemini CLI',
     effortNote: 'no effort setting: the registry records its documented default',
     isolation: {
       level: 'partial',
-      note: "file, shell and web tools are switched off by name in a private GEMINI_CLI_HOME, and anything that asks for approval is refused; a built-in tool a later Gemini CLI adds that needs no approval would still be there. Not yet run on a real Gemini CLI install",
+      note: "file, shell and web tools are switched off by name in a private GEMINI_CLI_HOME, and anything that asks for approval is refused; a built-in tool a later Gemini CLI adds that needs no approval would still be there",
     },
     // A Google sign-in (linked oauth files) may need your Cloud project; an API key or Vertex only with --use-api-key
     // (a Gemini CLI whose auth choice is an API key needs the flag).
@@ -457,6 +465,7 @@ export const HARNESSES: HarnessInfo[] = [
   },
   {
     id: 'opencode',
+    support: 'tested',
     aliases: ['opencode'],
     label: 'OpenCode',
     // Effort is a model variant (`--model provider/model#variant`, `opencode run --help`); the registry's
@@ -491,6 +500,7 @@ export const HARNESSES: HarnessInfo[] = [
   },
   {
     id: 'cursor',
+    support: 'tested',
     aliases: ['cursor', 'cursor-agent', 'cursor-cli'],
     label: 'Cursor CLI (cursor-agent)',
     effortNote: 'level in the model name (registry launch strings, `cursor-agent models`)',
@@ -569,6 +579,14 @@ export function harnessFor(name: string | undefined): HarnessInfo | undefined {
 
 /** Harnesses `bench play` can launch headless, in the order they're offered. */
 export const LAUNCHABLE = HARNESSES.filter((h) => h.launch);
+
+/** Which harnesses have run real tables and which haven't yet, in one line (check, setup's seats question). */
+export function harnessSupportLine(): string {
+  const of = (x: 'tested' | 'untested') => LAUNCHABLE.filter((h) => !h.test && h.support === x).map((h) => registry.harnessDisplay(h.id));
+  const tested = of('tested');
+  const untested = of('untested');
+  return `Tested on real tables: ${tested.join(', ')}.${untested.length ? ` Supported but untested (not yet run on a real install, so expect problems): ${untested.join(', ')}.` : ''}`;
+}
 
 /**
  * A harness name as typed ("Claude Code", "codex", "Gemini CLI", "T3 Code") → the id recorded for the seat:

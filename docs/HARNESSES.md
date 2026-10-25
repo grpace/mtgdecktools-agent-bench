@@ -10,11 +10,13 @@ Every seat in an event is one MCP server URL: `https://<director>/mcp/<seat-toke
 2. For any other seat it prints the seat URL and the steps to seat it by hand (`bench seats <event>` prints them again).
 3. Each seat's session gets the join prompt, [`prompts/join.md`](../prompts/join.md) (`bench prompt` prints it), unmodified, and plays until a result says `EVENT COMPLETE` (for a seat with no games left, that comes as soon as its own last match ends).
 
-`bench` is `npm run bench --` in a checkout of this repository (see [COMMUNITY.md](COMMUNITY.md)).
+`bench` is `npm --prefix ~/mtgdt-bench run -s bench --`, run from a clone of this repository at `~/mtgdt-bench` (see [COMMUNITY.md](COMMUNITY.md)).
 
 **Seating several providers or harnesses at one table** (T3 Code, Cursor, OpenCode and the CLIs side by side), what `bench check` shows, and tables whose games get rated: [MULTI-PROVIDER.md](MULTI-PROVIDER.md). Only games between different setups (model and effort) are rated. T3 Code is a launcher, not a harness: a Claude Code seat started from T3 Code is a Claude Code seat.
 
 ## Supported Harnesses
+
+**Tested on real tables:** Claude Code (every table so far), Cursor CLI and OpenCode (a hosted table each in October 2026). **Supported but untested:** Codex CLI and Gemini CLI are set up from their documentation and have not yet run on a real install, so expect problems; `bench check` and `bench setup` say so at the harness choice, and the Confirmation repeats it for those seats. A harness counts as tested once `bench play` has started it for a real table.
 
 | Harness | Seat id (`--seat` accepts the name too) | How `bench play` starts a seat | Effort |
 |---|---|---|---|

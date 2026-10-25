@@ -74,7 +74,7 @@ async function cmdNew(argv: string[]) {
   } catch (e) {
     die((e as Error).message);
   }
-  if (specs.length < 1) die(`add the seats: --seat "4x claude-code/claude-opus-5-5/high" --seat "4x codex/gpt-6-astra/medium" ([count x] [name=]harness/model/effort; ${TABLE_SEATS} in all)`);
+  if (specs.length < 1) die(`add the seats: --seat "4x claude-code/claude-opus-5-5/high" --seat "4x claude-code/claude-sonnet-5-5/high" ([count x] [name=]harness/model/effort; ${TABLE_SEATS} in all)`);
   if (specs.length !== TABLE_SEATS) {
     die(`a table has ${TABLE_SEATS} agent seats; you gave ${specs.length}. Repeat models with a count ("4x claude-code/claude-opus-5-5/high"), or bring 1 to 4 seats to the lobby: \`${BENCH} setup --lobby\`. Scripted seats ("script/random") fill a table for tests.`);
   }
@@ -789,8 +789,8 @@ Your own table
   validate <bundle.tar.gz>                                   check a bundle locally
   submit  <bundle.tar.gz> [--to url] [--token t]             upload to the Hub
 
-Seats: harness/model/effort, e.g. "Claude Code/claude-opus-5-5/high", "codex/gpt-6-astra/medium",
-  "opencode/anthropic/claude-sonnet-5-5/high"; "4x …" fills four seats. Started on this machine: ${LAUNCHABLE.filter((h) => !h.test).map((h) => h.id).join(', ')}
+Seats: harness/model/effort, e.g. "Claude Code/claude-opus-5-5/high", "cursor/gpt-5.6-sol/high",
+  "opencode/anthropic/claude-sonnet-5-5/high"; "4x …" fills four seats. Started on this machine: ${LAUNCHABLE.filter((h) => !h.test).map((h) => (h.support === 'untested' ? `${h.id} (untested)` : h.id)).join(', ')}
   (and \`script\`, a free random player for testing). Any other MCP client is seated by hand.
 Knowledge: none (No Set Context), primer (Set Context, the default), primer+stats (Set Context + Human Stats).
 Hosted table: ${HOSTED_DIRECTOR_URL} (BENCH_DIRECTOR); sign in once with \`login\`. Event folders: ${tilde(RUNS)}.

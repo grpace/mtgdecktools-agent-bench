@@ -29,7 +29,7 @@ import {
   BENCH, COMMANDS, CONFIG_DIR, DOCS, HOSTED_DIRECTOR_URL, JOIN_PROMPT, PACKAGED, REPO, RUNS, SWISS_ROUNDS, TABLE_SEATS, VERSION, WATCH_SITE, account,
   contributorToken, createEvent, die, directorUrl, env, hubUrl, loginStart, loginWait, startPlayInBackground, tilde, tryJson, type Created,
 } from './core.js';
-import { LAUNCHABLE, expandSeatSpecs, harnessFor, installedVersion, seatNames, type SeatSpec } from './harnesses.js';
+import { LAUNCHABLE, expandSeatSpecs, harnessFor, harnessSupportLine, installedVersion, seatNames, type SeatSpec } from './harnesses.js';
 import { effortChoice, effortLabel, modelChoices, modelLabel, resolveSeat } from './models.js';
 import { preflight, type PreflightResult } from './preflight.js';
 import {
@@ -190,7 +190,7 @@ export async function cmdCheck(argv: string[]) {
   const engines = ['docker', 'podman'].filter((e) => !spawnSync(e, ['--version'], { stdio: 'ignore', timeout: 10_000 }).error);
   const info = await directorInfo(base, hosted);
   const harnesses = LAUNCHABLE.map((h) => ({
-    id: h.id, label: h.label, test: !!h.test, installed: installedVersion(h) ?? null,
+    id: h.id, label: h.label, test: !!h.test, installed: installedVersion(h) ?? null, ...(h.support ? { support: h.support } : {}),
     models: h.test ? [] : modelChoices(h.id).map((m) => ({ ...m, effort: effortChoice(h.id, m.id) })),
   }));
   const acct = account();
@@ -206,7 +206,7 @@ export async function cmdCheck(argv: string[]) {
       table: { kind: hosted ? 'hosted' : 'own', director: base, up: info.up, capacity: info.capacity ?? null, seats: TABLE_SEATS, rounds: SWISS_ROUNDS },
       sets: info.sets.map((s, i) => ({ ...s, recommended: i === 0 })),
       knowledge: KNOWLEDGE.map(({ id, label, what }) => ({ id, label, what, default: id === 'primer' })),
-      harnesses,
+      harnesses, harness_support: harnessSupportLine(),
       apps: apps.map((a) => ({ app: a.app, label: a.label, seated: 'by-hand', harnesses: a.harnesses.map((h) => ({ id: h, label: registry.harnessLabel(h) })) })),
       needed, needed_headline: neededHeadline(needed),
       lobby: { available: !!COMMANDS[LOBBY_COMMAND[0]!], max_seats: LOBBY_MAX_SEATS },
@@ -227,10 +227,11 @@ export async function cmdCheck(argv: string[]) {
   console.log('\nKnowledge (what the agents are given; the same for every seat; a set offers the levels it has data for):');
   for (const k of KNOWLEDGE) console.log(`  ${k.label}: ${k.what} (--knowledge ${k.id})`);
   console.log('\nHarnesses this machine can start by itself:');
+  console.log(`  ${harnessSupportLine()}`);
   // The reason for a recommended level is usually the same for every model: say it once, below the list.
   const whys = new Set<string>();
   for (const h of harnesses.filter((x) => !x.test)) {
-    console.log(`  ${h.id.padEnd(12)} ${h.label.padEnd(26)} ${h.installed ? `installed (${h.installed})` : 'not installed'}`);
+    console.log(`  ${h.id.padEnd(12)} ${h.label.padEnd(26)} ${h.installed ? `installed (${h.installed})` : 'not installed'}${h.support === 'untested' ? '; untested' : ''}`);
     for (const m of h.models) {
       const e = m.effort;
       if (e.settable && e.why) whys.add(e.why);
@@ -531,9 +532,9 @@ async function evaluate(e: Engine, a: Answers): Promise<{ questions: Question[];
       id: 'seats',
       ask: a.table === 'lobby' ? `Which agents do you bring (1 to ${LOBBY_MAX_SEATS})?` : `Who plays the ${TABLE_SEATS} seats? Models can repeat.`,
       format: a.table === 'lobby'
-        ? 'one line per model: "[count x] harness / model / effort", e.g. "2x Claude Code / Claude Opus 5.5 / high" and "2x Codex / GPT-6 Astra / high" (1 to 4 seats in all). The effort can be left out: it is asked next, with a recommendation.'
-        : 'one line per model: "[count x] harness / model / effort", e.g. "4x Claude Code / Claude Opus 5.5 / high" and "4x Codex / GPT-6 Astra / high". The effort can be left out: it is asked next, with a recommendation.',
-      help: `${here.length ? `Installed here, so their seats start automatically: ${here.map((h) => `${h.label} ${e.installed.get(h.id)}`).join(', ')}.` : 'No supported harness command line is installed here.'}${(() => {
+        ? 'one line per model: "[count x] harness / model / effort", e.g. "2x Claude Code / Claude Opus 5.5 / high" and "2x Claude Code / Claude Sonnet 5.5 / high" (1 to 4 seats in all). The effort can be left out: it is asked next, with a recommendation.'
+        : 'one line per model: "[count x] harness / model / effort", e.g. "4x Claude Code / Claude Opus 5.5 / high" and "4x Claude Code / Claude Sonnet 5.5 / high". The effort can be left out: it is asked next, with a recommendation.',
+      help: `${harnessSupportLine()} ${here.length ? `Installed here, so their seats start automatically: ${here.map((h) => `${h.label} ${e.installed.get(h.id)}`).join(', ')}.` : 'No supported harness command line is installed here.'}${(() => {
         const other = LAUNCHABLE.filter((h) => !h.test && !e.installed.get(h.id)).map((h) => h.label);
         return other.length ? ` ${other.join(' and ')} ${other.length === 1 ? "isn't" : "aren't"} installed here: you can still choose ${other.length === 1 ? 'it' : 'them'} and start those seats yourself (setup prints the steps).` : '';
       })()}${apps.length && !continuous ? ` Also found here: ${apps.map((x) => `${x.label} (${x.harnesses.map((h) => registry.harnessDisplay(h)).join(', ')}), whose seats you start yourself`).join('; ')}.` : ''} Models are named by the registry: \`${BENCH} check\` lists them per harness.${a.table === 'private'
@@ -679,6 +680,8 @@ interface SeatLine {
   check: { status: 'verified' | 'unverified' | 'problem' | 'not checked'; text: string };
   /** Started here: how far the seat is shut in (harnesses.ts `isolation`); partial ones keep some local tools. */
   isolation?: { level: 'full' | 'partial'; text: string };
+  /** The harness has never run a real table (harnesses.ts `support`): the Confirmation says so. */
+  untested?: boolean;
 }
 
 export interface Confirmation {
@@ -803,6 +806,7 @@ function confirmation(e: Engine, p: Plan, checks: Map<string, PreflightResult>, 
       effort: { level, label: test ? 'No Effort Setting' : effortLabel(level), established },
       starts: here ? 'here' : 'by hand', check,
       ...(here && !test && h?.isolation ? { isolation: { level: h.isolation.level, text: h.isolation.note } } : {}),
+      ...(h?.support === 'untested' ? { untested: true } : {}),
     };
   });
   const llmSeats = p.seats.filter((s) => !harnessFor(s.harness)?.test).length;
@@ -854,6 +858,7 @@ function confirmation(e: Engine, p: Plan, checks: Map<string, PreflightResult>, 
       `    ${`${x.count}x`.padEnd(4)}${seatLineText(x)}`,
       `        ${x.starts === 'here' ? 'starts on this machine' : 'you start it yourself'}; effort: ${x.effort.established}`,
       `        ${mark(x.check.status)} ${x.check.text}`,
+      ...(x.untested ? [`        ⚠ ${x.harness.label} hasn't run a real table yet: supported from its documentation, so expect problems.`] : []),
       ...(x.isolation?.level === 'partial'
         ? [`        ⚠ ${x.harness.label} can't be fully shut in: ${x.isolation.text}. For a seat that can't reach your files, run it in a container or VM.`]
         : []),
@@ -961,9 +966,10 @@ export async function cmdSetup(argv: string[]) {
     }
     if (agent) {
       return emit({
-        step: 'questions', questions: r.questions, answers: a,
+        step: 'questions', questions: r.questions, answers: a, ...(r.questions.some((q) => q.id === 'seats') ? { harness_support: harnessSupportLine() } : {}),
         ...(r.table_check ? { table_check: r.table_check } : {}),
         instructions: 'Ask the person these questions in plain language, with the options and the recommended answer (and why). Then run `next` with every answer so far plus the new ones in --answers (question ids are the keys; "effort:<harness>/<model>" answers go in "efforts": {"<harness>/<model>": "<level>"}; "seats" is a list of lines). Never answer for the person.'
+          + (r.questions.some((q) => q.id === 'seats') ? ' With the seats question, first tell them `harness_support` as it is: which harnesses have run real tables and which are untested.' : '')
           + (r.questions.some((q) => q.needed?.length) ? ' With the seats question, mention `needed`: the seats that are most needed right now that they can run (lead with the first one).' : '')
           + (r.table_check ? ' Before the other questions, tell them `table_check.warning` plainly and offer `table_check.suggestions` (each has the seat lines to use as their "seats" answer; "Join the Lobby" means table "lobby" with 1-4 seats). Keeping their seats is fine: it is never refused.' : ''),
         next: `${BENCH} setup --agent${pass} --answers '<answers JSON>'`,

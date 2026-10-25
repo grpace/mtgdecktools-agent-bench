@@ -28,6 +28,7 @@ import { CONCRETE_EFFORTS, resolveSeat as resolveDeclared } from '../../packages
 import { BENCH, CONFIG_DIR, HOSTED_DIRECTOR_URL, RUNS, contributorToken, die, env, isLoopback, requireTls, sleep, trustedOrigin } from './core.js';
 import { assignSeats, eventIdFrom, printable, under, type LocalSeat } from './trust.js';
 import { harnessFor, installedVersion } from './harnesses.js';
+import { pairProblem } from './models.js';
 import { normalizeKnowledge } from './setup.js';
 import { DEFAULT_FRESH_SESSION, FRESH_SESSION_MODES, isFreshSession, policyOfMode, type FreshSession } from './rotation.js';
 
@@ -95,6 +96,8 @@ export function lobbySeatPolicy(harness: string, mode: FreshSession, o: { launch
 export function localSeat(x: { harness: string; model?: string; effort?: string }): LocalSeat {
   const r = resolveDeclared({ harness: x.harness, model: x.model, effort: x.effort }, { allowUnlisted: false });
   if (!r.ok) return die(`--seat ${[x.harness, x.model, x.effort].filter(Boolean).join('/')}: ${r.error}`);
+  const pair = pairProblem(r.seat.harness, r.seat.model);
+  if (pair) return die(`--seat ${[x.harness, x.model, x.effort].filter(Boolean).join('/')}: ${pair}`);
   return {
     harness: r.seat.harness, ...(r.seat.model ? { model: r.seat.model } : {}), ...(r.seat.effort ? { effort: r.seat.effort } : {}),
     ...(r.hosted && x.model ? { launch_model: x.model } : {}),
