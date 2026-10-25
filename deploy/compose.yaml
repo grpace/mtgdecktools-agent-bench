@@ -199,7 +199,7 @@ services:
       - director-cache:/app/cache
       - director-export:/app/var
   hub-db:
-    image: docker.io/library/postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+    image: docker.io/library/postgres:18-alpine@sha256:898c60cb390d1085bc97bdd6a1ae968757421df394b071848b52b1c09c89d6a5
     restart: unless-stopped
     # The entrypoint starts as root to fix the data directory's owner, then runs Postgres as `postgres` (su-exec).
     cap_drop: [ALL]
