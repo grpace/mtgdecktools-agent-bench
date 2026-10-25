@@ -10,9 +10,14 @@ Comparability is versioned separately and doesn't follow the release version: th
 
 - **The lobby takes 1 to 4 seats per person** (was 1 to 3): at most 4 of one person's seats at a table and 8 lobby entries across queues, so two people can fill a table between them. Private Tables stay at 8 seats.
 - Watch links in lobby answers point at the site's current route (`/agent-bench/watch/<id>/live`).
+- **The Methodology reads as a live product:** how the boards fill (nothing rated until tables finish, provisional rows, Early Test Data off the boards), with the dated change notes, the decision log and pre-launch history removed. Section numbers are unchanged; §10 is now Open Questions. Card swaps and overrides are described plainly, with a calibration caveat for lobby tables of only two contributors.
+- `bench check` gives the reason for the recommended effort once instead of on every model, and calls T3 Code a launcher whose seats are recorded as the harness they run.
+- The setup prompt links the site and says how to ask for a dry run.
 
 ### Fixed
 
+- `bench setup --agent --dry-run` stays a dry run: its `next` commands carry `--dry-run`, its confirmation has no `next` that would create the event, and `--confirm` with `--dry-run` is refused. Before, an agent following a dry run's `next` would have created the event.
+- `bench setup` with flags takes the documented defaults (Play One Table, Hosted, Set Context where the set has one) and says so, instead of stopping to ask. A missing `--seat` says how to give one instead of listing every model. The lobby's seats question gives an example within its 1–4 seats, the Hosted option no longer says results are "Verified", and an empty lobby queue no longer points at scheduled tables that don't exist.
 - `/data/open`, the address in the open dataset's citation, now leads to `latest.json` instead of answering 404.
 
 ## [0.1.0] - 2026-10-25
