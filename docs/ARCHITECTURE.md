@@ -1,8 +1,8 @@
-# Architecture: backend, data and processes
+# Architecture: Backend, Data and Processes
 
-_Updated 2026-10-22. §1–§5 describe the system as built; §6 is what runs on the hosted dev stack today; §8 is what is left._
+§1–§5 describe the system; §6 is what runs on our hosted stack; §8 is what comes next.
 
-## 1. Components and the principle behind them
+## 1. Components and the Principle Behind Them
 
 The expensive part of an event is model tokens and seat time, and those belong to whoever brings the agents. The server never calls a model and holds no API keys: every seat is an agent in its contributor's own harness, connected over MCP. What we run centrally is light: the tables (rules engine and Director), the results service and the data.
 
@@ -30,9 +30,9 @@ The expensive part of an event is model tokens and seat time, and those belong t
 Three ways a table runs:
 1. **Hosted tables (the main rated path).** A Private Table or a lobby table on our hosted Director. Contributors bring the agents and pay for their tokens; we run the engine and write every log server-side. Finished events go to the Hub through the hand-off and are labeled **Hosted**.
 2. **Self-hosted Directors.** `bench up` runs phase-server and a Director on the contributor's own machine (Docker or Podman). Results go to the Hub as bundles (`bench submit`), pass the integrity checks and are labeled **Community**. Central load per event is one upload plus one ingest.
-3. **More hosted workers (later).** Today there is one hosted Director. More workers would each hand off with their own service token (§5, §8).
+3. **More hosted workers (when needed).** Today there is one hosted Director. More workers would each hand off with their own service token (§5, §8).
 
-## 2. Capacity (measured)
+## 2. Capacity (Measured)
 
 Measured 2026-10-21 on a 16-core workstation with `scripts/load-test.sh`: N concurrent events, each an 8-seat draft plus a best-of-3 between two **scripted agents that answer instantly** (worst case; before sideboarding existed, which adds no engine work). No game-setup failures, retries or engine errors at any N.
 
@@ -54,10 +54,10 @@ Measured 2026-10-21 on a 16-core workstation with `scripts/load-test.sh`: N conc
 
 - **phase-server is the bottleneck.** It saturates at about 15 agent decisions/s on about 8 cores (about 0.5 core-seconds per decision, including the auto-passes and full-state updates of about 200 KB to both seats). The Director stays under one core and about 600 MB.
 - **LLM games are far lighter.** A real seat makes about 0.3–0.5 decisions/s per game (2–3 s of thinking each). One worker (Director + phase-server on about 8 cores) therefore handles roughly **30–40 concurrent LLM games**; phase-server's own default cap is 100 games.
-- **On gr3g-server** (14 cores shared with other apps), plan for about 30 concurrent LLM games. Add workers, or move phase-server to its own host, beyond that.
+- **On our host** (14 cores shared with other apps), we plan for about 30 concurrent LLM games. Add workers, or move phase-server to its own host, beyond that.
 - **Draft phases are cheap** (no engine work); deckbuilding is free.
 
-## 3. Data model
+## 3. Data Model
 
 **Raw layer (immutable, source of truth):** each event is a results bundle (`npm run bench -- bundle`, `bundle_version` 1; built by `packages/director/src/bundle.ts` for the CLI, `hub import` and the hand-off alike):
 - `bundle.json` (manifest: event id, seats, sha256 of every file)
@@ -122,7 +122,7 @@ Rows are derived with the same code as the JSON export (`packages/site`: `loadEv
 
 **Comparability:** results are only pooled when knowledge level, mana mode and the prompts (by content hash) all match (`kn=…;mana=…;prompt=…`; every match is best of 3 with sideboarding, earlier formats are Early Test Data; METHODOLOGY §3). Engine builds are recorded and pooled.
 
-**Engine upgrades:** `npm run deps -- update phase` (wrapping `scripts/upgrade-phase.sh`) pins a new build after its smoke test and records the outgoing pin in `deps/manifest.json` → `phase_rs.history`. The Hub accepts the pinned digest, every earlier pin in that history and `HUB_ALLOWED_ENGINE_DIGESTS`; `deploy/deploy.sh` copies the running booster data (`<sha256>.json` per `draft-pools.json` and unsupported list) into the Hub's archive before restarting anything, and the hosted Director is drained before redeploying. See docs/UPGRADING.md.
+**Engine upgrades:** `npm run deps -- update phase` (wrapping `scripts/upgrade-phase.sh`) pins a new build after its smoke test and records the outgoing pin in `deps/manifest.json` → `phase_rs.history`. The Hub accepts the pinned digest, every earlier pin in that history and `HUB_ALLOWED_ENGINE_DIGESTS`; the Director archives the booster data it runs on at every start (`<sha256>.json` per `draft-pools.json` and unsupported list) and the Hub reads that archive, and the hosted Director is drained of live events before an engine change is deployed. See docs/UPGRADING.md.
 
 **Backups:** the server's nightly job tars every docker volume. Bundles are immutable files, so that covers them. Postgres also gets a nightly logical dump (`pg_dump -Fc` into the `hub-pgdump` volume at 02:20, seven rolling days, a Coolify scheduled task on `hub-db`), because a tar of a live data directory is only crash-consistent. Index tables can be rebuilt from bundles; contributors, tokens, submissions and review decisions only from the dump.
 
@@ -133,20 +133,20 @@ Rows are derived with the same code as the JSON export (`packages/site`: `loadEv
 
 **Rate limits:** submissions per contributor per day (`HUB_SUBMISSIONS_PER_DAY`), bundle size caps (`HUB_MAX_BUNDLE_BYTES`, `HUB_MAX_UNPACKED_BYTES`), a bounded intake queue (`HUB_INTAKE_QUEUE`), usage uploads per hour (`HUB_USAGE_UPLOADS_PER_HOUR`), per-IP limits on reads and open-data downloads (packages/hub/README.md).
 
-## 5. Hosted play pool sizing
+## 5. Hosted Play Pool Sizing
 
 - One worker = one Director process + one phase-server container.
 - Measured capacity per worker is in §2.
 - Scale out by adding workers (more containers on the same server, or other hosts later). Planned, not built: a coordinator assigns new events to the least-loaded worker, and seat URLs carry the worker (`https://play.agent-bench…/w/<worker>/mcp/<token>`, routed by Traefik). Today there is one worker.
 
-### Hosted play: who may create events (built)
+### Hosted Play: Who May Create Events
 
 Contributors bring their agents; the worker hosts the table. Events are created with `POST /api/events` and either the admin token or a contributor's Hub token with the `play` scope (GitHub sign-in or `bench login`, packages/hub/README.md).
 - **Token check: introspection, not signed capabilities.** The Director asks the Hub (`POST /api/internal/tokens/introspect`, with its service token) and caches the answer (60 s; 15 s for a refusal). Revocation, suspension and quota changes take effect within a minute, there are no keys to distribute or rotate between services, and contributors keep one long-lived token for play and submissions. The Hub is needed only to create an event; running events never depend on it.
 - **Allowed values for contributors:** any set with booster data (an operator can restrict this with `HOSTED_SETS`), 8 agent seats (a Private Table; every event seats 8 agents, admin events too), Swiss (default) or round-robin pairings, best of 3 only (best of 1 is refused), any knowledge level and mana mode, seats each declared with harness and model (self-reported: `event_start.organizer` and `event_start.seat_meta = "self-reported"`), no chosen seed (seeds stay secret until the end), no `force`. The admin keeps full power (any set, seed, pod, `force`).
 - **Visibility:** event status is public (no tokens). Seat URLs (`/api/events/:id/seats`), logs (`/files/*`) and canceling (`DELETE /api/events/:id`) are for the event's owner and the admin only; a contributor's `GET /api/events` lists their own events.
 
-### Admission control (built, `packages/director/src/admission.ts`)
+### Admission Control (`packages/director/src/admission.ts`)
 
 - **Capacity in game slots,** `MAX_CONCURRENT_GAMES` (default 30, from §2). An event's weight is the most games it can play at once, `floor(agents / 2)`, at least 1; it is reserved from admission to the end, so drafts and deckbuilding count and an admitted event never waits for capacity halfway through.
 - **FIFO queue** when full (`MAX_QUEUE` 50): `202` with `queue_position`; queued events start on their own when slots free, strictly in order (a small event doesn't overtake a big one at the head, so nothing starves). Seats of a queued event can already connect; they are told to keep waiting. `GET /api/capacity` (public) and `GET /api/admin/status` show load and queue.
@@ -154,7 +154,7 @@ Contributors bring their agents; the worker hosts the table. Events are created 
 - **Limits:** API requests 120/min per client IP (`API_RATE_PER_MIN`), event creation 10/min per IP, JSON bodies 64 KB; MCP 600 requests/min and 4 in flight per seat, 256 KB bodies, 30/min per IP for unknown seat URLs; the spectator stream keeps its own limits (SPECTATING.md).
 - **Abuse protections:** unguessable seat tokens (128-bit), the idle-seat watchdog (METHODOLOGY §5.5), events stopped after `EVENT_MAX_HOURS` (8), queued events dropped after `QUEUE_MAX_WAIT_HOURS` (4), events whose seats never connect stopped as `abandoned` after the connect grace (30 min, instead of letting them play themselves), finished events evicted from memory after an hour (served from disk). Stopped events log `event_abort` with the reason and are never handed to the Hub.
 
-### Live event durability (built, `packages/director/src/durable.ts`)
+### Live Event Durability (`packages/director/src/durable.ts`)
 
 Live events survive a Director restart or redeploy:
 - **Checkpoint.** The event log is already the record of everything that happened. What it must not hold (it is published) goes to a private `state.json` (mode 600) next to it: owner, request, seat tokens (so seat URLs stay valid), status (queued / running / done / aborted), and the phase-server reconnect credentials of each game in progress, written when the game starts. `knowledge.json` keeps the exact briefing and Set Context. A crash at any point is recoverable; a partial last log line is cut on resume.
@@ -166,7 +166,7 @@ Live events survive a Director restart or redeploy:
 - **Clients through a restart.** The proxy answers 404, 502 or 503 while the Director restarts; the `bench` CLI treats only the Director's own JSON 404 as "gone", waits out the rest with backoff for up to 10 minutes, and relaunches a seat session that ended meanwhile without counting it. The scripted agent retries for 10 minutes.
 - **Tested** by `packages/director/test/hosted-e2e.sh` (SIGTERM mid-draft, SIGKILL mid-game, phase-server restart mid-game, a downtime past the grace that voids and replays a game) and `durable.test.ts` (a draft cut at any point resumes to the identical log).
 
-### Matchmaking lobby (built, `packages/director/src/lobby.ts`, `lobby-http.ts`; contract in docs/LOBBY.md)
+### Matchmaking Lobby (`packages/director/src/lobby.ts`, `lobby-http.ts`; contract in docs/LOBBY.md)
 
 Contributors with 1–4 agents queue per condition set; 8 present seats get a ready check; a confirmed table fires as an 8-seat Swiss event on this Director.
 - **Owner: the Director, not the Hub.** A lobby schedules live tables, and tables live on a Director. Firing is then a local call through the same admission control, checkpoint and seat tokens as any hosted event; holders' long-polls end at the process that fires; draining and restarts reuse the Director's durability. The Hub stays the source of truth for results only, and introspects contributor tokens as before. With several workers, the lobby moves to a coordinator (the Hub or a small service) that fires tables on the least-loaded worker; the public API stays the same.
@@ -177,15 +177,13 @@ Contributors with 1–4 agents queue per condition set; 8 present seats get a re
 - **Public API:** `/api/lobby*` reads are cached (5 s; stats 60 s), CORS `*`, under the shared per-IP API rate limit, and carry no contributor ids, IPs or tokens; handles only for contributors who show them.
 - **Tested** by `lobby.test.ts` (ready check and backfill, presence, per-contributor cap, expiry, cooldowns, reliability, scheduled tables, draining, stats, restart durability) and `packages/director/test/lobby-e2e.sh` (three contributors queue 8 scripted seats with `bench lobby join`; the table fires, the event completes, the handed-off bundle passes the Hub's checks; in CI).
 
-## 6. Today (hosted dev stack)
-
-Not public yet: the hosts below are unlisted development hosts, and the site's `/agent-bench` pages are behind a default-off flag.
+## 6. The Hosted Stack
 
 - **One Coolify application per instance, built from this repository** (`deploy/compose.yaml`; Coolify deploys the instance's branch, `deploy/dev` or `deploy/prod`, and `deploy/deploy.sh` promotes commits to it; OPERATIONS "Deploying"):
   - `phase-server` (the pinned engine image);
   - `director` (`bench.mtgdecktools.com`): events created over the API by the admin or by contributors with a Hub `play` token, the lobby, admission control, a queue and quotas (§5); logs and private checkpoints in the `director-runs` volume; live events survive restarts and redeploys (§5);
   - `hub` (`bench-data.mtgdecktools.com`) and `hub-db` (Postgres 17).
-- **Director → Hub hand-off** (`packages/director/src/hub-handoff.ts`): after `event_end` and `summary.json`, the Director POSTs the event's bundle to `HUB_URL/api/internal/events` with `HUB_SERVICE_TOKEN` (both set by the compose file), retries with backoff, logs each attempt as a `hub_handoff` record, and resends unfinished hand-offs at start. `event_start.boosters` names the booster data for exact pack regeneration. Events from before the hand-off existed went in with `hub import` of pulled hosted runs.
+- **Director → Hub hand-off** (`packages/director/src/hub-handoff.ts`): after `event_end` and `summary.json`, the Director POSTs the event's bundle to `HUB_URL/api/internal/events` with `HUB_SERVICE_TOKEN` (both set by the compose file), retries with backoff, logs each attempt as a `hub_handoff` record, and resends unfinished hand-offs at start. `event_start.boosters` names the booster data for exact pack regeneration. Runs from before the hand-off existed went in with `hub import`.
 - **Where the site reads:** finished events from the Hub's `/data`; live events from the Director, which still writes its own report export to `/data` every 2 minutes while anything is running (live events included, for spectating).
 - **Submissions:** `bench submit` sends bundles to the Hub. The Director's older interim endpoint (`POST /api/submissions`, `SUBMIT_TOKENS`) still exists for compatibility and is off unless tokens are configured.
 - **Backups:** every volume is in the nightly encrypted backup, and the `hub-db` dump runs nightly at 02:20 (seven rolling days).
@@ -195,13 +193,8 @@ Not public yet: the hosts below are unlisted development hosts, and the site's `
 
 The load-test results are in §2 (`scripts/load-test.sh`). Rerun it after an engine upgrade or a change to the Director's game loop, and record the new numbers there with the date.
 
-## 8. Migration path
+## 8. What Comes Next
 
-1. **Done:**
-   - the Hub (`packages/hub`) with Postgres, deployed on the dev host; incremental JSON export; `hub import` of earlier runs;
-   - the hosted Director as "worker 1", handing finished events to the Hub (`POST /api/internal/events`);
-   - contributor tokens through GitHub sign-in and `bench login`; `bench submit` pointed at the Hub; Community labels;
-   - hosted Private Tables and the matchmaking lobby; event resume across restarts (§5);
-   - the nightly open dataset.
-2. **Launch:** make the repository and the site public (the owner's call), publish the CLI package (docs/RELEASING.md), production hosts.
-3. **Scale when needed:** more workers with a coordinator (§5), a CDN in front of the JSON, replay verification (needs upstream phase-rs seed and replay-log support).
+- **More workers** with a coordinator (§5) when one worker is no longer enough.
+- **A CDN** in front of the Hub's JSON.
+- **Replay verification** (the Replay-Checked label), once phase-rs supports seeded games and a server-side replay log.

@@ -2,9 +2,9 @@
 
 This page covers how to report a vulnerability, what we protect, and the controls on each exposed surface. It also tells self-hosters how to run their own Director safely.
 
-## Reporting a vulnerability
+## Reporting a Vulnerability
 
-**Please don't open a public issue for a security problem.** Report it privately through GitHub: on the repository page go to **Security → Report a vulnerability**, or open https://github.com/grpace/mtgdecktools-agent-bench/security/advisories/new. Only the project owner can read these reports.
+**Please don't open a public issue for a security problem.** Report it privately through GitHub: on the repository page go to **Security → Report a vulnerability**, or open https://github.com/grpace/mtgdecktools-agent-bench/security/advisories/new. Only we can read these reports.
 
 Include:
 - what is affected (Director, Hub, bench CLI, deploy files, the results export or the mtgdecktools.com pages)
@@ -17,7 +17,7 @@ Don't include real tokens. If you found a token or seat URL in the wild, say whe
 We aim to acknowledge reports within 3 days and to fix critical and high-severity issues before anything else. We credit reporters in the advisory and the changelog unless you'd rather we didn't.
 
 **Please don't:**
-- run load or denial-of-service tests against the hosted services (`*.mtgdecktools.com` and the dev stack `*.dev.greg.tech`)
+- run load or denial-of-service tests against the hosted services (`*.mtgdecktools.com` and our development hosts)
 - access other people's events, tokens or submissions
 - submit forged results to the hosted Hub
 
@@ -25,7 +25,7 @@ Test against your own `npm run up` stack instead. Everything the hosted stack ru
 
 **Supported versions:** the latest release and `main`. Fixes are not backported before 1.0.
 
-## What we protect
+## What We Protect
 
 | Asset | Why it matters |
 |---|---|
@@ -38,7 +38,7 @@ Test against your own `npm run up` stack instead. Everything the hosted stack ru
 
 The server never calls a model and holds no model API keys (CLAUDE.md). There is nothing of that kind to steal. Agents run in their owners' harnesses.
 
-## Threat model
+## Threat Model
 
 **Actors**
 
@@ -63,7 +63,9 @@ The server never calls a model and holds no model API keys (CLAUDE.md). There is
 - Rules bugs in phase-rs. Report those upstream.
 - Self-hosted stacks an operator deliberately exposes without TLS or auth.
 
-## Controls by surface
+## Controls by Surface
+
+The codes in parentheses (SEC-, HUB-, LOB-, PTS-, LOG- and so on) name a control where it lives in the code and in its regression tests (for example `packages/director/src/security.test.ts`), so you can find both with a search.
 
 ### Director (`packages/director`)
 
@@ -120,18 +122,18 @@ The server never calls a model and holds no model API keys (CLAUDE.md). There is
   - SQL goes only through parameterized tagged templates; `sql.unsafe` runs only the repository's own migration files.
 - **Terms (`src/terms.ts`):** hosted play and uploads need the current terms version accepted (`bench login`, `bench terms --accept`, or the button on `/account`); the Hub records each acceptance (`consents`). Introspection tells a Director, which refuses new tables with the Hub's message; `POST /api/submissions` and `POST /api/usage` answer `403` with it. Admin and service accounts are never asked. `HUB_TERMS_REQUIRED=0` turns the check off (tests only).
 - **`/data`:** every file goes through the shared scrubber before it is written (`scrubPublic`); malformed and traversal paths answer 404, ETag and gzip are supported, `X-Content-Type-Options: nosniff` is set on every response, and a stream error ends the response instead of the process.
-- **`/data/open/` (open dataset, docs/OPEN-DATA.md):** prebuilt static files only, never computed per request; the build runs once a night in a separate process at the lowest CPU and I/O priority, skips unchanged inputs and swaps the served tree atomically. Per IP: 60 requests a minute and 4 downloads at a time (429 with `Retry-After`). Files stream from disk (no buffering); single byte ranges only. Privacy: the redaction (`src/open-data/redact.ts`: attribution rewritten to salted keys, identifying keys dropped at any depth, every string through the shared scrubber, [Moderation and erasure](#moderation-and-erasure)) removes API keys and tokens, JWTs, paths, e-mail and IP addresses (v4 and v6), account ids and hidden handles from logs and notes; transcripts never enter it; a test scans every published byte of a fixture with planted secrets. A takedown or a hidden handle triggers an early rebuild and deletes every snapshot that held it.
+- **`/data/open/` (open dataset, docs/OPEN-DATA.md):** prebuilt static files only, never computed per request; the build runs once a night in a separate process at the lowest CPU and I/O priority, skips unchanged inputs and swaps the served tree atomically. Per IP: 60 requests a minute and 4 downloads at a time (429 with `Retry-After`). Files stream from disk (no buffering); single byte ranges only. Privacy: the redaction (`src/open-data/redact.ts`: attribution rewritten to salted keys, identifying keys dropped at any depth, every string through the shared scrubber, [Moderation and Erasure](#moderation-and-erasure)) removes API keys and tokens, JWTs, paths, e-mail and IP addresses (v4 and v6), account ids and hidden handles from logs and notes; transcripts never enter it; a test scans every published byte of a fixture with planted secrets. A takedown or a hidden handle triggers an early rebuild and deletes every snapshot that held it.
 - **Contributor points (`src/points.ts`, `src/contributors.ts`):**
   - **Attribution only from trusted data.** Hosted events credit the contributor ids the Director logged (lobby seats; the organizer of a Private Table). A community upload credits the uploader for every seat, whatever its log claims, so a forged log can't hand points to someone else. The lobby multiplier needs the hosted Director's hand-off (a lobby table it fired); an upload claiming a lobby table earns as a Private Table (PTS-3).
   - **The Hub's clock.** Ordering, the daily cap, the 7-day windows, admin bounty windows and seasons use the Hub's acceptance time (`decided_at`, else `received_at`), never the times inside a bundle, so backdating can't dodge the cap or take bounties (PTS-1). Record times in a bundle must be Unix milliseconds before 2100.
-  - **Anti-farming.** Points never reward wins (nothing to gain from throwing games or colluding). Only rated play earns: a seat with no rated games earns nothing, so a table of one model setup earns 0 (H2). Bounties need 2 rated games at that table and harness logs (on hosted tables: a seat the bench CLI launched); Needs Games only for listed, current models at an explicit effort, at most 3 per contributor and setup in 7 days. Seats without logs earn half (PTS-2). Only accepted events count: Smoke, dev, held, rejected and excluded events earn nothing, and the review queue holds a new contributor's first uploads. Mismatch seats (declared one model, ran another) earn nothing. Repeats of one setup in one set beyond what the data needs taper (half from the 9th seat in 7 days, a quarter from the 17th), there is a daily cap of 400 points, abandoned seats earn no seat points and lower a reliability multiplier, and hosted quotas (tables a day, lobby tables included; one continuous table) bound how fast anyone can play. Bounties are computed from public data and capped (admin bounties at 100 a seat). Residual risk: usage files and `effort_basis` are written by the contributor's own machine (LOG-1), so the logs rule raises the cost of lying without proving the model; several aged GitHub accounts (sybils) can each farm up to the cap; review, anomaly checks (duplicate decision streams, latencies) and takedowns are the backstop, and a takedown or exclusion removes the points at the next recompute.
+  - **Anti-farming.** Points never reward wins (nothing to gain from throwing games or colluding). Only rated play earns: a seat with no rated games earns nothing, so a table of one model setup earns 0. Bounties need 2 rated games at that table and harness logs (on hosted tables: a seat the bench CLI launched); Needs Games only for listed, current models at an explicit effort, at most 3 per contributor and setup in 7 days. Seats without logs earn half (PTS-2). Only accepted events count: Smoke, dev, held, rejected and excluded events earn nothing, and the review queue holds a new contributor's first uploads. Mismatch seats (declared one model, ran another) earn nothing. Repeats of one setup in one set beyond what the data needs taper (half from the 9th seat in 7 days, a quarter from the 17th), there is a daily cap of 400 points, abandoned seats earn no seat points and lower a reliability multiplier, and hosted quotas (tables a day, lobby tables included; one continuous table) bound how fast anyone can play. Bounties are computed from public data and capped (admin bounties at 100 a seat). Residual risk: usage files and `effort_basis` are written by the contributor's own machine (LOG-1), so the logs rule raises the cost of lying without proving the model; several aged GitHub accounts (sybils) can each farm up to the cap; review, anomaly checks (duplicate decision streams, latencies) and takedowns are the backstop, and a takedown or exclusion removes the points at the next recompute.
   - **Privacy.** The public boards and profiles carry handles, GitHub avatars and contribution counts only: no contributor ids, tokens, pending or rejected submissions. Contributors who hide their handle (`--hide-handle` in the lobby or the account setting) are left out of the boards and get no profile file or API answer (`404`, the same as an unknown handle); contributor files are cached for at most 60 s. Their private view (pending bundles, ledger lines, abandoned seats) is only on `/account` behind a GitHub session. The export never names an uploader (`source.json` keeps only the Hub id, which the export salts and hashes), and `GET /api/events/<id>` names the uploader only for contributors on the public leaderboard (PTS-4).
   - **Public API.** `GET /api/contributors`, `/api/contributors/<handle>` and `/api/bounties` are read-only, per-IP rate limited (120 a minute; IPv6 by /64), cached for 60 s (oldest entries evicted first) and validate the handle, season and offset parameters. `/api/events`, `/api/events/<id>` and `/health` have their own per-IP limit (HUB-16).
 - **Hostile text and requests** (HUB-22 to HUB-31): every text and JSON value reaches Postgres without NUL or lone surrogates (so one note can't stop a table's ingest); console lines are capped and terminal-safe, and the review CLI strips control characters; CSV cells that would start a spreadsheet formula get a leading `'` (Parquet keeps the exact text); failed token checks are limited to 60 a minute per address; a body still unread when an answer starts closes the connection; JSON and data answers carry a `default-src 'none'` CSP, and `/data` refuses dot segments.
 - **Intake on the event loop:** bundles are checked one at a time, with a short waiting line (`HUB_INTAKE_QUEUE`) and `429` beyond it, so one large bundle at a time holds the loop (HUB-8, mitigated; a worker thread is the full fix).
 - **GitHub sign-in and `/account`:** for self-serve tokens. It is off unless `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` are set. Over https the cookies are host-locked (`__Host-` names); signing out ends every session of the account (a session epoch); the token cap is checked and the token issued under a row lock.
 
-### The bench CLI and a Director it doesn't trust (`scripts/bench`)
+### The bench CLI and a Director It Doesn't Trust (`scripts/bench`)
 
 - **Nothing from a Director picks a path, a program, a model or an effort** (`trust.ts`):
   - Event ids must match the event-id pattern and seat names `^[\w.-]{1,40}$`. Every path built from them is resolved and must stay inside its folder.
@@ -150,15 +152,15 @@ The server never calls a model and holds no model API keys (CLAUDE.md). There is
 - **Harness logs (`bench attach-logs`):** a session counts for a seat only on a strong, unique match: a quarter (at least 3) of 32 sampled lines only that seat saw, in order, and none of another seat's or another event's lines. SQLite stores are read from a private snapshot that is removed even on Ctrl-C. Only ids, levels and counts are kept, never text or paths. What it writes is **self-attested** (`provenance.self_attested`, `evidence.kind: "cli-local-logs"` in the bundle): it was read by the contributor's CLI from files the contributor controls, so it never counts as evidence the Director observed.
 - **Not distributed on npm.** Every instruction uses a clone of this repository (`npm --prefix ~/mtgdt-bench run -s bench --`); no instruction runs `npx` or installs an npm package (docs/RELEASING.md).
 
-### Results export and site (`packages/site`, mtgdecktools.com)
+### Results Export and Site (`packages/site`, mtgdecktools.com)
 
-- **Public text:** `build-data.ts` (the hosted Director's own `/data`) writes every file through the shared scrubber and applies the Hub's moderation list (`MTGDT_MODERATION_FILE`: taken-down events left out, hidden notes replaced, hidden handles dropped, erased contributors anonymized). Automatic highlights and model-page notes take only notes that pass the content filter ([Moderation and erasure](#moderation-and-erasure)).
+- **Public text:** `build-data.ts` (the hosted Director's own `/data`) writes every file through the shared scrubber and applies the Hub's moderation list (`MTGDT_MODERATION_FILE`: taken-down events left out, hidden notes replaced, hidden handles dropped, erased contributors anonymized). Automatic highlights and model-page notes take only notes that pass the content filter ([Moderation and Erasure](#moderation-and-erasure)).
 - The static report escapes every interpolated string (`esc()`), embeds JSON with `<` escaped, and builds card-image URLs with `encodeURIComponent`.
 - **The loader distrusts logs:**
   - It drops events whose id or set code isn't path-safe.
   - It coerces every number that reaches markup or a loop, de-duplicates standings, and caps expansion loops.
   - It uses bounded regexes on agent text.
-- **mtgdecktools.com** renders agent text as React text nodes. Markdown is used only for first-party content, without raw HTML. The pages sit behind a compile-time flag that is off by default.
+- **mtgdecktools.com** renders agent text as React text nodes. Markdown is used only for first-party content, without raw HTML.
 
 ### Deployment (`deploy/`, `Dockerfile`)
 
@@ -183,7 +185,7 @@ The server never calls a model and holds no model API keys (CLAUDE.md). There is
   - phase-server's entrypoint starts as root only to chown its data directory, then drops to its own user (uid 999) with gosu; it keeps `CHOWN`, `SETUID` and `SETGID` and nothing else.
   - Coolify puts every service variable, secrets included, into every container. phase-server is therefore started through `env -i` with only its image defaults, so the third-party engine never sees our secrets, and the upstream of its unused `/jev/systemone` relay points at a closed local port.
 
-### Supply chain and CI
+### Supply Chain and CI
 
 - `npm ci` from a committed lockfile. CI runs `npm audit --omit=dev --audit-level=high`, and Dependabot proposes minor and patch updates monthly.
 - **GitHub Actions:**
@@ -192,7 +194,7 @@ The server never calls a model and holds no model API keys (CLAUDE.md). There is
   - The one exception is the weekly dependency workflow's pull-request step (`deps.yml`, `data-pr` and `phase-pr`). It gets `contents`, `pull-requests` and `actions` write, but runs only `git` and `gh`: no `npm ci`, no project code, no upstream image. It takes the change as a patch from the read-only job that did the work, refuses one touching anything outside the refreshed paths (or adding executables or symlinks), and hands the token to `git push` through a credential helper, never `.git/config`.
   - Triggered by `pull_request`, never `pull_request_target`, so a fork's code never runs with secrets. The workflows use no secrets.
 
-## Moderation and erasure
+## Moderation and Erasure
 
 Agent text, deck names and handles are public, so everything that publishes them shares one module, `packages/director/src/public-text.ts` (docs/legal/CONTENT-POLICY.md, docs/legal/PRIVACY.md):
 
@@ -202,9 +204,9 @@ Agent text, deck names and handles are public, so everything that publishes them
 - **Hosted Directors** read the list (`GET /api/internal/moderation`, service token) every minute and on `POST /api/admin/moderation/sync`: a taken-down event's run folder and exported files are deleted, it leaves `/api/events` and the spectator stream, and the export is rebuilt; hidden text and erasures apply to the export and to replays (a finished event touched by a hide is replayed from its log, not from memory). The last list survives restarts (`runs/.moderation.json`) and stays in force while the Hub is unreachable.
 - **Erasure** (`npm run hub -- contributor erase <handle> --reason …`, `POST /api/admin/contributors/<handle>/erase`): the account loses its GitHub id, login, avatar, handle and tokens; its Hub id is replaced by a random anonymous id in every event log (a new contributor key, so old and new exports can't be joined); points and profile disappear; every output is rebuilt. `--remove-events` also takes down the events the contributor uploaded or ran as Private Tables, with their bundles. What remains is listed in PRIVACY.md "Erasure". Tests: `packages/hub/test/moderation-db.test.ts`, `packages/site/src/moderation.test.ts`, `packages/director/src/public-text.test.ts`.
 
-## What a malicious seat can and can't do
+## What a Malicious Seat Can and Can't Do
 
-Someone who controls a seat (or rewrites the bench CLI) can send any bytes to that seat's URL. Our pre-release red-team pass tested this against a local stack. In short:
+Someone who controls a seat (or rewrites the bench CLI) can send any bytes to that seat's URL. We test this against a local stack (`scripts/security/`, `packages/director/src/security.test.ts`). In short:
 
 - **It can't run code** on the Director or the Hub, read or write their files, reach phase-server, Postgres or any other internal service, or make either server fetch a URL. Its input is checked against fixed schemas, used only as data, and turned into engine actions the Director builds and the engine checks again.
 - **It can't see** other seats' hands, decks, notes or identities, and its own notes never reach other agents.
@@ -212,7 +214,7 @@ Someone who controls a seat (or rewrites the bench CLI) can send any bytes to th
 - **It can annoy, within limits:** requests, sessions, refused answers, rules reports, long-polls and log growth are all capped per seat or per address, so it can't slow other tables, crash the process or push its table's log past what the Hub accepts.
 - **Its words reach people.** Notes and deck names are public in the spectator stream and the export after the fairness delay. They are cleaned of control characters and always rendered as text, never as markup. They can still say anything, so treat them like any other user content.
 
-## Running your own Director safely
+## Running Your Own Director Safely
 
 - **Keep the default bind** (`127.0.0.1`).
 - **If agents elsewhere must reach it,** put a TLS reverse proxy in front.

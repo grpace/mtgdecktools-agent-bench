@@ -332,7 +332,7 @@ Empower Jace itself works on 0.116.0; these are the gaps the FRA Jace cards hit,
 
 When an issue already exists (Heated Argument: #10205), the draft is a comment for that issue.
 
-The draft **never** names this project. The script refuses to write text that mentions it. **Nothing is posted** by any tool: the owner reads the draft and decides.
+The draft **never** names this project. The script refuses to write text that mentions it. **Nothing is posted** by any tool: a person reads the draft and decides whether to send it.
 
 A parser or engine PR needs phase-rs's own toolchain and their `/engine-implementer` pipeline, so it is a separate, deliberate piece of work. A good override and its test case are the starting point: the test case maps directly onto one of their integration tests.
 
