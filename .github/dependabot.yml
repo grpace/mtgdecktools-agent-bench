@@ -24,13 +24,20 @@ updates:
   # Base images pinned by digest (Dockerfile; deploy/compose.yaml hub-db). The engine image (phase-server) is upgraded
   # by .github/workflows/deps.yml after a smoke event, never here. CI's Postgres service (ci.yml) is bumped by hand to
   # the hub-db digest.
+  # Digest and minor/patch updates only: a major (Node past the 22 runtime, Postgres 18 over a 17 data volume, which it
+  # can't open) is a migration, done by hand.
   - package-ecosystem: docker
     directory: /
     schedule:
       interval: monthly
+    ignore:
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
   - package-ecosystem: docker-compose
     directory: /deploy
     schedule:
       interval: monthly
     ignore:
       - dependency-name: '*phase-server*'
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
