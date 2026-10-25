@@ -45,8 +45,9 @@ if ($cfg['delete'] ?? false) {
     return;
 }
 
+// A new project comes with a `production` environment.
 $project ??= Project::create(['name' => $name, 'description' => 'MTG Deck Tools Agent Bench', 'team_id' => $teamId]);
-$environment ??= $project->environments()->create(['name' => 'production']);
+$environment ??= $project->environments()->where('name', 'production')->first() ?? $project->environments()->create(['name' => 'production']);
 $server = Server::whereTeamId($teamId)->where('name', 'localhost')->firstOrFail();
 $destination = $server->destinations()->first();
 $source = GithubApp::where('name', $cfg['github_app'])->firstOrFail();
@@ -119,18 +120,18 @@ ScheduledTask::updateOrCreate(
         'enabled' => true, 'timeout' => 900, 'team_id' => $teamId],
 );
 
-// Coolify stores a compose default (${VAR:-default}) as the variable's value when it first parses the file and keeps
-// it, so a later change to the default in compose.yaml never reaches the instance (docs/OPERATIONS.md "Coolify
-// variables"). Report every stored value that differs from the shipped default; names only for secrets.
+// Coolify creates an empty variable for each ${VAR:-default} in compose.yaml; empty, the compose default applies, so a
+// new default ships with its commit. A value set in Coolify overrides it for good (docs/OPERATIONS.md "Coolify
+// variables"): report each one that differs from the shipped default; names only for secrets.
 preg_match_all('/\$\{([A-Z0-9_]+):-([^}$]*)\}/', $app->docker_compose_raw, $m, PREG_SET_ORDER);
 foreach ($m as [, $key, $default]) {
     if (array_key_exists($key, $cfg['env']) || str_starts_with($key, 'GITHUB_')) {
         continue;
     }
     $row = $app->environment_variables()->where('key', $key)->first();
-    if ($row && (string) $row->value !== $default) {
+    if ($row && (string) $row->value !== '' && (string) $row->value !== $default) {
         $secret = preg_match('/TOKEN|SECRET|PASSWORD|SALT|KEY/', $key);
-        echo "warning: env {$key} is ".($secret ? 'set' : "\"{$row->value}\"")." in Coolify, but compose.yaml's default is ".($secret ? 'different' : "\"{$default}\"")."\n";
+        echo "note: env {$key} is ".($secret ? 'set' : "\"{$row->value}\"")." in Coolify, overriding compose.yaml's default ".($secret ? '' : "\"{$default}\"")."\n";
     }
 }
 
