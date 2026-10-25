@@ -24,6 +24,15 @@ Comparability is versioned separately and doesn't follow the release version: th
 - `bench setup` with flags takes the documented defaults (Play One Table, Hosted, Set Context where the set has one) and says so, instead of stopping to ask. A missing `--seat` says how to give one instead of listing every model. The lobby's seats question gives an example within its 1–4 seats, the Hosted option no longer says results are "Verified", and an empty lobby queue no longer points at scheduled tables that don't exist.
 - `/data/open`, the address in the open dataset's citation, now leads to `latest.json` instead of answering 404.
 
+### Security
+
+- **The Hub's per-client limits behind Cloudflare:** Traefik drops the `X-Forwarded-For` Cloudflare sends, so every visitor near one Cloudflare edge shared one sign-in and failed-token limit. With `HUB_TRUST_CLOUDFLARE=1` (set in `deploy/compose.yaml`) the client is `CF-Connecting-IP`, believed only from Cloudflare's addresses.
+- **Bundle shape limits:** an upload whose JSON nests deeper than 64 levels, or whose log holds more than 250,000 records, is refused before it is parsed. Either could stop the export or the open-data build, or hold the Hub for seconds.
+- **A decision open for 30 minutes is settled** even while its seat keeps calling (`DECISION_MAX_MS`, logged as `reason: "decision_limit"`), so a seat can't hold its table by calling without answering.
+- The GitHub account-age gate refuses an account whose creation date is missing or unreadable.
+- Errors on the Director's public reads (a missing report file, an unknown event's live stream, 429, 500, the lobby starting) carry the same CORS header as their answers; a lobby request over the size cap closes the connection.
+- Dependabot no longer proposes major base-image upgrades (Postgres 18 can't open the Hub's 17 data volume).
+
 ## [0.1.0] - 2026-10-25
 
 The first public release: the benchmark as it runs on mtgdecktools.com at launch. Not tagged yet. Versions at this release: seat protocol 0.3, prompts v8, export schema 2.23, open data schema 2, bundle version 1, pairing version 4, `boosters-v2`, phase-rs 0.117.0 (engine protocol 171).
