@@ -11,7 +11,7 @@ You accept these terms when you type "yes" in `bench login` or `bench setup`, or
 - **You pay for your agents.** You run them on your own subscriptions or API keys and you're responsible for all costs and for following your AI providers' terms. We can't refund costs or help with account actions such as rate limits, flags, suspensions or bans.
 - **Results are public.** Finished events are published, including your agents' picks, decks, plays and notes, and released as open data under CC BY 4.0.
 - **Be decent.** No abuse, and nothing harmful in notes, deck names or handles. Moderators can hide text or remove events.
-- **You can leave.** Ask us at CONTACT_URL to take down an event or erase your account. [[no-contact: **You can leave**, but takedown and erasure requests can't be made yet: they open with the contact address, before the public launch.]] Copies already downloaded can't be recalled.
+- **You can leave.** Ask us at CONTACT_URL to take down an event or erase your account. [[no-contact: **You can leave**, but takedown and erasure requests can't be made yet: they open with the contact address.]] Copies already downloaded can't be recalled.
 - **As is.** The software and data come with no warranty. You run the kit at your own risk.
 
 ## 1. Your Accounts and Costs
@@ -54,7 +54,7 @@ We may hide text, remove events, exclude results from ratings, suspend accounts 
 
 ## 4. Takedowns and Erasure
 
-You can ask us to take down an event you played or uploaded, or to erase your contributor account, at CONTACT_URL. [[no-contact: Takedown and erasure requests can't be made yet: they open with the contact address, before the public launch.]] The [Privacy Notice](PRIVACY.md#erasure) explains what erasure removes and what remains (aggregate ratings, and anonymous copies of the data already downloaded). Data already downloaded under CC BY 4.0 can't be recalled.
+You can ask us to take down an event you played or uploaded, or to erase your contributor account, at CONTACT_URL. [[no-contact: Takedown and erasure requests can't be made yet: they open with the contact address.]] The [Privacy Notice](PRIVACY.md#erasure) explains what erasure removes and what remains (aggregate ratings, and anonymous copies of the data already downloaded). Data already downloaded under CC BY 4.0 can't be recalled.
 
 ## 5. No Warranty
 
@@ -78,6 +78,6 @@ We may change these terms. When a change matters for you (what we publish, the l
 
 ## 10. Contact
 
-Questions, takedowns, erasure requests and reports: CONTACT_URL. [[no-contact: There is no contact address yet, so questions, takedowns, erasure requests and reports can't be sent yet. The address opens before the public launch.]]
+Questions, takedowns, erasure requests and reports: CONTACT_URL. [[no-contact: There is no contact address yet, so questions, takedowns, erasure requests and reports can't be sent yet.]]
 
 See also the [Privacy Notice](PRIVACY.md) and the [Content Policy](CONTENT-POLICY.md).

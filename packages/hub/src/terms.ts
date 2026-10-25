@@ -22,7 +22,7 @@ export const CONTACT_URL = (process.env.MTGDT_CONTACT_URL ?? '').trim() || CONTA
 /** Whether a contact address is configured. Until it is, takedown, erasure and report requests can't be made yet. */
 export const HAS_CONTACT = CONTACT_URL !== CONTACT_URL_PLACEHOLDER;
 /** What readers see instead of a request route while no contact address is configured (open data card, CLI). */
-export const NO_CONTACT_REQUESTS = "Takedown and erasure requests can't be made yet: they open with the contact address, before the public launch.";
+export const NO_CONTACT_REQUESTS = "Takedown and erasure requests can't be made yet: they open with the contact address.";
 
 /**
  * docs/legal/*.md as readers get it (the Hub's /legal/*; the site's pages do the same in LegalPage.tsx):

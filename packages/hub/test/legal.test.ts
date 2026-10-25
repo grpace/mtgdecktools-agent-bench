@@ -26,7 +26,7 @@ test('no contact address: every request sentence says it can’t be made yet; no
   assert.doesNotMatch(terms, /You can ask us to take down/, 'no "ask us" without an address');
   assert.doesNotMatch(terms, /Ask us to take down/, 'nor in the short version');
   assert.match(terms, /- \*\*You can leave\*\*, but takedown and erasure requests can't be made yet/);
-  assert.match(terms, /Takedown and erasure requests can't be made yet: they open with the contact address, before the public launch\./);
+  assert.match(terms, /Takedown and erasure requests can't be made yet: they open with the contact address\./);
   assert.match(terms, /## 10\. Contact\n\nThere is no contact address yet/, 'the Contact section says so');
 });
 
