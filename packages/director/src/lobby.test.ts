@@ -138,7 +138,7 @@ await test('seat identity: canonical ids, unknown models and harnesses refused',
   assert.equal(resolveSeatIdentity({ harness: 'claude-code', model: 'claude-opus-5-5', effort: 'extreme' }).ok, false);
   const s = resolveSeatIdentity({ harness: 'script' });
   assert.ok(s.ok && s.test && s.model_id === 'random');
-  // The public lobby needs a concrete effort for LLM seats (identity = harness + model + effort).
+  // The public lobby needs a concrete effort for LLM seats (identity = model + effort).
   for (const effort of [undefined, 'default', 'unknown']) {
     const r2 = resolveSeatIdentity({ harness: 'claude-code', model: 'claude-opus-5-5', effort }, { requireEffort: true });
     assert.ok(!r2.ok && r2.field === 'effort', `effort ${effort} should be refused`);

@@ -75,7 +75,7 @@ export interface LobbyConfig {
   /** Scripted test seats in public queues (LOBBY_ALLOW_SCRIPT=1, development only; LOB-4). */
   allowScript: boolean;
   /**
-   * Most seats of one setup (harness + model + effort) at a forming table (LOBBY_MAX_SAME_SETUP; docs/LOBBY.md §10).
+   * Most seats of one setup (model + effort; the harness is never part of it) at a forming table (LOBBY_MAX_SAME_SETUP; docs/LOBBY.md §10).
    * At half the table or fewer, most matches are between different setups (a 4+4 table rates about 10.5 of 12 matches
    * under Swiss v3; docs/LOBBY.md §10).
    * Entries over it keep their place and go to the next table.

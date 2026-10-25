@@ -2,7 +2,7 @@
  * Make Your Table Count: how many rated games a planned table can produce, and mixes that produce more, built from
  * what this person can actually run (docs/MULTI-PROVIDER.md, METHODOLOGY §2 and §3.2).
  *
- * Only games between two different seat identities (harness + model + effort) are rated. The Swiss pairs two seats of
+ * Only games between two different seat identities (model + effort; the harness is never part of it) are rated. The Swiss pairs two seats of
  * the same identity only when it can't avoid it (packages/director/src/pairings.ts), so the number of rated matches
  * follows from the table's mix. packages/director/src/rated-estimate.ts runs the real pairing function over simulated
  * results (seeded, so the answer is stable; cached per composition) and counts the matches between different setups;

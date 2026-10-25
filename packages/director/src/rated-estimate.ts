@@ -1,5 +1,5 @@
 /**
- * How many matches of a Swiss are rated: only games between two different setups (harness + model + effort) are
+ * How many matches of a Swiss are rated: only games between two different setups (model + effort; the harness is never part of it) are
  * rated (METHODOLOGY §2.3–2.4), and the Swiss pairs two seats of one setup only when it can't avoid it
  * (pairings.ts). How often it can't depends on the results, so we run the real pairing function, at the current
  * PAIRING_VERSION, over simulated results and count the matches between different setups.

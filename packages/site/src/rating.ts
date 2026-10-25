@@ -4,7 +4,7 @@
  *
  *   P(a beats b) = σ(θ_a − θ_b + h·s + β·x)
  *
- * - θ: one strength per seat identity (harness + model + effort), natural log-odds units internally, reported as Elo
+ * - θ: one strength per seat identity (model + effort; the harness is never part of it), natural log-odds units internally, reported as Elo
  *   (1500 + 400/ln 10 · θ), centered so the unweighted mean of the identities in each connected group is 1500.
  * - h: play/draw advantage (s = +1 when a was on the play, −1 when b was, 0 when unknown). Fitted only when at least
  *   one game records who was on the play.
