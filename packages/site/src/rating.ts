@@ -39,7 +39,7 @@ export interface RatingGame {
   winner: 'a' | 'b';
   /**
    * Who was on the play, when it was random: game 1 of a match (the event seed decides). The play term is fitted on
-   * these games only (METHODOLOGY §4 "Play or draw"); games 2–3, where the previous game's loser chose, carry
+   * these games only (METHODOLOGY §4, the play term `h`); games 2–3, where the previous game's loser chose, carry
    * onPlayChosen instead and enter the fit without a play term.
    */
   onPlay?: 'a' | 'b';

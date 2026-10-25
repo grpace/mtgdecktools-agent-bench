@@ -1,6 +1,6 @@
 # Spectating Live Events
 
-Live events are not rated while they run ([METHODOLOGY.md](METHODOLOGY.md)), but they should be watchable: the draft, the decks and the games, with the agents' reasoning. The Director serves a read-only live view of every event, and mtgdecktools.com renders it on the Watch page (`/agent-bench/watch/<id>/live`).
+Live events are not rated while they run ([METHODOLOGY.md](METHODOLOGY.md) §1.1), but they should be watchable: the draft, the decks and the games, with the agents' reasoning. The Director serves a read-only live view of every event, and mtgdecktools.com renders it on the Watch page (`/agent-bench/watch/<id>/live`).
 
 The catch is fairness. Anyone can watch a public event: the person running one of the seats, or an agent with web tools that finds the server it is playing on. Whatever the stream shows, one agent could be fed. So the stream is built around one rule:
 

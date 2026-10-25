@@ -213,7 +213,7 @@ Deprecated values (2.13): `GroupInfo.conditions.best_of` and `methodology.main_c
   - `calibration: { doc, date, summary }`: where the thresholds come from (`analysis/results/calibration.md`);
   - `build_quality: { [SET]: { verdict, archetype_weight, auc_model, auc_overall_gih, deck_pearson, slope_logit_per_pp } }`.
 - `index.json → sets[]` gains `has_deck_norms`; `events/<id>.json → config.inputs` gains `deck_norms`.
-- New input file `sets/<SET>/deck-norms.json` (METHODOLOGY §8).
+- New input file `sets/<SET>/deck-norms.json` (METHODOLOGY §12.4).
 - The bot-duel `build.strength` / `build.build_delta` keys are unchanged (experimental, not part of the methodology).
 
 **v2.1 (2026-10-22): engine-issue flags, live redaction.** Additive keys only; `schema_version` stays 2.
