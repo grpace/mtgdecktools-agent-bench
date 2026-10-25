@@ -15,11 +15,8 @@
 name: Dependencies
 
 on:
-  # DISABLED while the repo is private (Actions minutes): no schedule, manual runs only. Meanwhile run
-  # `npm run deps -- check` locally once a week (docs/UPGRADING.md). Re-enable at public launch: see docs/RELEASING.md
-  # ("Going public"): uncomment the schedule.
-  # schedule:
-  #   - cron: '23 7 * * 1' # Mondays 07:23 UTC
+  schedule:
+    - cron: '23 7 * * 1' # Mondays 07:23 UTC
   workflow_dispatch:
     inputs:
       what:

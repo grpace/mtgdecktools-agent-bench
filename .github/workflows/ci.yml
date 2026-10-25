@@ -4,18 +4,16 @@
 # main only, to keep Actions minutes modest while the repo is private. No LLM, no secrets, no deploys.
 name: CI
 
-# DISABLED while the repo is private (Actions minutes): only a manual run starts it. Meanwhile CI is
-# scripts/ci-local.sh (the same jobs). Re-enable at public launch: see docs/RELEASING.md ("Going public"):
-# uncomment push and pull_request below.
+# Public: free standard runners. scripts/ci-local.sh runs the same jobs locally (and stamps commits for deploy.sh).
 # When enabled, only prose no test or build reads is skipped. Tests read prompts/*.md (the comparability hash),
 # sets/*/primer.md, docs/OPEN-DATA.md, docs/notes/ and docs/METHODOLOGY.md (hashed into every export and shipped in
 # the image), and `deps -- verify` covers analysis/, so a change to any of them runs CI.
 on:
-  # push:
-  #   branches-ignore: ['dependabot/**'] # tested by their pull request
-  #   paths-ignore: ['README.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'CODE_OF_CONDUCT.md', 'LICENSE', 'NOTICE', 'docs/spikes/**', 'docs/LAUNCH-CHECKLIST.md']
-  # pull_request:
-  #   paths-ignore: ['README.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'CODE_OF_CONDUCT.md', 'LICENSE', 'NOTICE', 'docs/spikes/**', 'docs/LAUNCH-CHECKLIST.md']
+  push:
+    branches-ignore: ['dependabot/**'] # tested by their pull request
+    paths-ignore: ['README.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'CODE_OF_CONDUCT.md', 'LICENSE', 'NOTICE', 'docs/spikes/**', 'docs/LAUNCH-CHECKLIST.md']
+  pull_request:
+    paths-ignore: ['README.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'CODE_OF_CONDUCT.md', 'LICENSE', 'NOTICE', 'docs/spikes/**', 'docs/LAUNCH-CHECKLIST.md']
   workflow_dispatch:
 
 permissions:
