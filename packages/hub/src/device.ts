@@ -44,6 +44,11 @@ export interface DeviceAnswer {
 export class DeviceFlow {
   private sessions = new Map<string, DeviceSession>();
   private starts = new RateLimiter(10, 15 * 60_000);
+  /**
+   * Starts from everyone together: each one costs a call to GitHub on our app's rate limit and a session slot, so
+   * clients with many addresses (an IPv6 prefix has billions) can't fill the table or exhaust GitHub's limit (HUB-35).
+   */
+  private allStarts = new RateLimiter(60, 10 * 60_000);
   private polls = new RateLimiter(120, 60_000);
 
   constructor(private cfg: HubConfig, private sql: Sql) {}
@@ -61,6 +66,9 @@ export class DeviceFlow {
     const ip = clientIp(req, this.cfg.trustProxy);
     if (!this.starts.take(`ip:${ip}`)) {
       return { http: 429, body: { error: 'too many sign-in attempts from your network; wait a few minutes' }, headers: { 'Retry-After': String(Math.max(1, this.starts.retryAfter(`ip:${ip}`))) } };
+    }
+    if (!this.allStarts.take('all')) {
+      return { http: 429, body: { error: 'too many sign-ins are starting right now; try again in a minute' }, headers: { 'Retry-After': String(Math.max(1, this.allStarts.retryAfter('all'))) } };
     }
     this.prune();
     if (this.sessions.size >= MAX_SESSIONS) return { http: 503, body: { error: 'too many sign-ins in progress; try again in a few minutes' }, headers: { 'Retry-After': '60' } };

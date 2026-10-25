@@ -13,6 +13,7 @@ import type { TableDef } from '../src/open-data/tables.js';
 import { clientIp, isCloudflare } from '../src/ratelimit.js';
 import { jsonDepth, SHAPE_LIMITS, shapeErrors } from '../src/shape.js';
 import { githubRefusal } from '../src/account.js';
+import { DeviceFlow } from '../src/device.js';
 
 const MB = 2 ** 20;
 const ok = (files: Record<string, string>) => packTarGz(new Map(Object.entries(files).map(([k, v]) => [k, Buffer.from(v)])));
@@ -171,4 +172,15 @@ test('HUB-34: the GitHub account-age gate fails closed', () => {
   assert.equal(githubRefusal(cfg(30), user(undefined))?.title, 'Account Too New', 'no creation date: refused');
   assert.equal(githubRefusal(cfg(30), user('not a date'))?.title, 'Account Too New', 'an unreadable date: refused');
   assert.equal(githubRefusal(cfg(0), user(undefined)), undefined, 'the gate off (0): anyone passes');
+});
+
+test('HUB-35: device sign-in starts are limited for everyone together, not only per address', async () => {
+  // GitHub is unreachable here (a closed port): every start that gets past the limits answers 502.
+  const cfg = { github: { clientId: 'cid', oauthUrl: 'http://127.0.0.1:9' }, trustProxy: false } as unknown as ConstructorParameters<typeof DeviceFlow>[0];
+  const flow = new DeviceFlow(cfg, {} as ConstructorParameters<typeof DeviceFlow>[1]);
+  const from = (i: number) => ({ headers: {}, socket: { remoteAddress: `2001:db8:0:${i.toString(16)}::1` } }) as unknown as Parameters<DeviceFlow['start']>[0];
+  const codes: number[] = [];
+  for (let i = 0; i < 61; i++) codes.push((await flow.start(from(i))).http);
+  assert.deepEqual([...new Set(codes.slice(0, 60))], [502], '60 starts from 60 different /64s reach GitHub');
+  assert.equal(codes[60], 429, 'the 61st is held back, whatever its address');
 });
