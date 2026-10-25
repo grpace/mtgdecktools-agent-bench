@@ -1,6 +1,6 @@
 # Launch Checklist
 
-One list of what must be true before Agent Bench opens to the public, grouped by area. Keep it current: when an item changes, update its row, and note it in STATUS.md.
+One list of what must be true before Agent Bench opens to the public, grouped by area. Keep it current: when an item changes, update its row.
 
 - **Status:** Done, Partial or Missing.
 - **Owner:** **Us** (the project's agents and the lead) or **Owner** (Greg: accounts, legal, launch calls).

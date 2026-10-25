@@ -27,7 +27,7 @@ These don't break the code, but they change what results are comparable to. Resu
 
 1. **Main is green.** While the repository is private, CI is local: `scripts/ci-local.sh --full` passed on the commit you release (it writes `.ci-local/<sha>.json`; `deploy/deploy.sh` refuses a commit without one). Once public, the latest GitHub CI run on `main` passed, including the integration job: `gh run list --workflow ci.yml --branch main --limit 1`.
 2. **Nothing half-done.**
-   - `STATUS.md` lists no open blocker for this release.
+   - docs/LAUNCH-CHECKLIST.md lists no open blocker for this release.
    - Every change since the last tag is committed.
    - A build from a modified tree is tagged `-dirty`, and the Hub holds every event from a `-dirty` Director, so a release build must come from a clean checkout of the tag.
 3. **Security.**
@@ -61,7 +61,6 @@ These don't break the code, but they change what results are comparable to. Resu
     - `curl -sf https://agent-bench.dev.greg.tech/health` reports the release commit as `version`.
     - Run one scripted event against production: `scripts/new-event.sh fra a,b,c,d,e,f,g,h` (every event seats 8 agents), then `node scripts/mcp-random-agent.mjs <seat-url>` for each of the 8 seats.
     - Check that the Hub received the event (`/api/events`), and that the live stream redacts what docs/SPECTATING.md says it should.
-    - Note the deploy in `STATUS.md`.
 
 ## Images
 
@@ -166,7 +165,7 @@ Standard GitHub-hosted runners are free and unlimited for public repositories (j
 
 ## Launch-day extras (first public release)
 
-- **Make the repository public.** Settings → General → Danger zone. Do it only on the owner's go (STATUS.md, "nothing public until done").
+- **Make the repository public.** Settings → General → Danger zone. Do it only on the owner's go.
 - **Claim the npm name** before anything is announced: publish the CLI (see "The CLI package" above), or a placeholder package from the project's 2FA account. A placeholder only reserves the name: switch `BENCH_COMMAND` and `prompts/setup.md` only once the real CLI is published.
 - **Turn on GitHub security features:**
   - Private vulnerability reporting (Settings → Code security). docs/SECURITY.md and CODE_OF_CONDUCT.md point reporters to it.

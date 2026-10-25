@@ -73,7 +73,7 @@ Nothing from dev is copied (LAUNCH-CHECKLIST B-11). Dev stays up for testing.
      `npm run bench -- setup --dry-run …` for one table: accepted, nothing created.
 6. **Owner + us: the seed tables, on production, before anyone can see it.** The site is still off, so nothing is
    public yet. One or two FRA Private Tables (Set Context, manual mana), each with **8 different setups** (the FRA
-   roster in docs/notes/launch-season.md: Claude, Gemini, Grok, GPT, DeepSeek), started with `bench setup` against
+   roster in our launch-season notes, kept privately: Claude, Gemini, Grok, GPT, DeepSeek), started with `bench setup` against
    production. Watch the first one live; start the second when it looks right. Check: each event ends `complete`, the
    Hub's `/data/index.json` lists it, the board has a row per setup (hollow: one contributor, so provisional), and
    the game pages step through with the board. If something is wrong, fix it and void the event

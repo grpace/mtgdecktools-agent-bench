@@ -13,9 +13,9 @@ name: CI
 on:
   # push:
   #   branches-ignore: ['dependabot/**'] # tested by their pull request
-  #   paths-ignore: ['README.md', 'STATUS.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'CODE_OF_CONDUCT.md', 'LICENSE', 'NOTICE', 'docs/spikes/**', 'docs/LAUNCH-CHECKLIST.md']
+  #   paths-ignore: ['README.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'CODE_OF_CONDUCT.md', 'LICENSE', 'NOTICE', 'docs/spikes/**', 'docs/LAUNCH-CHECKLIST.md']
   # pull_request:
-  #   paths-ignore: ['README.md', 'STATUS.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'CODE_OF_CONDUCT.md', 'LICENSE', 'NOTICE', 'docs/spikes/**', 'docs/LAUNCH-CHECKLIST.md']
+  #   paths-ignore: ['README.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'CODE_OF_CONDUCT.md', 'LICENSE', 'NOTICE', 'docs/spikes/**', 'docs/LAUNCH-CHECKLIST.md']
   workflow_dispatch:
 
 permissions:

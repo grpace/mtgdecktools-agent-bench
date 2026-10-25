@@ -189,7 +189,7 @@ Not public yet: the hosts below are unlisted development hosts, and the site's `
 - **Where the site reads:** finished events from the Hub's `/data`; live events from the Director, which still writes its own report export to `/data` every 2 minutes while anything is running (live events included, for spectating).
 - **Submissions:** `bench submit` sends bundles to the Hub. The Director's older interim endpoint (`POST /api/submissions`, `SUBMIT_TOKENS`) still exists for compatibility and is off unless tokens are configured.
 - **Backups:** every volume is in the nightly encrypted backup, and the `hub-db` dump runs nightly at 02:20 (seven rolling days).
-- **What is deployed** at any moment, and what is built but waiting for a deploy (for example the open data or the latest Director changes), is tracked in STATUS.md.
+- **What is deployed** at any moment is what `/health` names on each host (the commit) and what the `deploy/<instance>` branch points at.
 
 ## 7. Measurements
 

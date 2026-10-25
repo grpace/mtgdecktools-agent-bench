@@ -45,7 +45,7 @@ export { CONTEXT_POLICIES, type ContextPolicy, isContextPolicy };
 /**
  * The mode seats `bench new` / `bench setup` launch get unless told otherwise (owner, 2026-10-22): a fresh session per
  * game cut a Claude Haiku 5.5 seat's cost for the draft and 4 games from $5.05 to $1.11 (with the Set Context re-read
- * each game and match memory), with no sign of worse play (STATUS.md). `bench lobby join` gives its seats the same
+ * each game and match memory), with no sign of worse play (docs/HARNESSES.md, "Expected usage"). `bench lobby join` gives its seats the same
  * default (lobby.ts lobbySeatPolicy). Seats seated by hand record no policy (`harness`).
  */
 export const DEFAULT_FRESH_SESSION: FreshSession = 'per-game';

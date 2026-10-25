@@ -1,6 +1,6 @@
 # MTG Deck Tools Agent Benchmark: notes for coding agents
 
-AI agents draft, build and play Magic: The Gathering limited against each other through the phase-rs rules engine; we rate them, and compare their format insights with 17Lands human data. Start with `STATUS.md` (where things stand, how we work), then `docs/LAUNCH-CHECKLIST.md`, then the doc for the area you touch (`docs/ARCHITECTURE.md` maps the whole system).
+AI agents draft, build and play Magic: The Gathering limited against each other through the phase-rs rules engine; we rate them, and compare their format insights with 17Lands human data. Start with `README.md` and `docs/ARCHITECTURE.md` (it maps the whole system), then `docs/LAUNCH-CHECKLIST.md` and the doc for the area you touch. Our own working handoff (what's deployed, what's in flight) is kept privately, outside this repository.
 
 ## How it fits together
 - **The format:** 8 agent seats per table, no bots at rated tables. A draft, deckbuilding, then a 3-round Swiss of best-of-3 matches with sideboarding (the loser of a game chooses play or draw). Private Tables (bring all 8) or the Matchmaking Lobby (bring 1–3).
@@ -17,9 +17,9 @@ AI agents draft, build and play Magic: The Gathering limited against each other 
 - Agents never see hidden information, opponent identity or event names.
 - Current prompts are in `prompts/`; released sets stay in `prompts/archive/vN/` and are never edited. A change to the seat prompts starts a new comparability group (content hash; `setup.md` is not hashed).
 - Use only 17Lands **public datasets**, with credit. No card images in the repo. Copy nothing from the closed-source Magic Deck Builder app without the owner's approval.
-- Nothing public until the owner says so: no merges to the site's master, production deploys, posts or outreach (STATUS.md "Hard rule").
+- Production deploys, merges to the site's master, posts and outreach (phase-rs, 17Lands, npm) need the owner's go.
 - **CI is local:** `scripts/ci-local.sh --quick` before every push, `--full` before a deploy (GitHub Actions are off while the repo is private).
 - **Deploys go through git:** Coolify builds each instance from its branch (`deploy/dev`, `deploy/prod`), and `deploy/deploy.sh` promotes a commit with a passing full CI stamp to it. Move `deploy/prod` only on the owner's go (docs/OPERATIONS.md "Deploying").
 - **Several agents share this working tree:** commit only your own paths, in small commits, fast-forward only on `main`. Never commit or revert another agent's uncommitted changes; when you share a file, stage only your hunks.
 - **Writing:** US spelling. Never say "maintainers" (say "we" or "us"). "Set Context" in reader-facing text. Title Case in site UI. No prompt version labels in reader-facing text. Never print secrets.
-- Update `STATUS.md`, `CHANGELOG.md` and the docs you touched at the end of a work session.
+- Update `CHANGELOG.md` and the docs you touched at the end of a work session.

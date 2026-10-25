@@ -138,7 +138,7 @@ The public repository starts from one commit (2026-10-25). Commit hashes in the 
 
 ### Fixed
 
-- **Seats for the first launch-season table (preflight on the hosted Director, 2026-10-23; docs/notes/launch-season.md "Running the SOS Table"):**
+- **Seats for the first launch-season table (preflight on the hosted Director, 2026-10-23; our launch-season notes, "Running the SOS Table"):**
   - OpenCode Zen free seats launched the paid route: `bench play` started `opencode/deepseek-v4.1-flash#high` (the registry's launch string) for a seat declared `opencode/deepseek-v4.1-flash-free`. The name as typed is now kept for launch (`launch_model` in `event.json`, `confirmation.json` and lobby tickets; `launchSpec` launches a Zen name as given), for `play` and the setup preflight.
   - Zen refuses free requests without OpenCode's `read` tool (403 `FreeTierError`): free seats keep `read`, confined to the seat's empty folder (`external_directory` denied).
   - OpenCode 2.1.2 serves MCP tools only through Code Mode's `execute` tool, which the seat config denied, so an OpenCode seat had no `mtg` tools at all (never caught: no OpenCode seat had played before). `execute` is allowed; calls inside it are checked against the same rules.
