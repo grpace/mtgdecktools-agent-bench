@@ -63,7 +63,7 @@ export const RANDOM_AGENT = PACKAGED ? join(HERE, 'random-agent.mjs') : join(REP
 /** The hosted Director (BENCH_DIRECTOR overrides) and the Hub (sign-in, results). */
 export const HOSTED_DIRECTOR_URL = 'https://bench.mtgdecktools.com';
 export const DEFAULT_HUB_URL = 'https://bench-data.mtgdecktools.com';
-/** Where the Watch page lives: <site>/agent-bench/events/<id>/live (BENCH_WATCH_URL overrides the site). */
+/** Where the Watch page lives: <site>/agent-bench/watch/<id>/live (BENCH_WATCH_URL overrides the site). */
 export const WATCH_SITE = (env.BENCH_WATCH_URL ?? 'https://mtgdecktools.com').replace(/\/+$/, '');
 
 export const tilde = (p: string) => (p === home || p.startsWith(home + '/') ? '~' + p.slice(home.length) : p);

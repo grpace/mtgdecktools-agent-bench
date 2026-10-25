@@ -1188,7 +1188,7 @@ function report(e: Engine, p: Plan, c: Created, o: { relaunch?: string; useApiKe
     const extra = [...(o.relaunch ? ['--relaunch', o.relaunch] : []), ...(o.useApiKey ? ['--use-api-key'] : [])];
     bg = startPlayInBackground(dir, ev.id, here.map((s) => s.name), extra);
   }
-  const watch = p.hosted ? `${WATCH_SITE}/agent-bench/events/${ev.id}/live` : null;
+  const watch = p.hosted ? `${WATCH_SITE}/agent-bench/watch/${ev.id}/live` : null;
   const handSteps = byHand.map((s) => {
     const h = harnessFor(s.harness);
     return {
