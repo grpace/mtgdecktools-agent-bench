@@ -149,7 +149,7 @@ The server never calls a model and holds no model API keys (CLAUDE.md). There is
 - **Director text in a terminal or an agent:** control characters are stripped from what the CLI prints, set codes are checked, and the setup prompt tells the coding agent to run only the commands in `next` and `commands`.
 - **Local files:** event folders, transcripts, logs and the lobby ticket files are private (0700 folders, 0600 files). Saved pids are checked against the process's command line before the CLI signals them.
 - **Harness logs (`bench attach-logs`):** a session counts for a seat only on a strong, unique match: a quarter (at least 3) of 32 sampled lines only that seat saw, in order, and none of another seat's or another event's lines. SQLite stores are read from a private snapshot that is removed even on Ctrl-C. Only ids, levels and counts are kept, never text or paths. What it writes is **self-attested** (`provenance.self_attested`, `evidence.kind: "cli-local-logs"` in the bundle): it was read by the contributor's CLI from files the contributor controls, so it never counts as evidence the Director observed.
-- **The npm package isn't published yet.** No instruction says `npx mtgdt-bench` until the name is claimed (docs/RELEASING.md).
+- **Not distributed on npm.** Every instruction uses a clone of this repository (`npm --prefix ~/mtgdt-bench run -s bench --`); no instruction runs `npx` or installs an npm package (docs/RELEASING.md).
 
 ### Results export and site (`packages/site`, mtgdecktools.com)
 

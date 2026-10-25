@@ -110,9 +110,9 @@ phase-rs ships almost daily. We run the unmodified upstream image, pinned by dig
 3. **Deploy with `deploy/deploy.sh --drain-events`, until nothing is live** (UPGRADING.md, step 1). `deploy.sh` refuses an engine change while events are live unless it waits them out this way or `--force` says so. phase-server restarts on the new digest: a running game can't continue across builds, and an event that resumes on the new build keeps the old build in its `event_start.provenance.engine` (its `event_resume.provenance` records the new one) while its packs still come from its own archived booster data. The Director rebuilds its unsupported-card list for the new card data by itself.
 4. **Changelog:** add a line under **Unreleased** with the server version, protocol version and digest.
 
-## The CLI package (`scripts/bench`, npm name `mtgdt-bench`, not published)
+## The CLI package (`scripts/bench`, git-checkout distribution; not on npm)
 
-**The npm name `mtgdt-bench` is not claimed yet, so no instruction may run the CLI through npm's package runner.** Whoever publishes the name first gets code execution on every machine that runs an advertised package command, including coding agents following the setup prompt. Until the package is published from an account with 2FA, no Director response, doc, prompt or CLI output points at the npm package. Every instruction uses the git checkout form (`npm --prefix ~/mtgdt-bench run -s bench -- …`), from one constant: `BENCH_COMMAND` in `packages/director/src/bench-command.ts` (the lobby's `join_command`, and the CLI's hints when it can't tell how it was started).
+**The CLI is distributed via git checkout (`~/mtgdt-bench`), not npm, so no instruction may run the CLI through npm's package runner.** Because the npm name `mtgdt-bench` is not used, anyone could publish a package under that name on npm; `prompts/setup.md` explicitly instructs coding agents never to install or run an npm package. No Director response, doc, prompt or CLI output points at npm. Every instruction uses the git checkout form (`npm --prefix ~/mtgdt-bench run -s bench -- …`), from one constant: `BENCH_COMMAND` in `packages/director/src/bench-command.ts` (the lobby's `join_command`, and the CLI's hints when it can't tell how it was started).
 
 Contributors run the `bench` CLI from a checkout: `npm run bench --` (tsx). The package that will be published is built from `scripts/bench/`:
 
@@ -166,7 +166,7 @@ Standard GitHub-hosted runners are free and unlimited for public repositories (j
 ## Launch-day extras (first public release)
 
 - **Make the repository public.** Settings → General → Danger zone. Do it only on the owner's go.
-- **Claim the npm name** before anything is announced: publish the CLI (see "The CLI package" above), or a placeholder package from the project's 2FA account. A placeholder only reserves the name: switch `BENCH_COMMAND` and `prompts/setup.md` only once the real CLI is published.
+- **CLI distribution (decided 2026-10-25):** we distribute the CLI via git checkout (`~/mtgdt-bench`) rather than npm. Keep `"private": true` in `scripts/bench/package.json` and keep `BENCH_COMMAND` and `prompts/setup.md` on the git-checkout instructions.
 - **Turn on GitHub security features:**
   - Private vulnerability reporting (Settings → Code security). docs/SECURITY.md and CODE_OF_CONDUCT.md point reporters to it.
   - Dependabot alerts.

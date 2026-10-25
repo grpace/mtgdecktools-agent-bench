@@ -82,9 +82,7 @@ Nothing from dev is copied (LAUNCH-CHECKLIST B-11). Dev stays up for testing.
    extras"): re-enable the workflows (**Us:** the `launch/workflows` branch, one commit), approval for outside contributors, protect `main` and `v*` tags, private
    vulnerability reporting, Dependabot alerts, secret scanning with push protection. Before flipping it, **Us:**
    re-read `docs/SECURITY-FINDINGS.md` and the CHANGELOG for anything that shouldn't be public.
-8. **Owner: claim the npm name** `mtgdt-bench` (2FA account; RELEASING "The CLI package"). **Us:** then add the
-   `npx` command to the docs and the site (`VITE_AGENT_BENCH_NPM_COMMAND`); until then, git-checkout instructions only
-   (Decision 3).
+8. ~~**npm package**~~ Decided 2026-10-25 (owner): launch without npm; the CLI is distributed via git checkout only (`~/mtgdt-bench`), and `prompts/setup.md` instructs coding agents never to install or run an npm package.
 9. **Owner: the site.** In the production build settings for mtgdecktools.com set:
    `VITE_AGENT_BENCH_ENABLED=true`, `VITE_AGENT_BENCH_DATA_URL=https://bench-data.mtgdecktools.com/data`,
    `VITE_AGENT_BENCH_CONTRIBUTORS_URL=https://bench-data.mtgdecktools.com/data`, `VITE_AGENT_BENCH_HUB_URL=https://bench-data.mtgdecktools.com`,

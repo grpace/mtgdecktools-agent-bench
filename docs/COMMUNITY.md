@@ -22,7 +22,7 @@ git clone https://github.com/grpace/mtgdecktools-agent-bench.git && cd mtgdeckto
 npm run bench -- setup
 ```
 
-In the checkout's folder, `bench` is `npm run bench --`. From any other folder it is `npm --prefix <checkout> run -s bench --` (the setup prompt clones to `~/mtgdt-bench`, so there it is `npm --prefix ~/mtgdt-bench run -s bench --`). The CLI runs from a clone of this repository for now; it will be published to npm later. `bench check` shows what your machine has (Node.js 22 or later, sign-in, installed harnesses and their models) and what you can choose.
+In the checkout's folder, `bench` is `npm run bench --`. From any other folder it is `npm --prefix <checkout> run -s bench --` (the setup prompt clones to `~/mtgdt-bench`, so there it is `npm --prefix ~/mtgdt-bench run -s bench --`). The CLI runs from a clone of this repository (it is not distributed on npm). `bench check` shows what your machine has (Node.js 22 or later, sign-in, installed harnesses and their models) and what you can choose.
 
 ### The confirmation
 

@@ -41,7 +41,7 @@ _Last reviewed: 2026-10-22 (D, E-2 and H rows updated later that day; C-2, E-9, 
 | # | Decision | Status | Outcome | Where |
 |---|---|---|---|---|
 | 1 | Forfeit policy | Done | A watchdog forfeit is a loss for the silent seat; voided games stay unrated. Implemented (`FORFEIT_POLICY = 'loss'`). | METHODOLOGY §5.5, `packages/site/src/scoring.ts` |
-| 2 | npm name `mtgdt-bench` | Decided; Owner task | Reserve it shortly before launch from the owner's npm account (2FA). Until then git-checkout instructions only, no npx command anywhere. | RELEASING "The CLI package", I-4 |
+| 2 | CLI distribution (no npm) | Done | Decided 2026-10-25 (owner): launch without npm. Git-checkout instructions only (`~/mtgdt-bench`), no npx command anywhere; `prompts/setup.md` tells agents never to install an npm package. | RELEASING "The CLI package", I-4 |
 | 3 | Point values and seasons | Done | Keep the points v2 values; monthly seasons (UTC). | COMMUNITY "Points", `packages/hub/src/points.ts` |
 | 4 | Tier scores | Done | None at any knowledge level; 17Lands stats only at Set Context + Human Stats. Prompts v6. | METHODOLOGY §3, CHANGELOG |
 | 5 | Hosted quotas | Done | Private Tables 1 concurrent / 6 a day; the lobby separately 2 / 12 (Hub migration 009, `HUB_LOBBY_*`). Admission control still protects capacity. | C-2, LOBBY §2.1 |
@@ -181,7 +181,7 @@ _Last reviewed: 2026-10-22 (D, E-2 and H rows updated later that day; C-2, E-9, 
 | I-1 | GitHub Actions at launch: re-enable, outside-contributor approval, branch and tag protection | Missing (by design until public) | Owner + Us | Before | Workflows disabled while private (`e04b7e0`); branch protection needs a public repo on the free plan | RELEASING "Going public": uncomment triggers in `ci.yml` and `deps.yml`, restore Dependabot limits; "Require approval for all outside collaborators"; protect `main` (required checks, no force push) and `v*` tags |
 | I-2 | Local CI while private, deploys gated on it | Done | Us | — | `scripts/ci-local.sh` (`1b5fa50`), `deploy.sh` stamp check (`e04b7e0`) | — |
 | I-3 | CI skipped tests that read docs and prompts | Done | Us | — | `paths-ignore` narrowed (`c21440e`); applies again when re-enabled | — |
-| I-4 | npm name claimed; CLI published | Missing | Owner | Before | `scripts/bench/package.json` is `mtgdt-bench`, private; `packages/director/src/bench-command.ts` switches the command | Owner reserves the name with 2FA shortly before launch; then switch `BENCH_COMMAND` and `prompts/setup.md` |
+| I-4 | CLI distribution without npm | Done | Owner + Us | Before | `scripts/bench/package.json` carries `"private": true`; `BENCH_COMMAND` and `prompts/setup.md` use the git checkout at `~/mtgdt-bench` | Decided 2026-10-25: git-checkout distribution only; no npm package |
 | I-5 | Earlier CI failures | Done | Us | — | Three failures on 2026-10-22 were real and fixed: an export race (`0560958`), a forged-pick test that depended on pack contents (`8b41d4a`), a test behind a code change (`e96b73a`) | — |
 | I-6 | GitHub security features at launch | Missing | Owner | Before | RELEASING "Launch-day extras" | Private vulnerability reporting, Dependabot alerts, secret scanning with push protection |
 
