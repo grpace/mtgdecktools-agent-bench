@@ -260,7 +260,7 @@ export class Hub {
     }
     const report = checkBundle(files, {
       allowedEngineDigests: this.cfg.allowedEngineDigests,
-      boosters: { defaultDraftPools: this.cfg.draftPools, defaultUnsupported: this.cfg.unsupportedCards, archiveDir: this.cfg.boosterArchive },
+      boosters: { defaultDraftPools: this.cfg.draftPools, defaultUnsupported: this.cfg.unsupportedCards, archiveDir: this.cfg.boosterArchive, archiveDirs: this.cfg.boosterArchiveDirs },
       minLatencyMs: this.cfg.minLatencyMs,
       fastShare: this.cfg.fastShare,
       // The card data the event says it ran (upstream + card overrides) against this repository's pins and override files.

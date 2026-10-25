@@ -54,11 +54,17 @@ export function boosterProvenance(draftPoolsPath: string, unsupported: { file: s
 let cachedDirector: string | undefined;
 
 /**
- * The Director version: DIRECTOR_TAG when set (container builds; deploy/deploy.sh and `bench up` add
- * `-dirty` for uncommitted changes), else the git commit with `-dirty` when tracked files have local changes.
+ * The Director version: DIRECTOR_TAG when set (container builds; `bench up` adds `-dirty` for uncommitted changes),
+ * else the git commit with `-dirty` when tracked files have local changes. The hosted stack is built by Coolify from
+ * the repository (deploy/compose.yaml), so its image keeps the default tag `local` and Coolify hands the container the
+ * commit it deployed as SOURCE_COMMIT: that commit, shortened, is the version.
  */
 export function directorVersion(): string {
-  if (process.env.DIRECTOR_TAG) return process.env.DIRECTOR_TAG;
+  const tag = process.env.DIRECTOR_TAG;
+  if (tag && tag !== 'local') return tag;
+  const commit = process.env.SOURCE_COMMIT ?? '';
+  if (/^[0-9a-f]{40}$/.test(commit)) return commit.slice(0, 7);
+  if (tag) return tag;
   if (cachedDirector) return cachedDirector;
   try {
     cachedDirector = execSync('git describe --always --dirty --abbrev=7 --exclude "*"', { cwd: import.meta.dirname, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim() || 'unknown';

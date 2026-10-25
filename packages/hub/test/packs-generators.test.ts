@@ -100,3 +100,24 @@ test('a log from before booster provenance still verifies after the defaults cha
   }
   assert.ok(exact > 0, 'some of these events need the archived list (their swaps differ under the new default)');
 });
+
+test("after an engine upgrade an event verifies from the Director's archive (HUB_BOOSTER_ARCHIVE_DIRS), with nothing copied into the Hub's", () => {
+  // The event ran on `pools` and `unsupportedFile`; the engine upgrade replaced both defaults. The Director archived the
+  // old files by hash at its start (booster-archive.ts); the Hub's own archive is empty.
+  const inp = event('upgraded', 'boosters-v2');
+  const directorArchive = mkdtempSync(join(tmpdir(), 'hub-packs-director-archive-'));
+  for (const f of [pools, unsupportedFile]) {
+    const bytes = readFileSync(f);
+    writeFileSync(join(directorArchive, `${createHash('sha256').update(bytes).digest('hex')}.json`), bytes);
+  }
+  const newPools = join(dir, 'draft-pools-new.json');
+  writeFileSync(newPools, JSON.stringify({ tst: { ...JSON.parse(readFileSync(pools, 'utf8')).tst, release_date: '2026-02-01' } }));
+  const newUnsupported = join(dir, 'unsupported-upgraded.json');
+  writeFileSync(newUnsupported, JSON.stringify({ unsupported: ['Molten Tide'] }));
+  const hubArchive = mkdtempSync(join(tmpdir(), 'hub-packs-hub-archive-'));
+  const upgraded = { defaultDraftPools: newPools, defaultUnsupported: newUnsupported, archiveDir: hubArchive };
+  assert.equal(regeneratePacks(inp, upgraded).status, 'unverifiable');
+  const r = regeneratePacks(inp, { ...upgraded, archiveDirs: [directorArchive] });
+  assert.equal(r.status, 'verified', r.message);
+  assert.equal(r.draft_pools_source, 'logged');
+});

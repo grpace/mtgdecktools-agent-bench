@@ -38,6 +38,8 @@ export interface HubConfig {
   draftPools: string;
   unsupportedCards: string;
   boosterArchive: string;
+  /** More booster archives, read-only (HUB_BOOSTER_ARCHIVE_DIRS, colon-separated): the hosted Director's own archive. */
+  boosterArchiveDirs: string[];
   /** phase-rs card data (card-data.json) and the slim index derived from it, for the JSON export. */
   cardData: string;
   setsDir: string;
@@ -188,6 +190,7 @@ export function loadConfig(overrides: Partial<HubConfig> = {}): HubConfig {
     draftPools: env.HUB_DRAFT_POOLS ?? join(engineData, 'draft-pools.json'),
     unsupportedCards: env.HUB_UNSUPPORTED_CARDS ?? join(engineData, 'unsupported-cards.json'),
     boosterArchive: env.HUB_BOOSTER_ARCHIVE ?? join(dataDir, 'booster-data'),
+    boosterArchiveDirs: (env.HUB_BOOSTER_ARCHIVE_DIRS ?? '').split(':').filter(Boolean),
     cardData: env.HUB_CARD_DATA ?? join(engineData, 'card-data.json'),
     setsDir: env.HUB_SETS_DIR ?? join(repoRoot, 'sets'),
     methodologyPath: env.HUB_METHODOLOGY ?? join(repoRoot, 'docs', 'METHODOLOGY.md'),

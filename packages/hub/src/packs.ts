@@ -76,6 +76,11 @@ export interface BoosterData {
   defaultUnsupported?: string;
   /** Directory of archived files named <sha256>.json (draft pools or unsupported lists). */
   archiveDir?: string;
+  /**
+   * More archives searched after archiveDir, read-only (HUB_BOOSTER_ARCHIVE_DIRS): on the hosted stack the Director's own
+   * archive, where it keeps the booster data it runs on at every start (director-cache/booster-archive).
+   */
+  archiveDirs?: string[];
 }
 
 /** The generator id new events use (bumped in the Director with any generator change). */
@@ -102,10 +107,18 @@ function readCached(path: string): { sha: string; text: string } {
   return v;
 }
 
-function findArchived(dir: string | undefined, digest: string | undefined): string | undefined {
-  if (!dir || !digest || !/^[0-9a-f]{64}$/.test(digest)) return undefined;
-  const p = join(dir, `${digest}.json`);
-  return existsSync(p) ? p : undefined;
+/** Every archive directory to search, the Hub's own first. */
+function archives(data: BoosterData): string[] {
+  return [...new Set([data.archiveDir, ...(data.archiveDirs ?? [])].filter((d): d is string => !!d))];
+}
+
+function findArchived(dirs: string[], digest: string | undefined): string | undefined {
+  if (!digest || !/^[0-9a-f]{64}$/.test(digest)) return undefined;
+  for (const dir of dirs) {
+    const p = join(dir, `${digest}.json`);
+    if (existsSync(p)) return p;
+  }
+  return undefined;
 }
 
 /**
@@ -271,7 +284,7 @@ export function regeneratePacks(inp: RegenInput, data: BoosterData): RegenResult
   let poolsSource: 'logged' | 'default' = 'default';
   const loggedPools = inp.boosters?.draft_pools_sha256;
   if (loggedPools) {
-    poolsPath = findArchived(data.archiveDir, loggedPools);
+    poolsPath = findArchived(archives(data), loggedPools);
     if (!poolsPath && data.defaultDraftPools && existsSync(data.defaultDraftPools) && readCached(data.defaultDraftPools).sha === loggedPools) poolsPath = data.defaultDraftPools;
     if (!poolsPath) {
       return { status: 'unverifiable', message: `booster data ${loggedPools.slice(0, 12)} is not in the hub's archive`, draft_pools_sha256: loggedPools, draft_pools_source: 'logged' };
@@ -288,7 +301,7 @@ export function regeneratePacks(inp: RegenInput, data: BoosterData): RegenResult
   const loggedUnsupported = inp.boosters?.unsupported_sha256;
   if (!loggedUnsupported) missing.push('event_start.boosters.unsupported_sha256');
   const unsupportedPath = loggedUnsupported
-    ? findArchived(data.archiveDir, loggedUnsupported) ?? (data.defaultUnsupported && existsSync(data.defaultUnsupported) && readCached(data.defaultUnsupported).sha === loggedUnsupported ? data.defaultUnsupported : undefined)
+    ? findArchived(archives(data), loggedUnsupported) ?? (data.defaultUnsupported && existsSync(data.defaultUnsupported) && readCached(data.defaultUnsupported).sha === loggedUnsupported ? data.defaultUnsupported : undefined)
     : data.defaultUnsupported && existsSync(data.defaultUnsupported) ? data.defaultUnsupported : undefined;
 
   const base: RegenResult = {
@@ -300,7 +313,12 @@ export function regeneratePacks(inp: RegenInput, data: BoosterData): RegenResult
     if (!loggedPools || !loggedUnsupported) {
       // A log from before booster provenance: try every archived data version too (the defaults first), and take
       // the one that regenerates every pack and swap exactly.
-      const arch = archivedByKind(data.archiveDir);
+      const arch = { pools: [] as string[], unsupported: [] as string[] };
+      for (const dir of archives(data)) {
+        const a = archivedByKind(dir);
+        arch.pools.push(...a.pools);
+        arch.unsupported.push(...a.unsupported);
+      }
       const poolsTry = loggedPools ? [poolsPath] : [...new Set([poolsPath, ...arch.pools])];
       const unsupTry = loggedUnsupported ? (unsupportedPath ? [unsupportedPath] : []) : [...new Set([...(unsupportedPath ? [unsupportedPath] : []), ...arch.unsupported])];
       for (const pp of poolsTry) {
