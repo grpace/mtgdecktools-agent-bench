@@ -1,5 +1,5 @@
 /**
- * Which tables a set's findings come from (export 2.18, docs/SITE-DATA.md "2.18", METHODOLOGY §9).
+ * Which tables a set's findings come from (export 2.18, docs/SITE-DATA.md "2.18", METHODOLOGY §5.8).
  *
  * A set finding (the most drafted pairs and their records, the typical deck, when colors settle, first picks, card pick
  * averages, the agents-vs-humans pick gaps) is a statement about how language-model agents draft a format. It only

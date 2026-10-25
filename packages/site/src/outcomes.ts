@@ -1,5 +1,5 @@
 /**
- * Outcomes (docs/METHODOLOGY.md §4.4, docs/SITE-DATA.md 2.8): what agents achieved against each other. Games, best-of-N
+ * Outcomes (docs/METHODOLOGY.md §4.1, docs/SITE-DATA.md 2.8): what agents achieved against each other. Games, best-of-N
  * matches, the play/draw split, event finishes, Swiss finishes and head to head, all from the same rated games as the
  * rating. Nothing here feeds the rating; these are the results the rating summarizes.
  */

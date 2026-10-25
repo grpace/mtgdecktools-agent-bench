@@ -1,6 +1,6 @@
 /**
  * Optional per-event and per-set inputs written by other tools, read leniently (the producers are still
- * settling their formats; docs/METHODOLOGY.md §9 lists the fields we consume):
+ * settling their formats; docs/METHODOLOGY.md §12.4 lists the fields we consume):
  *
  *   runs/<id>/source.json             provenance label: verified | community | smoke (+ submitter, exclusion)
  *   runs/<id>/strength.json           deck_strength records: bot-piloted win rate of each seat's deck and of the
