@@ -6,6 +6,7 @@
 # a commit is deploy/deploy.sh (or a push to the branch, or Coolify's Deploy button): no secrets needed for that.
 #
 #   INSTANCE=prod deploy/coolify-setup.sh [--deploy]   create or update; --deploy also deploys the branch's head now
+#                                                      (SETUP_COMMIT=<sha>: that commit; deploy.sh's first deploy)
 #   INSTANCE=test TEST_BRANCH=<branch> deploy/coolify-setup.sh --deploy
 #                                                      a throwaway instance from a work branch (auto-deploy on)
 #   INSTANCE=test deploy/coolify-setup.sh --delete     remove it: application, containers, volumes, network, project
@@ -90,9 +91,9 @@ cfg="$(ADMIN_TOKEN="$(cat "$secrets/admin-token" 2>/dev/null || true)" HUB_ADMIN
   GITHUB_CLIENT_ID="$(cat "$secrets/github-oauth-client-id" 2>/dev/null || true)" \
   GITHUB_CLIENT_SECRET="$(cat "$secrets/github-oauth-client-secret" 2>/dev/null || true)" \
   SUBMIT_TOKENS="$(if [ -s "$secrets/submit-tokens" ]; then grep -v '^ *$' "$secrets/submit-tokens" | paste -sd, -; fi)" \
-  python3 -I - "$name" "$repository" "$branch" "$domain" "$hub_domain" "${deploy:-}" "${delete:-}" "$instance" <<'PY'
+  python3 -I - "$name" "$repository" "$branch" "$domain" "$hub_domain" "${deploy:-}" "${delete:-}" "$instance" "${SETUP_COMMIT:-}" <<'PY'
 import json, os, sys
-name, repository, branch, domain, hub_domain, deploy, delete, instance = sys.argv[1:]
+name, repository, branch, domain, hub_domain, deploy, delete, instance, commit = sys.argv[1:]
 e = os.environ
 env = {}
 if not delete:
@@ -106,7 +107,7 @@ print(json.dumps({
     'name': name, 'description': f'MTG Deck Tools Agent Bench ({instance}): phase-server, card-data, director, hub, hub-db',
     'github_app': 'grpace-github', 'repository': repository, 'branch': branch,
     'domains': {'director': f'https://{domain}:8787', 'hub': f'https://{hub_domain}:8787'},
-    'env': env, 'auto_deploy': True, 'deploy': bool(deploy), 'delete': bool(delete),
+    'env': env, 'auto_deploy': True, 'deploy': bool(deploy), 'delete': bool(delete), 'commit': commit or None,
 }))
 PY
 )"

@@ -4,6 +4,7 @@
 # Coolify, which deploys that branch from GitHub (deploy/coolify-setup.sh created the application), builds the image
 # from the commit and restarts the stack. A push from anywhere, or Coolify's Deploy button, takes the same path: this
 # script adds the checks around it and waits until the new build answers. docs/OPERATIONS.md "Deploying".
+# An instance's first deploy also creates its Coolify application and secrets (deploy/coolify-setup.sh).
 #
 #   deploy/deploy.sh                      deploy HEAD on dev now; live events checkpoint on SIGTERM and resume
 #   INSTANCE=prod deploy/deploy.sh        the production stack (only commits on origin/main)
@@ -199,32 +200,50 @@ fi
 # The deployment Coolify queued for the commit: <status> (queued, in_progress, finished, failed, cancelled-by-user).
 app_id() { on_host "docker exec coolify-db psql -U coolify -d coolify -Atc \"select a.id from applications a join environments e on e.id = a.environment_id join projects p on p.id = e.project_id where p.name = '$name' and a.name = '$name' and a.deleted_at is null\""; }
 id="$(app_id 2>/dev/null || true)"
+# A first deploy: the instance has no Coolify application yet. Create it now (deploy/coolify-setup.sh: Coolify DB backup,
+# secrets, the application) and deploy this commit. Never next to containers that aren't the application's (dev's
+# Coolify service from before git deploys: docs/OPERATIONS.md "Moving Dev to Git Deploys").
+if [ -z "$id" ]; then
+  if [ -n "$(on_host "docker ps -aq --filter label=coolify.projectName=$name" 2>/dev/null)" ]; then
+    echo "refusing: containers of $name run on gr3g-server, but there is no Coolify application $name (the old service?)."
+    echo "  Move it over first: docs/OPERATIONS.md \"Moving Dev to Git Deploys\". The branch $branch is at $short; nothing else changed."
+    return 1
+  fi
+  echo "== no Coolify application $name yet: creating it (deploy/coolify-setup.sh), then deploying $short"
+  SETUP_COMMIT="$sha" INSTANCE="$instance" deploy/coolify-setup.sh --deploy
+  id="$(app_id)"
+fi
 deployment() { [ -n "$id" ] && on_host "docker exec coolify-db psql -U coolify -d coolify -Atc \"select status || ' ' || deployment_uuid from application_deployment_queues where application_id = '$id' and commit = '$sha' and created_at >= to_timestamp($1) at time zone 'UTC' order by id desc limit 1\"" 2>/dev/null || true; }
 if [ -n "$redeploy" ]; then
   [ -n "$id" ] || { echo "refusing: no Coolify application $name on gr3g-server (deploy/coolify-setup.sh creates it)"; return 1; }
   echo "== ask Coolify to deploy $branch again"
-  on_host "docker exec coolify php artisan tinker --execute='\$a = App\\Models\\Application::find($id); \$r = queue_application_deployment(application: \$a, deployment_uuid: new_public_id(), commit: \"$sha\", force_rebuild: true, no_questions_asked: true, is_api: true); echo \$r[\"status\"], PHP_EOL;'"
+  on_host "docker exec coolify php artisan tinker --execute='\$a = App\\Models\\Application::find($id); \$r = queue_application_deployment(application: \$a, deployment_uuid: new_public_id(), commit: \"$sha\", no_questions_asked: true, is_api: true); echo \$r[\"status\"], PHP_EOL;'"
 fi
 
 # /health reports the build's version: wait until the new build answers, not just any (the old one may still be up).
 # Coolify builds the image first (a few minutes), then restarts the stack (about 30 s down).
 version_at() { curl -sf -m 5 "https://$1/health" 2>/dev/null | python3 -I -c "import json,sys; print(json.load(sys.stdin).get('version', ''))" 2>/dev/null || true; }
 echo "== waiting for Coolify to build and https://$domain/health to answer as $short"
-last=""
+# Done when the Director answers as the commit and Coolify's deployment of it has finished (a redeploy of the same commit
+# answers as it all along). Without SSH, or when Coolify's record of it can't be found, the version alone decides.
+last=""; st=""
 for i in $(seq 1 240); do
-  [ "$(version_at "$domain")" = "$short" ] && break
-  if [ $((i % 6)) = 1 ]; then
+  if [ -n "$id" ] && [ $((i % 2)) = 1 ]; then
     st="$(deployment "$(( t_push - 120 ))")"
     if [ -n "$st" ] && [ "$st" != "$last" ]; then echo "  Coolify deployment: $st"; last="$st"; fi
     case "$st" in
       failed*|cancelled*)
-        echo "Coolify's deployment of $short ${st%% *} (the stack before it keeps running). Its log: Coolify > $name > Deployments, or"
+        echo "Coolify's deployment of $short ${st%% *} (if the build failed, the stack before it keeps running). Its log: Coolify > $name > Deployments, or"
         echo "  ssh gr3g-server \"docker exec coolify-db psql -U coolify -d coolify -Atc \\\"select logs from application_deployment_queues where deployment_uuid = '${st#* }'\\\"\" | tail -c 4000"
         return 1 ;;
     esac
-    if [ -z "$st" ] && [ -n "$id" ] && [ "$i" = 37 ]; then
+    if [ -z "$st" ] && [ "$i" = 37 ]; then
       echo "  no deployment of $short queued after 3 min: is auto-deploy on, and did GitHub deliver the webhook? (deploy/deploy.sh --redeploy starts it by hand)"
     fi
+  fi
+  if [ "$(version_at "$domain")" = "$short" ]; then
+    case "$st" in finished*) break ;; esac
+    if [ -z "$id" ] || { [ -z "$st" ] && [ "$i" -ge 37 ]; }; then break; fi
   fi
   sleep 5
 done

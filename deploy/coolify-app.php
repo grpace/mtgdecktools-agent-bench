@@ -7,7 +7,7 @@
 //   docker exec coolify php artisan tinker --execute='require "/tmp/agent-bench-setup/coolify-app.php";'
 // Input /tmp/agent-bench-setup/config.json (copied in by coolify-setup.sh, removed afterwards; mode 600, holds secrets):
 //   {"name", "description", "github_app", "repository", "branch", "domains": {service: "https://host:port"},
-//    "env": {KEY: value}, "auto_deploy": bool, "deploy": bool, "delete": bool}
+//    "env": {KEY: value}, "auto_deploy": bool, "deploy": bool, "commit": sha or null (the branch's head), "delete": bool}
 // Prints names and ids only, never a variable's value.
 use App\Jobs\DeleteResourceJob;
 use App\Models\Application;
@@ -137,6 +137,6 @@ foreach ($m as [, $key, $default]) {
 
 echo ($isNew ? 'created' : 'updated')." application {$app->uuid} in project {$project->uuid}: {$cfg['repository']}@{$cfg['branch']}, auto-deploy ".($cfg['auto_deploy'] ? 'on' : 'off')."\n";
 if ($cfg['deploy'] ?? false) {
-    $result = queue_application_deployment(application: $app, deployment_uuid: new_public_id(), no_questions_asked: true, is_api: true);
+    $result = queue_application_deployment(application: $app, deployment_uuid: new_public_id(), commit: $cfg['commit'] ?? null, no_questions_asked: true, is_api: true);
     echo "deployment: {$result['status']}".(isset($result['deployment_uuid']) ? " {$result['deployment_uuid']}" : '')."\n";
 }
