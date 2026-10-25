@@ -9,7 +9,8 @@
  *   bench pull / bundle / submit    results of an event on your own table
  *   bench up / down                 run your own table (phase-server + Director, Docker or Podman)
  *
- * In a checkout `bench` is `npm run bench --`; the npm package installs it as `mtgdt-bench`. See docs/COMMUNITY.md.
+ * `bench` is `npm --prefix ~/mtgdt-bench run -s bench --` from a git clone (`npm run bench --` inside it); the CLI is never
+ * installed from npm. See docs/COMMUNITY.md.
  */
 import { spawn, spawnSync } from 'node:child_process';
 import { chmodSync, createWriteStream, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';

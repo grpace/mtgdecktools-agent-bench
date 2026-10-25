@@ -227,20 +227,25 @@ export async function cmdCheck(argv: string[]) {
   console.log('\nKnowledge (what the agents are given; the same for every seat; a set offers the levels it has data for):');
   for (const k of KNOWLEDGE) console.log(`  ${k.label}: ${k.what} (--knowledge ${k.id})`);
   console.log('\nHarnesses this machine can start by itself:');
+  // The reason for a recommended level is usually the same for every model: say it once, below the list.
+  const whys = new Set<string>();
   for (const h of harnesses.filter((x) => !x.test)) {
     console.log(`  ${h.id.padEnd(12)} ${h.label.padEnd(26)} ${h.installed ? `installed (${h.installed})` : 'not installed'}`);
     for (const m of h.models) {
       const e = m.effort;
-      console.log(`      ${m.label.padEnd(26)} ${e.settable ? `effort ${e.levels.join(', ')}; recommended ${e.recommended} (${e.why})` : e.why}`);
+      if (e.settable && e.why) whys.add(e.why);
+      console.log(`      ${m.label.padEnd(26)} ${e.settable ? `effort ${e.levels.join(', ')}; recommended ${e.recommended}` : e.why}`);
     }
   }
+  for (const w of whys) console.log(`  Recommended effort: ${w}.`);
   console.log('  Not installed here, or another machine: `setup` prints how to seat it by hand. Other MCP clients need a registry entry (registry/README.md).');
   console.log('  script       a scripted random player: free, for checking a setup end to end');
   for (const a of apps) {
     console.log(`\nApps found here (you start their seats yourself; Play One Table): ${a.label}`);
     const launcher = a.harnesses.some((h) => registry.resolveHarness(h).ok && (registry.resolveHarness(h) as { launcher?: unknown }).launcher);
-    if (launcher) console.log(`  It starts other harnesses (${a.harnesses.map((h) => registry.harnessDisplay(h)).join(', ')}); each seat ranks as the harness it runs, with ${a.label} noted in its details. \`${BENCH} seats <event>\` prints how to seat each one.`);
-    else console.log(`  Its seats are ${a.harnesses.map((h) => registry.harnessDisplay(h)).join(', ')} on the leaderboard; \`${BENCH} seats <event>\` prints how to seat each one.`);
+    // The leaderboard row is the model and effort; the harness (and a launcher) are recorded per seat.
+    if (launcher) console.log(`  A launcher: it starts other harnesses (${a.harnesses.map((h) => registry.harnessDisplay(h)).join(', ')}). Each seat is recorded as the harness it runs, with ${a.label} noted in its details. \`${BENCH} seats <event>\` prints how to seat each one.`);
+    else console.log(`  Its seats are recorded as ${a.harnesses.map((h) => registry.harnessDisplay(h)).join(', ')} seats; \`${BENCH} seats <event>\` prints how to seat each one.`);
   }
   if (needed.length) {
     console.log(`\nMost Needed Right Now, from what you can run (the Hub's bounties; ${DOCS}MULTI-PROVIDER.md):`);
@@ -434,7 +439,7 @@ async function evaluate(e: Engine, a: Answers): Promise<{ questions: Question[];
   if (continuous && (a.limits == null || typeof limits === 'string')) {
     qs.push({
       id: 'limits', ask: 'Any limits for Keep Playing? It stops at the first one reached.', recommended: 'none',
-      why: 'it keeps going until you stop it (`bench stop <loop id>`), and the summary file shows every table and its tokens as it goes',
+      why: `it keeps going until you stop it (\`${BENCH} stop <loop id>\`), and the summary file shows every table and its tokens as it goes`,
       format: 'e.g. "5 tables", "8 hours", "$50", "200M tokens", several separated by commas, or "none". Tokens count input and output as the harnesses report them (cached re-reads not counted); dollars use the harnesses\' reported cost, else our estimate.',
       ...(typeof limits === 'string' ? { error: limits } : {}),
     });
@@ -445,7 +450,7 @@ async function evaluate(e: Engine, a: Answers): Promise<{ questions: Question[];
     qs.push({
       id: 'where', ask: 'Where should the table run?', recommended: 'hosted', help: 'Only for a private table; the lobby is always hosted.',
       options: [
-        { value: 'hosted', label: 'Hosted', detail: 'we run the game server; your agents connect from this machine; results are Verified', recommended: true },
+        { value: 'hosted', label: 'Hosted', detail: 'we run the game server; your agents connect from this machine; results go to the leaderboard as Hosted', recommended: true },
         { value: 'local', label: 'Your own machine', detail: 'needs Docker or Podman and a checkout of the repository; you submit the results' },
       ],
       ...(a.where ? { error: `"${a.where}" isn't one of the options` } : {}),
@@ -525,10 +530,12 @@ async function evaluate(e: Engine, a: Answers): Promise<{ questions: Question[];
     qs.push({
       id: 'seats',
       ask: a.table === 'lobby' ? `Which agents do you bring (1 to ${LOBBY_MAX_SEATS})?` : `Who plays the ${TABLE_SEATS} seats? Models can repeat.`,
-      format: 'one line per model: "[count x] harness / model / effort", e.g. "4x Claude Code / Claude Opus 5.5 / high" and "4x Codex / GPT-6 Astra / high". The effort can be left out: it is asked next, with a recommendation.',
+      format: a.table === 'lobby'
+        ? 'one line per model: "[count x] harness / model / effort", e.g. "2x Claude Code / Claude Opus 5.5 / high" and "2x Codex / GPT-6 Astra / high" (1 to 4 seats in all). The effort can be left out: it is asked next, with a recommendation.'
+        : 'one line per model: "[count x] harness / model / effort", e.g. "4x Claude Code / Claude Opus 5.5 / high" and "4x Codex / GPT-6 Astra / high". The effort can be left out: it is asked next, with a recommendation.',
       help: `${here.length ? `Installed here, so their seats start automatically: ${here.map((h) => `${h.label} ${e.installed.get(h.id)}`).join(', ')}.` : 'No supported harness command line is installed here.'}${(() => {
         const other = LAUNCHABLE.filter((h) => !h.test && !e.installed.get(h.id)).map((h) => h.label);
-        return other.length ? ` Seats on ${other.join(', ')} you start yourself (the steps follow).` : '';
+        return other.length ? ` ${other.join(' and ')} ${other.length === 1 ? "isn't" : "aren't"} installed here: you can still choose ${other.length === 1 ? 'it' : 'them'} and start those seats yourself (setup prints the steps).` : '';
       })()}${apps.length && !continuous ? ` Also found here: ${apps.map((x) => `${x.label} (${x.harnesses.map((h) => registry.harnessDisplay(h)).join(', ')}), whose seats you start yourself`).join('; ')}.` : ''} Models are named by the registry: \`${BENCH} check\` lists them per harness.${a.table === 'private'
         ? ' Only games between different setups (a different model or effort level; the harness doesn\'t count) are rated, so mix them: for example 4 seats at low effort and 4 at high, or two models.'
         : ''}${needed.length ? ` ${neededHeadline(needed)} ${needed.map((n) => `"${n.seat}": ${n.text.charAt(0).toLowerCase()}${n.text.slice(1)}`).join('; ')}.` : ''}`,
@@ -570,7 +577,7 @@ async function evaluate(e: Engine, a: Answers): Promise<{ questions: Question[];
         id: `effort:${key}`,
         ask: `Effort for ${n > 1 ? `the ${n} seats of ` : ''}${harnessFor(s.harness)?.label ?? s.harness} / ${modelLabel(s.model!)}?`,
         recommended: c.recommended, why: c.why,
-        help: here ? 'This seat starts on this machine with exactly this level.' : allowUnknown ? 'You start this seat yourself: declare the level you will set, or "unknown" if you don\'t know it (the harness\'s documented default is then recorded).' : 'Lobby seats need a level.',
+        help: here ? `${n > 1 ? 'These seats start' : 'This seat starts'} on this machine at exactly this level.` : allowUnknown ? 'You start this seat yourself: declare the level you will set, or "unknown" if you don\'t know it (the harness\'s documented default is then recorded).' : 'Lobby seats need a level.',
         options: [
           ...c.levels.map((l) => ({ value: l, label: effortLabel(l), recommended: l === c.recommended })),
           ...(allowUnknown ? [{ value: 'unknown', label: "I don't know", detail: "recorded as the harness's documented default, or Unknown" }] : []),
@@ -852,7 +859,7 @@ function confirmation(e: Engine, p: Plan, checks: Map<string, PreflightResult>, 
         : []),
     ]), '',
     ...(seats.some((x) => x.starts === 'here')
-      ? ['  Game text reaches your agents and could try to steer them. A seat with only its mtg tools has nothing to act on it with; see the warnings above for seats that keep some.', '']
+      ? [`  Game text reaches your agents and could try to steer them. A seat with only its mtg tools has nothing to act on it with${seats.some((x) => x.isolation?.level === 'partial') ? '; see the warnings above for seats that keep some' : ''}.`, '']
       : []),
     `  Tokens      ${c.tokens}`,
     ...(cont ? [`  In all      ${c.in_all}`] : []),
@@ -937,6 +944,8 @@ export async function cmdSetup(argv: string[]) {
     ...(values.director ? [`--director ${values.director}`] : []), ...(values.hub ? [`--hub ${values.hub}`] : []),
     ...(values['no-launch'] ? ['--no-launch'] : []), ...(values['skip-preflight'] ? ['--skip-preflight'] : []),
     ...(values['use-api-key'] ? ['--use-api-key'] : []), ...(values.relaunch ? [`--relaunch ${values.relaunch}`] : []),
+    // A dry run stays one to the end: its confirmation step has no `next` that would create the event.
+    ...(values['dry-run'] ? ['--dry-run'] : []),
   ].map((x) => ` ${x}`).join('');
   const again = (extra = '') => `${BENCH} setup --agent${pass} --answers '${JSON.stringify(a).replace(/'/g, `'\\''`)}'${extra}`;
   if (asker) console.log('MTG Deck Tools Agent Benchmark: set up an event. Press Enter to take the [recommended] answer.\n');
@@ -962,6 +971,15 @@ export async function cmdSetup(argv: string[]) {
     }
     if (!asker) {
       const q = r.questions[0]!;
+      // Flags for scripts: one table, where it runs and what the agents know have documented defaults (Play One Table,
+      // hosted, Set Context where the set has one). Everything else, the seats and their effort above all, must be given.
+      const flag = { play_mode: '--once or --keep-playing', where: '--hosted or --local', knowledge: '--knowledge <level>' }[q.id];
+      if (flag && !q.error && q.recommended === { play_mode: 'once', where: 'hosted', knowledge: 'primer' }[q.id]) {
+        setAnswer(a, q.id, q.recommended!);
+        console.log(`${q.ask} ${q.options?.find((o) => o.value === q.recommended)?.label ?? q.recommended} (the default; ${flag} to choose).`);
+        continue;
+      }
+      if (q.id === 'seats') die(`${q.error ? `${q.error}. ` : ''}${q.ask} Give --seat "${q.format?.match(/e\.g\. "([^"]+)"/)?.[1] ?? 'harness / model / effort'}" (repeat it for more seats); \`${BENCH} check\` lists the harnesses and models you can use.`);
       die(`${q.error ? `${q.error}. ` : ''}${q.ask}${q.options?.length ? ` Options: ${q.options.map((o) => o.value).join(', ')}${q.recommended ? ` (recommended: ${q.recommended}${q.why ? `, ${q.why}` : ''})` : ''}.` : ''}${q.format ? ` Format: ${q.format}` : ''}`);
     }
     if (r.table_check?.warning && adviceShown !== JSON.stringify(a.seats)) {
@@ -1054,8 +1072,14 @@ export async function cmdSetup(argv: string[]) {
     writeFileSync(cacheFile, JSON.stringify(conf), { mode: 0o600 });
   }
   if (values.confirm) {
+    if (values['dry-run']) die('--dry-run with --confirm: a dry run creates nothing. Run it again without --dry-run to start.');
     if (values.confirm !== code) die('the answers changed since that confirmation: run setup again without --confirm and confirm the new summary');
     if (!conf.ready) die(`not ready: ${conf.problems.join(' ')}`);
+  } else if (agent && values['dry-run']) {
+    return emit({
+      step: 'confirm', dry_run: true, confirmation: conf, answers: a,
+      instructions: 'This is a dry run: nothing will be created. Show the person `confirmation.text` as it is. To start for real, run setup again with the same answers and without --dry-run.',
+    });
   } else if (agent) {
     return emit({
       step: 'confirm', confirmation: conf, answers: a,

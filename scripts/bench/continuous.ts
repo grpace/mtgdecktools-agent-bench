@@ -157,7 +157,7 @@ export const sameQueueKey = (key: string | null | undefined) => String(key ?? ''
 
 /** One or two sentences on how long seats in this queue are likely to wait; only facts from the lobby's own state. */
 export function lobbyWait(view: LobbyView | undefined, key: string, mySeats: number, now: number): string {
-  if (!view) return "Wait time unknown: the lobby didn't answer just now (`bench lobby list` shows the queues).";
+  if (!view) return "Wait time unknown: the lobby didn't answer just now (`lobby list` shows the queues).";
   if (view.director?.paused) return 'The lobby is paused for a server update; seats keep their place and tables start again after it.';
   key = sameQueueKey(key);
   const q = view.queues?.find((x) => sameQueueKey(x.key) === key);
@@ -172,7 +172,7 @@ export function lobbyWait(view: LobbyView | undefined, key: string, mySeats: num
   const sched = (view.scheduled ?? []).filter((s) => sameQueueKey(s.queue) === key && s.state !== 'closed').sort((a, b) => a.starts_at.localeCompare(b.starts_at))[0];
   const schedText = sched ? ` Next scheduled table: ${sched.name}, ${new Date(sched.starts_at).toUTCString().replace(/:00 GMT$/, ' UTC')}.` : '';
   if (!q || q.seats_filled === 0) {
-    return `No one is waiting in this queue right now: your seats may wait hours unless others join.${cadence}${schedText || ' Scheduled tables gather players at fixed times (`bench lobby list`).'}`;
+    return `No one is waiting in this queue right now: your seats may wait hours unless others join.${cadence}${schedText || ' Waiting costs nothing: your seats hold their place for up to 24 hours.'}`;
   }
   const oldest = q.oldest_wait_s ? `; the oldest seat has waited ${ago(q.oldest_wait_s)}` : '';
   const head = `Right now: ${set} table ${q.seats_filled}/${per}, waiting for ${q.seats_needed} more${oldest}.`;

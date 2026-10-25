@@ -246,3 +246,48 @@ test('setup --agent: the seats question carries Most Needed, a mirror table carr
   assert.equal(x.confirmation.table_warning, null);
   assert.match(x.confirmation.text, /this table can produce: 24 \(of up to 29\)/);
 });
+
+test('setup --dry-run: an agent dry run never offers a `next` that creates the event; flags take the documented defaults', async () => {
+  const director = await stub({ '/health': { ok: true }, '/api/sets': { sets: [{ code: 'FRA', name: 'Reality Fracture', releaseDate: '2026-10-01', set_context: true, human_stats: true }], featured: ['FRA'] }, '/api/capacity': { capacity: 30, load: 0, queued: 0, draining: false }, '/api/lobby': { queues: [] } });
+  const hub = await stub({ '/api/bounties': { api_version: 1, bounties: [] } });
+  after(() => { director.server.close(); hub.server.close(); });
+  const env = { BENCH_DIRECTOR: director.url, BENCH_HUB: hub.url };
+  const answers = { table: 'private', play_mode: 'once', where: 'hosted', set: 'fra', seats: ['4x Claude Code / Claude Haiku 5.5 / low', '4x Claude Code / Claude Haiku 5.5 / high'] };
+
+  // Questions carry --dry-run in `next`, so the agent's later steps stay dry.
+  const q = JSON.parse((await bench(['setup', '--agent', '--dry-run', '--no-launch', '--skip-preflight', '--answers', JSON.stringify(answers)], env)).stdout);
+  assert.equal(q.step, 'questions');
+  assert.match(q.next, / --dry-run /);
+
+  // The confirmation of a dry run: no `next`, and it says nothing will be created.
+  const c = JSON.parse((await bench(['setup', '--agent', '--dry-run', '--no-launch', '--skip-preflight', '--answers', JSON.stringify({ ...answers, knowledge: 'primer' })], env)).stdout);
+  assert.equal(c.step, 'confirm');
+  assert.equal(c.dry_run, true);
+  assert.equal(c.next, undefined);
+  assert.match(c.instructions, /dry run: nothing will be created/);
+
+  // --confirm with --dry-run is refused before anything is created.
+  const refused = await bench(['setup', '--agent', '--dry-run', '--no-launch', '--skip-preflight', '--answers', JSON.stringify({ ...answers, knowledge: 'primer' }), '--confirm', c.confirmation.code], env);
+  assert.notEqual(refused.status, 0);
+  assert.match(refused.stderr + refused.stdout, /a dry run creates nothing/);
+  assert.ok(!director.hits.some((h) => h.startsWith('/api/events')), 'no event created');
+
+  // A lobby's seats question gives an example that fits the 1–4 seat limit.
+  const lobby = JSON.parse((await bench(['setup', '--agent', '--dry-run', '--no-launch', '--skip-preflight', '--answers', JSON.stringify({ table: 'lobby', play_mode: 'once', set: 'fra' })], env)).stdout);
+  const seatsQ = lobby.questions.find((x: { id: string }) => x.id === 'seats');
+  assert.match(seatsQ.ask, /1 to 4/);
+  assert.doesNotMatch(seatsQ.format, /4x/);
+
+  // Flags without --hosted or --knowledge: hosted and Set Context, said out loud, then the confirmation.
+  const flags = await bench(['setup', '--private', '--set', 'fra', '--seat', '4x Claude Code/Claude Haiku 5.5/low', '--seat', '4x Claude Code/Claude Haiku 5.5/high', '--dry-run', '--no-launch', '--skip-preflight'], env);
+  assert.equal(flags.status, 0, flags.stderr);
+  assert.match(flags.stdout, /Where should the table run\? Hosted \(the default/);
+  assert.match(flags.stdout, /What may the agents know\? The same for every seat\. Set Context \(the default/);
+  assert.match(flags.stdout, /Nothing created\./);
+
+  // Missing seats: the error says how to give them, without listing every model.
+  const noSeats = await bench(['setup', '--private', '--set', 'fra', '--dry-run', '--no-launch', '--skip-preflight'], env);
+  assert.notEqual(noSeats.status, 0);
+  assert.match(noSeats.stderr, /--seat "4x Claude Code \/ Claude Opus 5\.5 \/ high"/);
+  assert.doesNotMatch(noSeats.stderr, /Options:/);
+});

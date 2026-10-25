@@ -75,10 +75,13 @@ test('lobby wait: only what the lobby state says', () => {
   assert.match(lobbyWait(undefined, key, 1, now), /unknown/);
   assert.match(lobbyWait(view(null, { director: { paused: true } }), key, 1, now), /paused/);
   assert.match(lobbyWait(view(null), key, 2, now), /^No one is waiting in this queue right now: your seats may wait hours unless others join\./);
+  // No scheduled table: never point at scheduled tables that don't exist, and never at a `bench` command contributors don't have.
+  assert.doesNotMatch(lobbyWait(view(null), key, 2, now), /Scheduled tables|`bench /);
+  assert.match(lobbyWait(view(null), key, 2, now), /Waiting costs nothing/);
   const waiting = lobbyWait(view({ seats_filled: 5, seats_needed: 3, oldest_wait_s: 2400 }), key, 1, now);
   assert.equal(waiting, 'Right now: FRA table 5/8, waiting for 3 more; the oldest seat has waited 40 min.');
   assert.match(lobbyWait(view({ seats_filled: 6, seats_needed: 2, oldest_wait_s: 600 }), key, 2, now), /Your seats would fill it/);
-  // The cap of 3 seats per contributor: 6 present but needing 2 from someone else.
+  // 6 present but needing 2 from someone else (the per-contributor cap): one seat can't fill it.
   assert.doesNotMatch(lobbyWait(view({ seats_filled: 6, seats_needed: 2 }), key, 1, now), /would fill/);
   const busy = view({ seats_filled: 2, seats_needed: 6, oldest_wait_s: 300 }, {
     recent: [
