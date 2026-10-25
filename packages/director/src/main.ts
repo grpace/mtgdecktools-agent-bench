@@ -17,7 +17,7 @@ import { DEFAULT_PRIMER_URL, type KnowledgeLevel } from './knowledge.js';
 import { DEFAULT_MCP_LIMITS, startHttp } from './mcp.js';
 import { boosterProvenance } from './provenance.js';
 import { DEFAULT_LIMITS, EventServer } from './server.js';
-import type { Schedule } from './lobby.js';
+import { DEFAULT_LOBBY, type Schedule } from './lobby.js';
 import { DEFAULT_ADMISSION } from './admission.js';
 import { SpectateHub } from './spectate-http.js';
 import { normalizeEffort, resolveSeat } from '../../registry/src/index.js';
@@ -274,11 +274,13 @@ if (values.serve) {
     }
   }
   const applyInitial = env.LOBBY_CONFIG_APPLY === 'always' ? 'always' as const : 'seed' as const;
+  const lobbySeatsPerPerson = num(env.LOBBY_MAX_SEATS_PER_CONTRIBUTOR, DEFAULT_LOBBY.maxSeatsPerContributor);
   const lobby = {
     config: {
-      maxSeatsPerContributor: num(env.LOBBY_MAX_SEATS_PER_CONTRIBUTOR, 4),
-      maxSeatsPerJoin: num(env.LOBBY_MAX_SEATS_PER_CONTRIBUTOR, 4),
-      maxEntries: num(env.LOBBY_MAX_ENTRIES, 8),
+      // One person's seats at a lobby table, and so also the most one join can bring (docs/LOBBY.md).
+      maxSeatsPerContributor: lobbySeatsPerPerson,
+      maxSeatsPerJoin: lobbySeatsPerPerson,
+      maxEntries: num(env.LOBBY_MAX_ENTRIES, DEFAULT_LOBBY.maxEntries),
       readyWindowMs: num(env.LOBBY_READY_S, 60) * 1000,
       presenceMs: num(env.LOBBY_PRESENCE_S, 120) * 1000,
       entryTtlMs: num(env.LOBBY_ENTRY_TTL_HOURS, 24) * 3600_000,

@@ -41,7 +41,7 @@ const contributors = new Set(start.seats.map((s: any) => s.contributor_id));
 assert.ok(contributors.size >= 3, `seats from ${contributors.size} contributors`);
 assert.ok(start.seats.every((s: any) => s.contributor_id && s.harness === 'script'), 'per-seat provenance (contributor, harness)');
 const perContributor = [...contributors].map((c) => start.seats.filter((s: any) => s.contributor_id === c).length);
-assert.ok(perContributor.every((n) => n <= 3), `at most 3 seats per contributor (${perContributor})`);
+assert.ok(perContributor.every((n) => n <= 4), `at most 4 seats per contributor (${perContributor})`);
 assert.ok(!start.seats.some((s: any) => 'entry_id' in s), 'lobby entry ids stay private');
 assert.equal(events.filter((e) => e.type === 'round_start').length, 3);
 // Context policies, recorded per seat exactly as at a Private Table (only when the CLIs started the seats).

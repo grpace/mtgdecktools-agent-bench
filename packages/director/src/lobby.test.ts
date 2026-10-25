@@ -869,16 +869,16 @@ await test('expiry: a ticket whose seats waited 24 hours unseated says so, with 
   assert.match(v.message, /^Your 2 seats waited 24 hours without a full table and left the queue \(nothing ran, no tokens were used\)\. To keep waiting, join again: `.* lobby join --queue fra-primer-manual --seat claude-code\/claude-opus-5-5\/high --seat claude-code\/claude-sonnet-5-5\/high`\.$/);
 });
 
-await test('launch config: deploy/lobby.json is valid, features the newest featured set\'s main condition, and has no schedule', () => {
+await test('hosted config: deploy/lobby.json is valid, features the newest featured set\'s main condition, and has no schedule', () => {
   const repo = join(import.meta.dirname, '../../..');
   const file = JSON.parse(readFileSync(join(repo, 'deploy/lobby.json'), 'utf8')) as { featured: string[]; schedules: unknown[] };
   assert.deepEqual(configProblems(file), []);
   const rotation = JSON.parse(readFileSync(join(repo, 'sets/rotation.json'), 'utf8')) as { featured: Array<{ code: string; primer: boolean }> };
-  // Owner, 2026-10-24: the lobby defaults to the newest set (rotation order, newest first); the others stay joinable.
+  // The lobby features the newest set (rotation order, newest first); the others stay joinable.
   assert.deepEqual(file.featured, [`${rotation.featured[0]!.code.toLowerCase()}-primer-manual`],
     'the Set Context · Manual Mana queue of the first featured set in sets/rotation.json: update deploy/lobby.json with the rotation');
   assert.ok(rotation.featured.every((s) => s.primer), 'every featured set has a Set Context (the main condition needs one)');
-  assert.deepEqual(file.schedules, [], 'no scheduled table at launch (docs/LOBBY.md §2.5)');
+  assert.deepEqual(file.schedules, [], 'no scheduled tables (docs/LOBBY.md §2.5)');
 });
 
 await test('LOBBY_CONFIG at start: seeds a fresh lobby; with "always" replaces what an admin set; an invalid file changes nothing', () => {
