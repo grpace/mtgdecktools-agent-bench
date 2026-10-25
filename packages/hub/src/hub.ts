@@ -31,6 +31,7 @@ import type { Sql } from './db.js';
 import { writeCardStats, writeEventRows, writeRatings } from './indexer.js';
 import { loadModeration, logAction, scanLog } from './moderation.js';
 import { SET_CODE_RE } from './sanity.js';
+import { shapeErrors } from './shape.js';
 import { type BundleStore, sha256 } from './store.js';
 import type { Principal } from './tokens.js';
 import { uploadedUsageFiles } from './usage-uploads.js';
@@ -258,6 +259,9 @@ export class Hub {
     } catch (e) {
       return this.reject(id, [{ code: 'bundle_unreadable', severity: 'reject', message: (e as Error).message }], null, 400);
     }
+    // Nesting depth and record count before anything parses the files (HUB-33, shape.ts).
+    const shape = shapeErrors(files);
+    if (shape.length) return this.reject(id, shape.map((m) => ({ code: 'bundle_invalid', severity: 'reject' as const, message: m })), null, 400);
     const report = checkBundle(files, {
       allowedEngineDigests: this.cfg.allowedEngineDigests,
       boosters: { defaultDraftPools: this.cfg.draftPools, defaultUnsupported: this.cfg.unsupportedCards, archiveDir: this.cfg.boosterArchive, archiveDirs: this.cfg.boosterArchiveDirs },

@@ -11,6 +11,7 @@ import { LIMITS, sanityErrors } from '../src/sanity.js';
 import { toCsv } from '../src/open-data/formats.js';
 import type { TableDef } from '../src/open-data/tables.js';
 import { clientIp, isCloudflare } from '../src/ratelimit.js';
+import { jsonDepth, SHAPE_LIMITS, shapeErrors } from '../src/shape.js';
 
 const MB = 2 ** 20;
 const ok = (files: Record<string, string>) => packTarGz(new Map(Object.entries(files).map(([k, v]) => [k, Buffer.from(v)])));
@@ -144,4 +145,18 @@ test('HUB-32: behind Cloudflare, CF-Connecting-IP only from a Cloudflare edge', 
   assert.equal(clientIp(req('', '203.0.113.7', '::ffff:104.16.5.5'), false, 1, true), '203.0.113.7', 'no proxy in between: the socket peer is the edge');
   assert.ok(isCloudflare('2a06:98c0::1') && isCloudflare('104.16.0.1') && !isCloudflare('203.0.113.7') && !isCloudflare('junk'));
   assert.ok(isCloudflare('192.0.2.1', '192.0.2.0/24') && !isCloudflare('104.16.0.1', '192.0.2.0/24'), 'HUB_CLOUDFLARE_IPS replaces the list');
+});
+
+test('HUB-33: bundles nested too deep or holding too many records are refused before parsing', () => {
+  const files = (log: string, extra: Record<string, string> = {}) => new Map(Object.entries({ 'events.jsonl': log, 'summary.json': '{"standings":[]}', ...extra }).map(([k, v]) => [k, Buffer.from(v)]));
+  const deep = (d: number) => `{"t":1,"type":"note","x":${'['.repeat(d)}${']'.repeat(d)}}\n`;
+  assert.deepEqual(shapeErrors(files(deep(20))), [], 'ordinary nesting passes');
+  assert.match(shapeErrors(files(deep(5000))).join(), /nested deeper than 64/, 'the depth that overflows the scrubbers is refused');
+  assert.match(shapeErrors(files('{"t":1}\n', { 'seats-meta.json': `{"a":${'{"b":'.repeat(100)}1${'}'.repeat(100)}}` })).join(), /seats-meta\.json is nested/, 'every JSON file of the bundle');
+  assert.deepEqual(shapeErrors(files('{"t":1,"s":"[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[\\"[[["}\n')), [], 'brackets inside strings (and escaped quotes) are text');
+  assert.deepEqual(shapeErrors(files('[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[\n'.repeat(3))), [], 'JSONL: a malformed line does not carry its depth to the next');
+  assert.equal(jsonDepth('{"a":[{"b":[]}]}', 64), 4);
+  const many = '{"t":1,"type":"x"}\n'.repeat(SHAPE_LIMITS.records + 1);
+  assert.match(shapeErrors(files(many)).join(), /more than 250000 records/);
+  assert.deepEqual(shapeErrors(files('{"t":1,"type":"x"}\n\n\n'.repeat(1000))), [], 'blank lines are not records');
 });
