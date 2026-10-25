@@ -115,7 +115,9 @@ services:
     # Outbound only (a fresh volume downloads the pinned data). `env -i`: none of Coolify's .env secrets reach it.
     networks: [default]
     entrypoint: ["env", "-i", "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", "HOME=/tmp", "NODE_ENV=production"]
-    command: ["sh", "-c", "rm -f /tmp/card-data-staged && node --import tsx packages/director/src/stage-card-data.ts --data /phase-data --marker /tmp/card-data-staged && exec sleep infinity"]
+    # Then it idles, and exits at once on SIGTERM: a `sleep` as PID 1 ignores it, which held every deploy for Coolify's whole
+    # 30 s stop grace (about 33 s of 503s on 2026-10-25, before this).
+    command: ["sh", "-c", "rm -f /tmp/card-data-staged && node --import tsx packages/director/src/stage-card-data.ts --data /phase-data --marker /tmp/card-data-staged || exit 1; trap 'exit 0' TERM INT; sleep infinity & wait"]
     healthcheck:
       test: ["CMD", "test", "-s", "/tmp/card-data-staged"]
       interval: 5s
@@ -299,7 +301,7 @@ services:
       # Traefik is the only way in: per-client rate limits (sign-in, account) key on its X-Forwarded-For hop.
       HUB_TRUST_PROXY: "1"
       # Self-serve contributor tokens (GitHub sign-in, web + device flow; packages/hub/README.md). The OAuth App's id and
-      # secret are set in Coolify's environment UI (preferred; deploy.sh never overwrites them) or passed by deploy.sh
+      # secret are set in Coolify's environment UI (preferred) or by deploy/coolify-setup.sh
       # from ~/.config/mtgdt/github-oauth-client-{id,secret}. Unset: sign-in is off with a clear message.
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
