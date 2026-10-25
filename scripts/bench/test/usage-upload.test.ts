@@ -7,7 +7,7 @@ import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { after, before, test } from 'node:test';
-import { HOSTED_DIRECTOR_URL, type LocalEvent } from '../core.js';
+import { HOSTED_DIRECTOR_URL, DEFAULT_HUB_URL, type LocalEvent } from '../core.js';
 import { handedToHub, hubAdminToken, sendUsage, uploadHostedUsage, usageBody } from '../usage-upload.js';
 
 const EVENT = '2026-10-22-10-18-50-tla-8a85';
@@ -56,9 +56,12 @@ test('only events on a hosted Director that hands them to the Hub', () => {
 
 test('the Hub admin token goes only to an official Hub', () => {
   const home = mkdtempSync(join(tmpdir(), 'bench-home-'));
-  assert.equal(hubAdminToken('https://agent-bench-hub.dev.greg.tech', { HUB_ADMIN_TOKEN: 'h' }, home), 'h');
+  // The production Hub is trusted by default (core.ts tokenOrigins: it and the hosted Director). The dev pair counts
+  // as an origin only through a signed-in account.json (the issuer's hub), so it isn't asserted here: a runner has
+  // none, and neither does a contributor who never signed in.
+  assert.equal(hubAdminToken(DEFAULT_HUB_URL, { HUB_ADMIN_TOKEN: 'h' }, home), 'h');
   assert.equal(hubAdminToken('https://evil.example', { HUB_ADMIN_TOKEN: 'h' }, home), undefined);
-  assert.equal(hubAdminToken('https://agent-bench-hub.dev.greg.tech', {}, home), undefined);
+  assert.equal(hubAdminToken(DEFAULT_HUB_URL, {}, home), undefined);
   rmSync(home, { recursive: true, force: true });
 });
 

@@ -5,7 +5,7 @@
  */
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { mkdirSync, mkdtempSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { createServer, type Server } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -18,6 +18,13 @@ import { resolveSeat } from '../models.js';
 
 const scratch = mkdtempSync(join(tmpdir(), 'mtgdt-mix-'));
 after(() => rmSync(scratch, { recursive: true, force: true }));
+
+// A fake `claude` on the spawned CLI's PATH: setup fetches the Hub's bounties ("Most Needed … from what you can run")
+// only when the machine can seat a harness (mix.ts capabilities → installedVersion runs `claude --version`), and a
+// GitHub runner has no harness CLIs — the same flow was passing on a developer's machine and failing there.
+mkdirSync(join(scratch, 'bin'), { recursive: true });
+writeFileSync(join(scratch, 'bin', 'claude'), `#!/bin/sh\nprintf '2.1.306 (Claude Code)\\n'\n`, { mode: 0o755 });
+const fakeCliPath = () => `${join(scratch, 'bin')}:${process.env.PATH ?? ''}`;
 
 const seats = (...lines: string[]) => expandSeatSpecs(lines).map((s) => {
   const r = resolveSeat(s, { allowUnlisted: false });
@@ -211,7 +218,7 @@ test('setup --agent: the seats question carries Most Needed, a mirror table carr
   after(() => { director.server.close(); hub.server.close(); });
   const env = { BENCH_DIRECTOR: director.url, BENCH_HUB: hub.url };
   const base = { table: 'private', play_mode: 'once', where: 'hosted', set: 'fra' };
-  const q = await bench(['setup', '--agent', '--no-launch', '--skip-preflight', '--answers', JSON.stringify(base)], env);
+  const q = await bench(['setup', '--agent', '--no-launch', '--skip-preflight', '--answers', JSON.stringify(base)], { ...env, PATH: fakeCliPath() });
   assert.equal(q.status, 0, q.stderr);
   const qs = JSON.parse(q.stdout);
   const seatsQ = qs.questions.find((x: { id: string }) => x.id === 'seats');
