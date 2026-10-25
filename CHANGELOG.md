@@ -30,6 +30,8 @@ Comparability is versioned separately and doesn't follow the release version: th
 - **Bundle shape limits:** an upload whose JSON nests deeper than 64 levels, or whose log holds more than 250,000 records, is refused before it is parsed. Either could stop the export or the open-data build, or hold the Hub for seconds.
 - **A decision open for 30 minutes is settled** even while its seat keeps calling (`DECISION_MAX_MS`, logged as `reason: "decision_limit"`), so a seat can't hold its table by calling without answering.
 - The GitHub account-age gate refuses an account whose creation date is missing or unreadable.
+- Device sign-ins are also limited for everyone together (60 starts per 10 minutes), so many addresses can't fill the sign-in table.
+- Public text loses Unicode tag characters, word joiners and invisible operators (invisible text a language model still reads), in community bundles too.
 - Errors on the Director's public reads (a missing report file, an unknown event's live stream, 429, 500, the lobby starting) carry the same CORS header as their answers; a lobby request over the size cap closes the connection.
 - Dependabot no longer proposes major base-image upgrades (Postgres 18 can't open the Hub's 17 data volume).
 
