@@ -1,7 +1,7 @@
 # Sourced by deploy/deploy.sh and deploy/coolify-setup.sh: what each Agent Bench instance is on Coolify.
 #   instance_config <dev|prod|test>   sets: name (Coolify project and application), branch (the git branch Coolify deploys),
 #                                     domain (Director), hub_domain (Hub), secrets (the workstation's copy of its secrets)
-# dev: the unlisted dev stack. prod: the public stack (docs/LAUNCH-DAY.md). test: a throwaway copy for trying a branch
+# dev: the unlisted dev stack. prod: the public stack (docs/OPERATIONS.md "Deploying"). test: a throwaway copy for trying a branch
 # (TEST_BRANCH, default the current branch); delete it afterwards with deploy/coolify-setup.sh --delete.
 # DOMAIN and HUB_DOMAIN override the hosts.
 instance_config() {

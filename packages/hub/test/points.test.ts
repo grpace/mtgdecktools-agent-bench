@@ -457,7 +457,7 @@ describe('attribution and visibility', () => {
   });
 });
 
-describe('season rollover (LAUNCH-CHECKLIST F-4)', () => {
+describe('season rollover', () => {
   const OCT_31 = Date.parse('2026-10-31T23:59:00Z');
   const NOV_1 = Date.parse('2026-11-01T00:00:00Z');
   const ledger = computeLedger([event('oct-table', Date.parse('2026-10-31T20:00:00Z'), [seat('c1', 3, OPUS, { rated: games(3, GPT), games: 3 })])]);

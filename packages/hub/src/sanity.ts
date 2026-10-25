@@ -6,7 +6,7 @@
  * (packages/site) turns it into HTML and JSON that mtgdecktools.com renders, and file paths (sets/<CODE>.json),
  * so the fields that reach paths, markup or loops must have the type and size the Director writes. A bundle
  * that breaks one of these limits was not written by a Director: it is rejected as structurally invalid.
- * See docs/SECURITY-FINDINGS.md (site export).
+ * See docs/SECURITY.md (the site export).
  */
 
 import { SET_CODE_RE } from '../../site/src/data.js';

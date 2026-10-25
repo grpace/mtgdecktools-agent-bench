@@ -350,7 +350,7 @@ export function parseGroupKey(key: string): { knowledge: string; mana: string; p
 }
 
 /**
- * The main condition at launch (METHODOLOGY §3): Set Context, manual mana, with the current prompts (the newest prompt
+ * The main condition (METHODOLOGY §3): Set Context, manual mana, with the current prompts (the newest prompt
  * fingerprint among events under these conditions). Every other group is a side board. Every rated event is best of 3
  * with sideboarding, so best_of (always 3) is descriptive and not tested.
  */

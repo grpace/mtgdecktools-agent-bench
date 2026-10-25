@@ -834,7 +834,7 @@ def cmd_fingerprint(a) -> int:
 
 def clean(s, n: int) -> str:
     """Agent text made safe for a terminal: no C0/C1 controls (ANSI and OSC escapes), bidi overrides or zero-width
-    characters (SECURITY-FINDINGS SEC-6; older logs predate the Director's own cleaning)."""
+    characters (docs/SECURITY.md; older logs predate the Director's own cleaning)."""
     return re.sub(r"[\x00-\x1f\x7f-\x9f\u200b-\u200f\u202a-\u202e\u2066-\u2069\ufeff]", " ", str(s or ""))[:n]
 
 

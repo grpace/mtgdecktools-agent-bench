@@ -1,4 +1,4 @@
-// Hostile traffic against a LOCAL Director (docs/SECURITY.md, SECURITY-FINDINGS.md SEC-*): malformed HTTP, slow
+// Hostile traffic against a LOCAL Director (docs/SECURITY.md, SEC-*): malformed HTTP, slow
 // clients, oversized and malformed bodies, path tricks, then a hostile seat (batches, session floods, out-of-range ids,
 // control characters, refused-answer floods, concurrent decides). After every group the Director must still answer
 // /health, and its process must still be alive.

@@ -1,6 +1,6 @@
 /**
- * The booster data every event ran on, kept by hash so an event can resume on it after an engine upgrade (LAUNCH-CHECKLIST
- * E-2). phase-server rewrites its data volume on start, so after an upgrade `draft-pools.json` (and the unsupported-card
+ * The booster data every event ran on, kept by hash so an event can resume on it after an engine upgrade
+ * (docs/UPGRADING.md). phase-server rewrites its data volume on start, so after an upgrade `draft-pools.json` (and the unsupported-card
  * list) are the new build's; a resumed event replays its draft from the seed, and only its own data regenerates the packs
  * it logged. So at every start the Director copies the data it runs on into its archive as `<sha256>.json` (the hashes
  * event_start.boosters names), and a resumed event whose hashes differ from the current ones builds its BoosterFactory

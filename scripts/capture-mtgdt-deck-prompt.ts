@@ -5,7 +5,7 @@
 //
 // Reads src/pages/DeckBuilderPage.tsx (never modifies it), lifts generateAiPromptString out of the page component,
 // strips its types with esbuild and runs it on a small sample pool under the settings the knowledge levels map to
-// (docs/notes/mtgdt-deckbuilder-prompt.md): 40 cards, all five colors open (the bench lets the agent choose colors),
+// (the mapping is in packages/director/src/deck-parity.test.ts): 40 cards, all five colors open (the bench lets the agent choose colors),
 // no sideboard, no extra instructions; set context off or on, tier scores off or on. The set context itself is a
 // placeholder: its text is checked by scripts/export-mtgdt-primers.ts, not here. Every knowledge level maps to a
 // tier-scores-off capture: the bench sends no MTG Deck Tools tier scores (owner decision: agents use their own card

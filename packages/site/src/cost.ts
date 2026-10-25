@@ -12,7 +12,7 @@
  * a request count nor tool calls falls back to the base prices (`long_context: 'unknown'`). 1-hour cache writes are
  * priced as such where the counts say (cache_write_1h).
  *
- * Cross-checks (LAUNCH-CHECKLIST F-2, E-8): the estimate is always computed when token counts and a price exist. A
+ * Cross-checks (cost in docs/METHODOLOGY.md): the estimate is always computed when token counts and a price exist. A
  * reported $0 with tokens used, or a reported cost more than COST_GAP away from the estimate, is not trusted: the
  * estimate is used and the seat is flagged (`flag`). A cost from an uploaded usage file is the contributor's own
  * figure, so where the upload carries token counts the estimate wins (`flag: 'upload_repriced'`).

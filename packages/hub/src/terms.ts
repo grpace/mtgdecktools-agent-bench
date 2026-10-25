@@ -56,7 +56,7 @@ export function legalForReaders(md: string, o: { contact: string | null }): stri
   return body.replace(/\[\[no-contact: ([^\]]*)\]\]/g, '$1');
 }
 
-/** Where the documents are read. The Hub serves them itself (/legal/*); the site's pages replace these at launch. */
+/** Where the documents are read. The Hub serves them itself (/legal/*); MTGDT_*_URL points them at the site's pages. */
 export function termsLinks(publicUrl: string): { terms: string; privacy: string; content_policy: string } {
   const env = process.env;
   return {

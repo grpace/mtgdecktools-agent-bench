@@ -111,7 +111,7 @@ function parseLines(file: string): any[] {
 }
 
 /**
- * Why a seat's usage can't be trusted as read, or null (LAUNCH-CHECKLIST E-8): a harness update that changes its log
+ * Why a seat's usage can't be trusted as read, or null (docs/OPERATIONS.md "Monthly harness check"): a harness update that changes its log
  * format must not turn into silent zeros, a $0 cost or Unknown effort. Shown by preflight, `bench play` and Keep Playing.
  */
 export function usageProblem(u: Pick<SeatUsage, 'format' | 'lines' | 'input_tokens' | 'output_tokens' | 'cache_read_tokens' | 'cost_usd'>): string | null {

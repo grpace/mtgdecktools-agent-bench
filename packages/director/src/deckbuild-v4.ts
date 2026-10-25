@@ -1,7 +1,7 @@
 /**
  * Prompt v4 deckbuilding: the offer text, the submission check and the review, ported from the MTG Deck Tools AI
  * Deck Builder's 40-card Limited path (Magic-Deck-Builder src/pages/DeckBuilderPage.tsx, generateAiPromptString and
- * its result checks; docs/notes/mtgdt-deckbuilder-prompt.md). The rules text lives in prompts/deckbuilding-guide.md.
+ * its result checks; parity checked by deck-parity.test.ts). The rules text lives in prompts/deckbuilding-guide.md.
  *
  * What the Director adds over a one-shot prompt: pool numbers instead of card names (no invented cards), exact counts
  * it computes itself (pool facts, the review), and a review round before the deck locks.

@@ -1,5 +1,5 @@
 /**
- * Event logs kept gzipped once the Hub has accepted the event (LAUNCH-CHECKLIST H-3), and every reader of a run folder
+ * Event logs kept gzipped once the Hub has accepted the event, and every reader of a run folder
  * reading both forms.
  *   npx tsx packages/director/src/log-files.test.ts
  */

@@ -19,7 +19,7 @@
 # internal, no way out). phase-server and Postgres are not on the default network, so the Hub can't reach the engine and
 # the Director can't reach the database. phase-server keeps outbound access: it downloads card data on its first start.
 #
-# Coolify's project network (LAUNCH-CHECKLIST H-8): Coolify also attaches every container to the service's own network
+# Coolify's project network: Coolify also attaches every container to the service's own network
 # (the service uuid; Traefik reaches the Director and Hub there), so every container shares one network after all, and
 # the service names resolve on it (from the Hub, `hub-db` resolves to its project-network address). So phase-server and
 # Postgres listen only on their private network: each looks up its own alias on that network at start
@@ -38,7 +38,7 @@
 # starts with --no-data-download, so a card-data.json it can't load stops it instead of being silently replaced by
 # upstream's. The Director records the hash of that file in every event_start (provenance.card_data).
 #
-# Logs and disk (LAUNCH-CHECKLIST H-3, H-4): every container's log is capped at 5 × 20 MB. phase-server logs at `warn`
+# Logs and disk (docs/OPERATIONS.md): every container's log is capped at 5 × 20 MB. phase-server logs at `warn`
 # (PHASE_RUST_LOG; `info` writes a line per game action, about 300 MB a day under load) and never to files (its
 # PHASE_LOG_DIR, which keeps a log per game, stays unset). The Director gzips an event's log once the Hub has accepted it
 # (COMPRESS_HANDED_OFF). scripts/ops-check.sh --server watches disk, volume sizes and log sizes.
@@ -230,7 +230,7 @@ services:
         net="$$(ip -4 route show scope link | awk -v a="$$addr" '{ for (i = 1; i < NF; i++) if ($$i == "src" && $$(i + 1) == a) { print $$1; exit } }')"
         case "$$net" in */*) ;; *) echo "no subnet for $$addr on the db network: refusing to start" >&2; exit 1 ;; esac
         printf '%s\n' \
-          '# Written at start by deploy/compose.yaml (hub-db command); LAUNCH-CHECKLIST H-8.' \
+          '# Written at start by deploy/compose.yaml (hub-db command).' \
           'local all all trust' \
           "host hub hub $$net scram-sha-256" \
           'host all all 0.0.0.0/0 reject' \

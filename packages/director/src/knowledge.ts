@@ -55,7 +55,7 @@ export interface PrimerSources {
  * size are of the filtered text, the text agents read.
  */
 /**
- * Why a table may not run a Set Context level (LAUNCH-CHECKLIST E-1), or undefined: a set without a Set Context would
+ * Why a table may not run a Set Context level, or undefined: a set without a Set Context would
  * quietly run at "none" and pool there. Contributors' tables and lobby queues are refused unless the request says so
  * (`allow_downgrade`); admin tables keep running with the warning.
  */

@@ -1,4 +1,4 @@
-# External uptime check (LAUNCH-CHECKLIST H-1): every 10 minutes, from GitHub's runners rather than our own host,
+# External uptime check (docs/OPERATIONS.md "Monitoring"): every 10 minutes, from GitHub's runners rather than our own host,
 # so a server that is down or unreachable still gets noticed. A failing run is GitHub's alert: it e-mails whoever
 # last changed this schedule (Settings → Notifications → Actions). The ops check on the host (scripts/ops-check.sh)
 # covers everything else (disk, backups, queues). Scheduled runs can start late when GitHub is busy.

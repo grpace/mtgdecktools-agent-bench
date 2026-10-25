@@ -7,7 +7,7 @@
  * updated, or moved to NOT_PORTED with a reason).
  *   npx tsx packages/director/src/deck-parity.test.ts
  *
- * Settings mapping (docs/notes/mtgdt-deckbuilder-prompt.md):
+ * Settings mapping (scripts/capture-mtgdt-deck-prompt.ts captures the fixtures):
  *   none          ↔ set context "None", Ignore Tier Scores on   (none.txt)
  *   primer        ↔ set context on,     Ignore Tier Scores on   (set-context.txt)
  *   primer+stats  ↔ set context on,     Ignore Tier Scores on   (set-context.txt), plus the 17Lands stats

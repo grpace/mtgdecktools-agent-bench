@@ -1,5 +1,5 @@
 /**
- * Regression tests for the seat-facing security audit (docs/SECURITY-FINDINGS.md, SEC-*): what a hostile seat or an
+ * Regression tests for the seat-facing security audit (docs/SECURITY.md, SEC-*): what a hostile seat or an
  * anonymous client can send to the Director's HTTP and MCP surfaces.
  *   npx tsx packages/director/src/security.test.ts
  */

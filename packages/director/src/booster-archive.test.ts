@@ -1,5 +1,5 @@
 /**
- * Engine upgrades vs live events (LAUNCH-CHECKLIST E-2): the Director keeps every version of the booster data by hash,
+ * Engine upgrades vs live events (docs/UPGRADING.md): the Director keeps every version of the booster data by hash,
  * and an event resumed after an upgrade regenerates its packs from the data it started on, not the new build's.
  *   npx tsx packages/director/src/booster-archive.test.ts   (the draft test needs data/draft-pools.json and data/card-data.json)
  */

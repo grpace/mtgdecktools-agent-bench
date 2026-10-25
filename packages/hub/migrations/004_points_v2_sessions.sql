@@ -1,5 +1,5 @@
 -- Points scheme v2 and account sessions (docs/COMMUNITY.md "Points and the Contributors Leaderboard";
--- docs/SECURITY-FINDINGS.md HUB-17).
+-- docs/SECURITY.md).
 --
 -- Sign-out ends every session: a session cookie carries the contributor's epoch at sign-in, and signing out bumps it.
 alter table contributors add column if not exists session_epoch integer not null default 0;

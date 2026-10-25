@@ -324,7 +324,7 @@ async function hold(saved: SavedTicket, o: { notify: ReturnType<typeof notifier>
       continue;
     }
     // Past the Director's long-poll caps (lobby-http.ts MAX_WAITS_PER_TICKET, MAX_WAITS) it answers at once with nothing
-    // new: wait a little instead of asking again in a tight loop (LAUNCH-CHECKLIST C-7).
+    // new: wait a little instead of asking again in a tight loop.
     if (rev != null && view.rev === rev && Date.now() - asked < 2_000) await sleep(5_000);
     rev = view.rev;
     const msg = printable(`${view.message}${view.notice ? ` ${view.notice}` : ''}`, 500);

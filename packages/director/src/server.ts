@@ -689,7 +689,7 @@ export class EventServer {
   }
 
   /**
-   * A table asked for a Set Context level on a set without one (LAUNCH-CHECKLIST E-1): it would quietly run at "none"
+   * A table asked for a Set Context level on a set without one: it would quietly run at "none"
    * and pool there. Refused for contributors unless they say so (`allow_downgrade`); admin tables keep the warning.
    */
   private setContextProblem(code: string, knowledge: KnowledgeLevel, allowDowngrade: boolean): string | undefined {

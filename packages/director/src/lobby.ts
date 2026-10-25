@@ -1167,7 +1167,7 @@ export class Lobby {
 
   // ----- read models
 
-  /** A ticket whose seats all expired unseated says so (LAUNCH-CHECKLIST C-2), with the command to wait again. */
+  /** A ticket whose seats all expired unseated says so, with the command to wait again. */
   private expiredText(entries: Entry[], tables: number): string | undefined {
     const expired = entries.filter((e) => e.status === 'expired');
     if (!expired.length || tables || entries.some((e) => ACTIVE.includes(e.status))) return undefined;

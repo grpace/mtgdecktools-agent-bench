@@ -1,4 +1,4 @@
-// Does phase-server itself refuse structured answers outside what it offered? (docs/SECURITY-FINDINGS.md SEC-8)
+// Does phase-server itself refuse structured answers outside what it offered? (docs/SECURITY.md, SEC-8)
 // The Director builds DeclareAttackers, DeclareBlockers and SelectCards from an agent's raw ids; this plays random
 // games against a LOCAL phase-server and, at those decisions, sends ids the engine did not offer: the opponent's
 // creature or a land as an attacker, the attacker itself as a blocker, the opponent's hand card as a selection.

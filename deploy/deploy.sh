@@ -103,7 +103,7 @@ admin_api() { curl -sS -m 20 -H @<(printf 'Authorization: Bearer %s\n' "$(cat "$
 live_events() { curl -sS -m 10 "https://$domain/api/capacity" 2>/dev/null | python3 -I -c "import json,sys; print(json.load(sys.stdin)['live']['events'])" 2>/dev/null || echo '?'; }
 container_of() { echo "c=\$(docker ps --filter label=coolify.projectName=$name --filter label=com.docker.compose.service=$1 --format '{{.Names}}' | head -1)"; }
 
-# An engine upgrade while events are live (LAUNCH-CHECKLIST E-2): they would resume and play on the new build. Refused
+# An engine upgrade while events are live (docs/UPGRADING.md): they would resume and play on the new build. Refused
 # unless --drain-events waits until nothing is live, or --force. Live counts come from the public /api/capacity.
 refuse_if_live() {
   [ -z "$drain_events" ] || return 0
@@ -263,7 +263,7 @@ else
   return 1
 fi
 
-# Monitoring (LAUNCH-CHECKLIST H-1): the commit's scripts/ops-check.sh on the host, and the crontab line that runs it every
+# Monitoring: the commit's scripts/ops-check.sh on the host, and the crontab line that runs it every
 # 5 minutes and e-mails on failure (docs/OPERATIONS.md "Monitoring"). Idempotent; never touches other cron lines. Not for
 # the test instance. A deploy that doesn't go through this script leaves the installed check as it was.
 [ "$instance" != test ] || return 0

@@ -1,19 +1,29 @@
 # CI: typecheck + unit tests on every push and pull request; the integration job (pinned phase-server,
 # a scripted smoke event, the Hub end-to-end test against Postgres) and the image job (build the Director/Hub
 # image from the real context, check its files, boot it as deploy/compose.yaml runs it) on pull requests and
-# main only, to keep Actions minutes modest while the repo is private. No LLM, no secrets, no deploys.
+# main only. No LLM, no secrets, no deploys.
 name: CI
 
-# Public: free standard runners. scripts/ci-local.sh runs the same jobs locally (and stamps commits for deploy.sh).
-# When enabled, only prose no test or build reads is skipped. Tests read prompts/*.md (the comparability hash),
-# sets/*/primer.md, docs/OPEN-DATA.md, docs/notes/ and docs/METHODOLOGY.md (hashed into every export and shipped in
-# the image), and `deps -- verify` covers analysis/, so a change to any of them runs CI.
+# Free standard runners. scripts/ci-local.sh runs the same jobs locally (and stamps commits for deploy.sh).
+# Only prose no test or build reads is skipped. Tests read prompts/*.md (the comparability hash), sets/*/primer.md,
+# docs/OPEN-DATA.md, docs/legal/ and docs/METHODOLOGY.md (hashed into every export and shipped in the image), and
+# `deps -- verify` covers analysis/, so a change to any of them runs CI.
 on:
   push:
     branches-ignore: ['dependabot/**'] # tested by their pull request
-    paths-ignore: ['README.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'CODE_OF_CONDUCT.md', 'LICENSE', 'NOTICE', 'docs/spikes/**', 'docs/LAUNCH-CHECKLIST.md']
+    paths-ignore: ['README.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'CODE_OF_CONDUCT.md', 'LICENSE', 'NOTICE',
+        'docs/ARCHITECTURE.md', 'docs/CARD-OVERRIDES.md', 'docs/COMMUNITY.md', 'docs/DESIGN.md',
+        'docs/HARNESSES.md', 'docs/LOBBY.md', 'docs/METRICS.md', 'docs/MULTI-PROVIDER.md',
+        'docs/OPERATIONS.md', 'docs/PRIOR-ART.md', 'docs/PROTOCOL.md', 'docs/RELEASING.md',
+        'docs/REPORTING.md', 'docs/SECURITY.md', 'docs/SITE-DATA.md', 'docs/SPECTATING.md',
+        'docs/UPGRADING.md', '.github/ISSUE_TEMPLATE/**', '.github/PULL_REQUEST_TEMPLATE.md']
   pull_request:
-    paths-ignore: ['README.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'CODE_OF_CONDUCT.md', 'LICENSE', 'NOTICE', 'docs/spikes/**', 'docs/LAUNCH-CHECKLIST.md']
+    paths-ignore: ['README.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'CODE_OF_CONDUCT.md', 'LICENSE', 'NOTICE',
+        'docs/ARCHITECTURE.md', 'docs/CARD-OVERRIDES.md', 'docs/COMMUNITY.md', 'docs/DESIGN.md',
+        'docs/HARNESSES.md', 'docs/LOBBY.md', 'docs/METRICS.md', 'docs/MULTI-PROVIDER.md',
+        'docs/OPERATIONS.md', 'docs/PRIOR-ART.md', 'docs/PROTOCOL.md', 'docs/RELEASING.md',
+        'docs/REPORTING.md', 'docs/SECURITY.md', 'docs/SITE-DATA.md', 'docs/SPECTATING.md',
+        'docs/UPGRADING.md', '.github/ISSUE_TEMPLATE/**', '.github/PULL_REQUEST_TEMPLATE.md']
   workflow_dispatch:
 
 permissions:

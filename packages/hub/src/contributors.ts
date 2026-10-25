@@ -542,7 +542,7 @@ export function nextSeasonStart(ms: number): number {
 const MAX_TIMER_MS = 2 ** 31 - 1;
 
 /**
- * Season rollover (LAUNCH-CHECKLIST F-4): the season, its label ("November 2026") and the season board are fixed when
+ * Season rollover: the season, its label ("November 2026") and the season board are fixed when
  * the view is built, and the view is rebuilt only when events change. This calls `onRollover` a few seconds after
  * every month boundary (UTC), so the served files show the new season from its first minutes, even with no new
  * table. The timer never keeps the process alive.

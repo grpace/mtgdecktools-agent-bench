@@ -200,7 +200,7 @@ export function startServer(hub: Hub): Server {
     };
   }
 
-  // LAUNCH-CHECKLIST C-1: a traffic spike re-gzipped every file on every request. The gzipped bytes of each export file
+  // A traffic spike re-gzipped every file on every request. The gzipped bytes of each export file
   // are kept per ETag (they change only when the export replaces the file), bounded in total; and one address can't
   // monopolize the server (a generous per-IP limit: a page loads a handful of files).
   const gzCache = new Map<string, Buffer>();

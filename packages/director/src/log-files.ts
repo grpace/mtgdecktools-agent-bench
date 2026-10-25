@@ -1,5 +1,5 @@
 /**
- * Event logs on disk (LAUNCH-CHECKLIST H-3): a best-of-3 table's `events.jsonl` is about 72 MB and gzips to about 6 MB.
+ * Event logs on disk (docs/OPERATIONS.md): a best-of-3 table's `events.jsonl` is about 72 MB and gzips to about 6 MB.
  * Once the Hub has accepted a finished event (a final, successful `hub_handoff` record), the Director keeps only
  * `events.jsonl.gz`; everything that reads a run folder's log goes through here, so both forms work.
  */
