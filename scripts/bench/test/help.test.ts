@@ -4,7 +4,7 @@
  */
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { after, test } from 'node:test';
@@ -56,5 +56,25 @@ test('an unknown option: a short error and the usage, no stack trace', () => {
     noTrace(r);
     assert.match(r.stderr, /Unknown option '--no-such-option'/);
     assert.match(r.stderr, new RegExp(`\\n  ${c}\\b`), `${c}: the usage follows the error`);
+  }
+});
+
+test('bench stop with no id: nothing running here says how to find one (no "which event?" dead end)', () => {
+  const r = bench(['stop']);
+  assert.equal(r.status, 1);
+  noTrace(r);
+  assert.match(r.stderr, /nothing is running from this machine\. To stop an event started elsewhere: `bench stop <event id>` \(`bench status` lists/);
+});
+
+test('validate and submit find a bundle in the events folder from any folder (as `bundle` prints its path)', () => {
+  const id = '2026-10-25-01-02-03-fra-abcd';
+  const missing = bench(['validate', `runs/${id}.bundle.tar.gz`]);
+  assert.equal(missing.status, 1);
+  assert.match(missing.stderr, new RegExp(`no bundle at runs/${id}\\.bundle\\.tar\\.gz \\(\`bench bundle ${id}\` makes one\\)`));
+  mkdirSync(join(scratch, 'runs'), { recursive: true });
+  writeFileSync(join(scratch, 'runs', `${id}.bundle.tar.gz`), 'not a gzip');
+  for (const arg of [`runs/${id}.bundle.tar.gz`, `${id}.bundle.tar.gz`, id]) {
+    const found = bench(['validate', arg]);
+    assert.doesNotMatch(found.stderr, /no bundle at/, `${arg}: found in the events folder`);
   }
 });

@@ -13,12 +13,12 @@
  * installed from npm. See docs/COMMUNITY.md.
  */
 import { spawn, spawnSync } from 'node:child_process';
-import { chmodSync, createWriteStream, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, createWriteStream, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { BEST_OF, bestOfProblem } from '../../packages/director/src/best-of.js';
 import { buildBundle, type BuiltBundle } from '../../packages/director/src/bundle.js';
-import { unpackTarGz, validateBundle } from '../../packages/director/src/submissions.js';
+import { EVENT_ID_RE, unpackTarGz, validateBundle } from '../../packages/director/src/submissions.js';
 import { extractUsage, seatUsd, usageProblem, type SeatUsage } from '../../packages/director/src/usage.js';
 import {
   BENCH, COMMANDS, DEFAULT_HUB_URL, DOCS, HOSTED_DIRECTOR_URL, JOIN_PROMPT, joinPromptFile, LOCAL, RANDOM_AGENT, REPO, RUNS, SETUP_PROMPT, TABLE_SEATS, VERSION, api, checkSeat, contributorToken, statusToken,
@@ -35,7 +35,7 @@ import { cmdCheck, cmdSetup, MODE_TEXT, normalizeKnowledge, TABLE_TEXT } from '.
 import { cmdLobby, LOBBY_HELP } from './lobby.js';
 import { cmdAttachLogs } from './attach.js';
 import { handedToHub, readByPlay, uploadHostedUsage } from './usage-upload.js';
-import { cmdLoop, LOOP_ID_RE, printLoop, printLoops, stopLoop } from './loop.js';
+import { cmdLoop, listLoops, LOOP_ID_RE, printLoop, printLoops, stopLoop } from './loop.js';
 import { account as signedInAs } from './core.js';
 import { consentBeforeLogin, ensureTerms, finishLogin } from './consent.js';
 import { DEFAULT_FRESH_SESSION, endSession, FRESH_SESSION_MODES, isFreshSession, policyOfMode, progressUrl, seatMode, SessionRotation, startKey, type FreshSession } from './rotation.js';
@@ -481,6 +481,16 @@ async function cmdStatus(argv: string[]) {
 async function cmdStop(argv: string[]) {
   const { values, positionals } = parseArgs({ args: argv, allowPositionals: true, options: { director: { type: 'string' }, token: { type: 'string' }, now: { type: 'boolean' } } });
   if (positionals[0] && LOOP_ID_RE.test(positionals[0])) return stopLoop(positionals[0], !!values.now);
+  if (!positionals[0]) {
+    // No id: what runs from this machine. A Keep Playing loop first (it owns its current table), else an event whose
+    // seats run here. One of them: stop it; several: say which commands stop each; none: say how to find one.
+    const loops = listLoops().filter((l) => l.running).map((l) => l.loop.id);
+    if (loops.length === 1) return stopLoop(loops[0]!, !!values.now);
+    const events = loops.length ? [] : (existsSync(RUNS) ? readdirSync(RUNS) : []).filter((d) => existsSync(join(RUNS, d, 'event.json')) && playPid(join(RUNS, d)));
+    if (!loops.length && events.length === 1) positionals[0] = events[0]!;
+    else if (loops.length || events.length) die(`which one? ${[...loops, ...events].map((id) => `\`${BENCH} stop ${id}\``).join(', ')}`);
+    else die(`nothing is running from this machine. To stop an event started elsewhere: \`${BENCH} stop <event id>\` (\`${BENCH} status\` lists the events and Keep Playing loops)`);
+  }
   const dir = eventDir(positionals[0]);
   const ev = loadEvent(dir);
   const base = directorUrl(values.director, ev);
@@ -549,9 +559,22 @@ async function cmdBundle(argv: string[]) {
   console.log(`Next: ${BENCH} submit ${rel(out)}`);
 }
 
+/**
+ * A bundle as given: a path from here, else the same file name in the events folder (so `runs/<id>.bundle.tar.gz`, as
+ * `bundle` prints it, works from any folder), else an event id's default bundle there.
+ */
+function bundleFile(arg: string | undefined): string {
+  if (!arg) return die(`give a bundle path (\`${BENCH} bundle <event>\` makes one)`);
+  if (existsSync(resolve(arg))) return resolve(arg);
+  const name = basename(arg);
+  const id = name.replace(/\.bundle\.tar\.gz$/, '');
+  for (const f of [under(RUNS, name), ...(EVENT_ID_RE.test(id) ? [under(RUNS, `${id}.bundle.tar.gz`)] : [])]) if (existsSync(f)) return f;
+  return die(`no bundle at ${arg}${EVENT_ID_RE.test(id) ? ` (\`${BENCH} bundle ${id}\` makes one)` : ''}`);
+}
+
 function cmdValidate(argv: string[]) {
   const { positionals } = parseArgs({ args: argv, allowPositionals: true, options: {} });
-  const files = unpackTarGz(readFileSync(positionals[0] ?? die('give a bundle path')));
+  const files = unpackTarGz(readFileSync(bundleFile(positionals[0])));
   const v = validateBundle(files, { allowedEngineDigests: [lockFile().digest] });
   console.log(`files: ${[...files.keys()].join(', ')}`);
   report(v);
@@ -560,8 +583,7 @@ function cmdValidate(argv: string[]) {
 
 async function cmdSubmit(argv: string[]) {
   const { values, positionals } = parseArgs({ args: argv, allowPositionals: true, options: { to: { type: 'string' }, token: { type: 'string' } } });
-  const path = positionals[0] ?? die(`give a bundle path (\`${BENCH} bundle <event>\` makes one)`);
-  const gz = readFileSync(path);
+  const gz = readFileSync(bundleFile(positionals[0]));
   const v = validateBundle(unpackTarGz(gz), { allowedEngineDigests: [lockFile().digest] });
   if (!v.ok) {
     report(v);
@@ -776,7 +798,7 @@ One step at a time
   play    <event> [--seat name …] [--dry-run] [--use-api-key] [--relaunch 3]   run seats headless here
           [--fresh-session off|per-match|per-game]       as the event declared it (bench new / setup)
   status  [event | loop id]                              progress and standings; with nothing, your Keep Playing loops too
-  stop    <event>                                        stop the event and the seats running here
+  stop    [event]                                        stop the event and the seats running here (no id: what runs from here)
   stop    <loop id> [--now]                              Keep Playing: finish the current table, then stop (--now: at once)
 
 ${LOBBY_HELP}

@@ -968,7 +968,7 @@ export async function cmdSetup(argv: string[]) {
       return emit({
         step: 'questions', questions: r.questions, answers: a, ...(r.questions.some((q) => q.id === 'seats') ? { harness_support: harnessSupportLine() } : {}),
         ...(r.table_check ? { table_check: r.table_check } : {}),
-        instructions: 'Ask the person these questions in plain language, with the options and the recommended answer (and why). Then run `next` with every answer so far plus the new ones in --answers (question ids are the keys; "effort:<harness>/<model>" answers go in "efforts": {"<harness>/<model>": "<level>"}; "seats" is a list of lines). Never answer for the person.'
+        instructions: 'Ask the person these questions in plain language, with the options and the recommended answer (and why). Then run `next` with every answer so far plus the new ones in --answers (question ids are the keys; "effort:<harness>/<model>" answers go in "efforts": {"<harness>/<model>": "<level>"}; "seats" is a list of lines). Never answer for the person; only if they said "defaults", take `recommended` where a question has one (always ask them for the seats).'
           + (r.questions.some((q) => q.id === 'seats') ? ' With the seats question, first tell them `harness_support` as it is: which harnesses have run real tables and which are untested.' : '')
           + (r.questions.some((q) => q.needed?.length) ? ' With the seats question, mention `needed`: the seats that are most needed right now that they can run (lead with the first one).' : '')
           + (r.table_check ? ' Before the other questions, tell them `table_check.warning` plainly and offer `table_check.suggestions` (each has the seat lines to use as their "seats" answer; "Join the Lobby" means table "lobby" with 1-4 seats). Keeping their seats is fine: it is never refused.' : ''),
@@ -1040,14 +1040,14 @@ export async function cmdSetup(argv: string[]) {
     if (agent) {
       const info = await fetchTerms(hubUrl(values.hub));
       return emit({
-        step: 'sign_in', message: 'The hosted table needs a free contributor token (GitHub sign-in, once), and the person must accept the terms first.',
+        step: 'sign_in', message: 'The hosted table needs a free contributor token (GitHub sign-in, once, with a GitHub account at least 30 days old), and the person must accept the terms first.',
         ...(info ? { terms: termsText(info), terms_links: info.links } : {}),
         instructions: `${info ? 'Show the person `terms` as it is and ask whether they accept. Only if they say yes, run' : 'Run'} the first command and show the person the link and code it prints; then run the second, which returns once they have entered the code. Then run \`next\`.`,
         commands: [`${BENCH} login --start${info ? ' --accept-terms' : ''}`, `${BENCH} login --wait`], next: again(),
       });
     }
     if (!asker) die(`not signed in: run \`${BENCH} login\` first (GitHub sign-in, once), then run this again`);
-    console.log('\nThe hosted table needs a free contributor token: a GitHub sign-in, once.');
+    console.log('\nThe hosted table needs a free contributor token: a GitHub sign-in, once (the GitHub account must be at least 30 days old).');
     const hub = hubUrl(values.hub);
     await consentBeforeLogin(hub, {});
     await loginWait(await loginStart(hub));
@@ -1101,7 +1101,8 @@ export async function cmdSetup(argv: string[]) {
     });
   } else {
     console.log(`\n${conf.text}`);
-    const go = conf.ready && !values['dry-run'] && (values.yes || (asker ? !/^n/i.test(await asker.ask(`\n${plan.mode === 'continuous' ? 'Start Keep Playing' : plan.table === 'lobby' ? 'Join the lobby' : 'Start the event'}? [Y/n]`, '')) : false));
+    // Starting spends tokens, so only an explicit yes starts (Enter alone, or a stray newline from a script, doesn't).
+    const go = conf.ready && !values['dry-run'] && (values.yes || (asker ? /^y/i.test(await asker.ask(`\n${plan.mode === 'continuous' ? 'Start Keep Playing' : plan.table === 'lobby' ? 'Join the lobby' : 'Start the event'}? [y/N]`, '')) : false));
     if (!go) {
       asker?.close();
       console.log(`\nNothing created.${conf.ready && !values['dry-run'] ? ` To go ahead: ${BENCH} setup ${planFlags(plan)} --yes` : ''}`);

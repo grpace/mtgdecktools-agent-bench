@@ -13,16 +13,17 @@ A private table runs **on the hosted table** (recommended: we run the rules engi
 
 There is one setup flow, `bench setup`. It asks the questions (Private Table or Lobby, one table or Keep Playing, where it runs, the set, each seat's harness, model and effort, what the agents may know), checks the answers against the server and the model registry, runs a quick preflight for every harness it will start, and ends in a **Confirmation**: the details the leaderboard will record for each seat, how long the table takes, and a note on tokens. Nothing starts until you confirm.
 
-**With your coding agent (recommended).** Paste [`prompts/setup.md`](../prompts/setup.md) into a coding agent that can run commands (Claude Code, Codex, Gemini CLI, OpenCode, Cursor and the like). It installs the kit and runs `bench setup --agent`, asks you its questions in plain language, shows you the confirmation and starts the event only after you say yes.
+**With your coding agent (recommended).** Paste [`prompts/setup.md`](../prompts/setup.md) into a coding agent that can run commands (Claude Code, Codex, Gemini CLI, OpenCode, Cursor and the like). It installs the kit and runs `bench setup --agent`, asks you its questions in plain language, signs you in with GitHub once the questions are answered, shows you the confirmation and starts the event only after you say yes. Say "defaults" to take the recommended answer wherever a question has one (it still asks you for the seats). A dry run (`--dry-run`) shows the whole confirmation without signing in. The kit runs on macOS and Linux; on Windows, use WSL.
 
 **Prefer your terminal?** The same wizard, step by step:
 
 ```bash
-git clone https://github.com/grpace/mtgdecktools-agent-bench.git && cd mtgdecktools-agent-bench && npm ci
-npm run bench -- setup
+git clone https://github.com/grpace/mtgdecktools-agent-bench.git ~/mtgdt-bench
+npm --prefix ~/mtgdt-bench ci
+npm --prefix ~/mtgdt-bench run -s bench -- setup
 ```
 
-In the checkout's folder, `bench` is `npm run bench --`. From any other folder it is `npm --prefix <checkout> run -s bench --` (the setup prompt clones to `~/mtgdt-bench`, so there it is `npm --prefix ~/mtgdt-bench run -s bench --`). The CLI runs from a clone of this repository (it is not distributed on npm). `bench check` shows what your machine has (Node.js 22 or later, sign-in, installed harnesses and their models) and what you can choose.
+Every command runs the same way from any folder: `npm --prefix ~/mtgdt-bench run -s bench -- <command>`. In this guide, `bench <command>` is short for that (with a clone somewhere else, put its path after `--prefix`). The CLI runs from a clone of this repository (it is not distributed on npm). `bench check` shows what your machine has (Node.js 22 or later, sign-in, installed harnesses and their models) and what you can choose.
 
 ### The Confirmation
 
@@ -36,15 +37,15 @@ Then the table (private or lobby, hosted or your own), the set, the knowledge le
 
 ### Make Your Table Count
 
-Only games between **different setups** (a different model or effort level; the harness doesn't count) are rated. A table of 8 identical seats plays a full event and still adds format data, but none of its games is rated. The Confirmation says how many games your table can rate ("Rated games this table can produce: 29 (of up to 29)"), and when the answer is few or none it warns you plainly and suggests mixes from what you can run: an **Effort Ladder** (one model at two effort levels, for example 4 seats at low and 4 at high), a **Model Mix** (two or three models from one provider), a **Provider Mix** (models from two providers, such as Claude Code and Codex CLI seats; one model through two harnesses is still one setup), or **Join the Lobby**. Nothing is refused. `bench check` and the seats question also show which seats you can run are **most needed** right now, from the leaderboard's Most Needed list. Several providers, apps such as T3 Code and Cursor, and good tables for common subscriptions: [MULTI-PROVIDER.md](MULTI-PROVIDER.md).
+Only games between **different setups** (a different model or effort level; the harness doesn't count) are rated. A table of 8 identical seats plays a full event and still adds format data, but none of its games is rated. The Confirmation says how many games your table can rate ("Rated games this table can produce: 29 (of up to 29)"), and when the answer is few or none it warns you plainly and suggests mixes from what you can run: an **Effort Ladder** (one model at two effort levels, for example 4 seats at low and 4 at high), a **Model Mix** (two or three models from one provider), a **Provider Mix** (models from two providers, such as Claude Code and Cursor CLI seats; one model through two harnesses is still one setup), or **Join the Lobby**. Nothing is refused. `bench check` and the seats question also show which seats you can run are **most needed** right now, from the leaderboard's Most Needed list. Several providers, apps such as T3 Code and Cursor, and good tables for common subscriptions: [MULTI-PROVIDER.md](MULTI-PROVIDER.md).
 
 ### Flags, for Scripts
 
 The same answers work as flags; `--yes` confirms (after the same checks and preflight):
 
 ```bash
-npm run bench -- setup --private --hosted --set fra --knowledge primer \
-  --seat "4x Claude Code/Claude Opus 5.5/high" --seat "4x Codex/GPT-6 Astra/high" --yes
+npm --prefix ~/mtgdt-bench run -s bench -- setup --private --hosted --set fra --knowledge primer \
+  --seat "4x Claude Code/Claude Opus 5.5/high" --seat "4x Claude Code/Claude Sonnet 5.5/high" --yes
 ```
 
 - `--seat "[N x] harness/model/effort"`: by id or registry name (`Claude Code/Claude Opus 5.5/high` and `claude-code/claude-opus-5-5/high` are the same seat). A count fills several seats. A seat you start yourself may say `unknown` for the effort.
@@ -54,16 +55,16 @@ npm run bench -- setup --private --hosted --set fra --knowledge primer \
 After confirming, the seats whose harness is installed here start in the background (they keep going if you close the terminal), and every other seat gets its URL and the steps to seat it by hand. Then:
 
 ```bash
-npm run bench -- status <event>   # stage, who is deciding, standings
-npm run bench -- stop <event>     # stop the event and the seats running here
+npm --prefix ~/mtgdt-bench run -s bench -- status <event>   # stage, who is deciding, standings
+npm --prefix ~/mtgdt-bench run -s bench -- stop <event>     # stop the event and the seats running here
 ```
 
 ## The Hosted Table in Detail
 
 **Before you play: the terms.** The first `bench login` shows a short summary of the [Terms](legal/TERMS.md), [Privacy Notice](legal/PRIVACY.md) and [Content Policy](legal/CONTENT-POLICY.md) and asks for an explicit "yes" (a coding agent shows you the summary and passes `--accept-terms` only after you agree). In short: you run your agents on your own subscriptions or API keys and are responsible for all costs and for your providers' terms (we can't refund costs or help with account actions such as rate limits, flags or bans); finished events, including your agents' notes, are published and released as open data under CC BY 4.0; your handle shows only if you choose. When the terms change, hosted play and uploads stop until you accept again: run `bench login` (or `bench terms`), or press the button on your account page.
 
-**1. Get a token** (once). Either:
-- run `npm run bench -- login`: it prints a GitHub code to approve and saves the token to `~/.config/mtgdt-bench/token` (agents: `login --start` prints the code and exits, `login --wait` finishes once it's entered); or
+**1. Get a token** (once; `bench setup` asks you to sign in after its questions). The hosted Hub signs in GitHub accounts at least 30 days old. Either:
+- run `bench login`: it prints a GitHub code to approve and saves the token to `~/.config/mtgdt-bench/token` (agents: `login --start` prints the code and exits, `login --wait` finishes once it's entered); or
 - sign in with GitHub at https://bench-data.mtgdecktools.com/account: your token is shown once; copy it into `BENCH_TOKEN` or `~/.config/mtgdt-bench/token`.
 
 One token covers hosted play and submissions. Manage, revoke or rotate your tokens on the same account page. Hosted play has two quotas per person, counted separately: **Private Tables**, 1 running or queued at a time and 6 a day, and **lobby tables**, 2 at a time and 12 a day (days are rolling 24 hours). Your account page shows yours; ask us if you need more.
@@ -99,7 +100,7 @@ The answer has the seat URLs right away: `201` when the event starts now, `202` 
 
 ## Your Own Table
 
-Set it up with `npm run bench -- setup --local`, or step by step:
+Set it up with `npm --prefix ~/mtgdt-bench run -s bench -- setup --local`, or step by step:
 
 ### 1. Start the Table (Once)
 
@@ -109,12 +110,12 @@ Your own table needs:
 - At least one agent harness that speaks MCP. See [HARNESSES.md](HARNESSES.md).
 
 ```bash
-git clone https://github.com/grpace/mtgdecktools-agent-bench.git && cd mtgdecktools-agent-bench
-npm ci
-npm run up            # = npm run bench -- up
+git clone https://github.com/grpace/mtgdecktools-agent-bench.git ~/mtgdt-bench
+npm --prefix ~/mtgdt-bench ci
+npm --prefix ~/mtgdt-bench run up            # = bench up
 ```
 
-`npm run up` builds the Director image from your checkout and pulls the phase-rs rules engine at the exact build pinned in `engine/phase.lock.json`. It starts both and waits until the Director answers on `http://127.0.0.1:8787`. On the first start:
+`npm --prefix ~/mtgdt-bench run up` builds the Director image from your checkout and pulls the phase-rs rules engine at the exact build pinned in `engine/phase.lock.json`. It starts both and waits until the Director answers on `http://127.0.0.1:8787`. On the first start:
 - phase-server downloads its card database into a volume. That takes a minute or two.
 - The Director generates an **admin token**, saves it to `.bench/admin-token` (gitignored, readable only by you) and logs only where it is, never the token. The CLI reads it from there. You only need to copy it if you call the API yourself (`Authorization: Bearer <token>`).
 
@@ -125,18 +126,18 @@ mkdir -p .bench                                         # so the token file belo
 docker compose -f deploy/compose.local.yaml up --build  # or: podman compose -f deploy/compose.local.yaml up --build
 ```
 
-**No compose on your machine?** Run `npm run bench -- up --plain`. It uses plain `podman run` / `docker run` commands: a network, the pinned phase-server, and the Director with the same volumes and settings. Run `npm run bench -- up --plain --engine podman` and copy the printed commands to see exactly what it does.
+**No compose on your machine?** Run `npm --prefix ~/mtgdt-bench run -s bench -- up --plain`. It uses plain `podman run` / `docker run` commands: a network, the pinned phase-server, and the Director with the same volumes and settings. Run `npm --prefix ~/mtgdt-bench run -s bench -- up --plain --engine podman` and copy the printed commands to see exactly what it does.
 
-Options: `BENCH_PORT=8820 npm run up` changes the port. `npm run down` stops the stack and keeps the data volumes.
+Options: `BENCH_PORT=8820 npm --prefix ~/mtgdt-bench run up` changes the port. `npm --prefix ~/mtgdt-bench run down` stops the stack and keeps the data volumes.
 
 To let agents on other machines connect, put the Director behind HTTPS and set `PUBLIC_URL=https://your-host`, so seat URLs use that address. Keep the admin token secret: anyone holding it can create events.
 
 ### 2. Create an Event
 
-`npm run bench -- setup --local` asks the same questions as on the hosted table and starts the Director if it isn't running. One step at a time:
+`npm --prefix ~/mtgdt-bench run -s bench -- setup --local` asks the same questions as on the hosted table and starts the Director if it isn't running. One step at a time:
 
 ```bash
-npm run bench -- new --set fra --knowledge primer \
+npm --prefix ~/mtgdt-bench run -s bench -- new --set fra --knowledge primer \
   --seat "4x claude-code/claude-sonnet-5-5/high" \
   --seat "4x cursor/gpt-5.6-sol/high"
 ```
@@ -152,9 +153,9 @@ The seat URLs are saved to `runs/<event>/event.json` (gitignored). Anyone with a
 ### 3. Seat the Agents
 
 ```bash
-npm run bench -- play <event>             # launch every seat headless
-npm run bench -- play <event> --dry-run   # print the exact commands instead
-npm run bench -- seats <event>            # config snippets, to seat them by hand
+npm --prefix ~/mtgdt-bench run -s bench -- play <event>             # launch every seat headless
+npm --prefix ~/mtgdt-bench run -s bench -- play <event> --dry-run   # print the exact commands instead
+npm --prefix ~/mtgdt-bench run -s bench -- seats <event>            # config snippets, to seat them by hand
 ```
 
 `play` launches each seat with its harness's command line in an empty temp directory, gives it [`prompts/join.md`](../prompts/join.md), and saves the harness's own transcript to `runs/<event>/transcript-<seat>.jsonl`. If a session exits before its seat's EVENT COMPLETE (the Director's `GET /api/events/<id>` says the seat isn't done), `play` launches a fresh one, which resumes the seat, up to `--relaunch` times (default 3); every session is appended to the same transcript and the usage report sums them. A seat is done as soon as its own last match ends: the Director answers `EVENT COMPLETE. You're done…` with that seat's results, and `play` stops a session still running 2 minutes after that. On the hosted Director, `play` then waits for the event to end (no tokens spent) and sends your seats' usage to the Hub; the results go to the Hub on their own, with nothing to pull or bundle. A seat that stays silent for 10 minutes with a decision open forfeits it (METHODOLOGY §5.5), so a dead session never stalls the table. By default each game starts a fresh agent session to keep costs down, and every decision carries the full board and match history (`--fresh-session per-game`; `per-match` or `off` at `bench new`, `bench setup` or `bench lobby join`); it is recorded with each seat ([HARNESSES.md](HARNESSES.md), "Fresh sessions"). Supported harnesses and how each one is started: [HARNESSES.md](HARNESSES.md).
@@ -162,17 +163,17 @@ npm run bench -- seats <event>            # config snippets, to seat them by han
 ### 4. Watch It, Then Pull the Logs
 
 ```bash
-npm run bench -- status <event>   # stage, who is deciding, standings
-npm run bench -- pull <event>     # copy events.jsonl + summary.json from the Director into runs/<event>/
+npm --prefix ~/mtgdt-bench run -s bench -- status <event>   # stage, who is deciding, standings
+npm --prefix ~/mtgdt-bench run -s bench -- pull <event>     # copy events.jsonl + summary.json from the Director into runs/<event>/
 ```
 
-An event takes about 45 minutes to 2.4 hours (best of 3 with sideboarding). To browse your runs locally, use `npm run site` (static viewer over `runs/`) or the Director's live report data at `http://127.0.0.1:8787/data/index.json`.
+An event takes about 45 minutes to 2.4 hours (best of 3 with sideboarding). To browse your runs locally, use `npm --prefix ~/mtgdt-bench run site` (static viewer over `runs/`) or the Director's live report data at `http://127.0.0.1:8787/data/index.json`.
 
 ### 5. Bundle and Submit
 
 ```bash
-npm run bench -- bundle <event> --submitter <your-handle>
-npm run bench -- submit runs/<event>.bundle.tar.gz
+npm --prefix ~/mtgdt-bench run -s bench -- bundle <event> --submitter <your-handle>
+npm --prefix ~/mtgdt-bench run -s bench -- submit runs/<event>.bundle.tar.gz
 ```
 
 A bundle is a `.tar.gz` containing:
@@ -188,7 +189,7 @@ A bundle is a `.tar.gz` containing:
 
 By default nothing your agents wrote reaches the bundle except their decisions and the short notes they attach to each one, which are already in the event log. Full transcripts (reasoning, tool calls) are opt-in with `--transcripts`. They help with analysis, but they're yours to share or not.
 
-`bundle` runs the same validation as the server and refuses to write a bundle that would be rejected. Check an existing bundle with `npm run bench -- validate <file>`.
+`bundle` runs the same validation as the server and refuses to write a bundle that would be rejected. Check an existing bundle with `npm --prefix ~/mtgdt-bench run -s bench -- validate <file>`.
 
 **Submission tokens:** submitting uses your contributor token (`bench login`, or `BENCH_TOKEN`).
 
@@ -204,9 +205,9 @@ curl -H "Authorization: Bearer $BENCH_TOKEN" <hub>/api/submissions/<id>     # on
 Every table seats 8 agents, so with fewer you join the **lobby** and are matched with other contributors' agents under the same conditions. Details and the full API: [LOBBY.md](LOBBY.md).
 
 ```bash
-npm run bench -- login                                   # once
-npm run bench -- lobby list                              # open tables, scheduled tables, recent tables
-npm run bench -- lobby join --set fra --seat claude-code/claude-opus-5-5/high --notify
+npm --prefix ~/mtgdt-bench run -s bench -- login                                   # once
+npm --prefix ~/mtgdt-bench run -s bench -- lobby list                              # open tables, scheduled tables, recent tables
+npm --prefix ~/mtgdt-bench run -s bench -- lobby join --set fra --seat claude-code/claude-opus-5-5/high --notify
 ```
 
 - **Waiting is free.** `lobby join` holds your place with a long-poll; no harness runs and no tokens are spent until your table fills. Keep it running (or use `--detach`).
@@ -229,10 +230,10 @@ npm run bench -- lobby join --set fra --seat claude-code/claude-opus-5-5/high --
 Every seat must start on this machine (each new table has new seat URLs), and every table uses your tokens. It runs in the background until you stop it or a limit you set is reached: a number of tables (`--max-tables 5`), hours (`--max-hours 8`), tokens (`--max-tokens 200M`, input plus output; cached re-reads aren't counted) or dollars (`--max-usd 50`), whichever comes first. It won't start a table that is expected to go past a limit. Tokens and dollars use what your harness reports in its usage logs where it does, and a measured per-table size (the high end) where it doesn't. The Confirmation shows the mode, the limits and how many tables they allow. Before each table the loop re-runs the quick preflight; if a harness stops answering (signed out, out of credits), the loop stops instead of seating a dead agent. When the hosted server is busy or your daily limit is used up, it waits as long as the server says; on other errors it backs off (1, 2, 4 … 30 minutes) and stops after five failures in a row. It writes a running summary (every table, your seats' results, tokens and cost) to `runs/loops/<loop id>/summary.json`.
 
 ```bash
-npm run bench -- status                    # your loops (and events on the Director)
-npm run bench -- status <loop id>          # one loop's summary
-npm run bench -- stop <loop id>            # finish the current table, then stop
-npm run bench -- stop <loop id> --now      # stop now (see below)
+npm --prefix ~/mtgdt-bench run -s bench -- status                    # your loops (and events on the Director)
+npm --prefix ~/mtgdt-bench run -s bench -- status <loop id>          # one loop's summary
+npm --prefix ~/mtgdt-bench run -s bench -- stop <loop id>            # finish the current table, then stop
+npm --prefix ~/mtgdt-bench run -s bench -- stop <loop id> --now      # stop now (see below)
 ```
 
 `stop --now` on a Private Table cancels the event (nothing from it is scored). In the lobby other people's agents are at your table, so stopping now leaves your seats to the watchdog: they count as abandoned, which lowers your reliability and earns no seat points. Prefer the graceful stop.
@@ -312,7 +313,7 @@ Results are only comparable if everyone plays the same game. For leaderboard sub
 1. **Use the join prompt unmodified.** Use the current join prompt (`prompts/join.md`) as the seat's first message. No extra system prompt, hints, strategy notes or examples. (`bench play --prompt` exists for experiments; those runs aren't leaderboard runs.)
 2. **Report harness, model and effort honestly**, as specific as your harness allows (`claude-code/claude-opus-5-5/high`, not `claude/opus`). If a seat ran on something unusual (a custom system prompt in your global config, a proxy, a fallback model), say so in your submission.
 3. **Fresh sessions that hold one seat only**, with only the `mtg` tools: a seat's sessions start empty (`bench play` starts a new one for every game by default) and never carry another seat or event. No file, shell or web access, no sub-agents with other tools, and no human in the loop.
-4. **Don't modify the Director or the engine** for leaderboard runs. Run a clean checkout (`npm run up` records the commit, and a `-dirty` suffix flags local changes) and the pinned engine build.
+4. **Don't modify the Director or the engine** for leaderboard runs. Run a clean checkout (`bench up` records the commit, and a `-dirty` suffix flags local changes) and the pinned engine build.
 5. **Submit every completed event you ran for the leaderboard, not just the wins.** Restarts after a crash are fine. Mention them.
 6. Experiments (other prompts, ablations, custom harness setups) are welcome. Submit them too and say what you changed. They're labeled and kept off the main board.
 

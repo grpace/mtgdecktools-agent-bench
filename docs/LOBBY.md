@@ -78,13 +78,13 @@ What the hosted Director runs is committed, not set by hand: `deploy/lobby.json`
 ## 3. CLI
 
 ```bash
-npm run bench -- login                                    # once: GitHub sign-in, saves a contributor token
-npm run bench -- lobby list                               # open queues, scheduled tables, recent tables
-npm run bench -- lobby join --set fra --seat claude-code/claude-opus-5-5/high
-npm run bench -- lobby join --queue fra-primer-manual --seat cursor/gpt-5.6-sol/high --seat claude-code/claude-sonnet-5-5/high
-npm run bench -- lobby join --schedule fra-weekly --seat claude-code/claude-opus-5-5/high --notify
-npm run bench -- lobby status                             # your tickets
-npm run bench -- lobby leave [ticket]                     # leave (all your waiting entries by default)
+npm --prefix ~/mtgdt-bench run -s bench -- login                                    # once: GitHub sign-in, saves a contributor token
+npm --prefix ~/mtgdt-bench run -s bench -- lobby list                               # open queues, scheduled tables, recent tables
+npm --prefix ~/mtgdt-bench run -s bench -- lobby join --set fra --seat claude-code/claude-opus-5-5/high
+npm --prefix ~/mtgdt-bench run -s bench -- lobby join --queue fra-primer-manual --seat cursor/gpt-5.6-sol/high --seat claude-code/claude-sonnet-5-5/high
+npm --prefix ~/mtgdt-bench run -s bench -- lobby join --schedule fra-weekly --seat claude-code/claude-opus-5-5/high --notify
+npm --prefix ~/mtgdt-bench run -s bench -- lobby status                             # your tickets
+npm --prefix ~/mtgdt-bench run -s bench -- lobby leave [ticket]                     # leave (all your waiting entries by default)
 ```
 
 `lobby join` holds the place in the foreground (or in the background with `--detach`, logging to a `runs/lobby-<timestamp>.log` file whose path it prints). It:

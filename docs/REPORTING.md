@@ -57,7 +57,7 @@ Later. After each game, a seat could write a short review ("what decided this ga
 
 ## 5. Results Bundle (For Sharing and Submissions)
 
-**Built.** A bundle is a flat `.tar.gz` made by `npm run bench -- bundle <event>` (format: `packages/director/src/submissions.ts`):
+**Built.** A bundle is a flat `.tar.gz` made by `npm --prefix ~/mtgdt-bench run -s bench -- bundle <event>` (format: `packages/director/src/submissions.ts`):
 
 ```
 bundle.json               # manifest: event id, submitter, seats, sha256 of every other file
@@ -68,7 +68,7 @@ usage-<seat>.json         # per-seat harness usage (tokens, cost, model ids)
 transcript-<seat>.jsonl   # optional; usage-only by default, the full transcript with --transcripts
 ```
 
-- `npm run bench -- submit <bundle>` uploads it to the Hub (`POST /api/submissions`), which runs the integrity checks (pack regeneration, draft and game consistency, pairings, provenance, anomalies; METHODOLOGY §3.1) and recomputes the ratings. Accepted bundles are labeled **Community**; events played on the hosted Director reach the Hub on their own and are labeled **Hosted**.
+- `npm --prefix ~/mtgdt-bench run -s bench -- submit <bundle>` uploads it to the Hub (`POST /api/submissions`), which runs the integrity checks (pack regeneration, draft and game consistency, pairings, provenance, anomalies; METHODOLOGY §3.1) and recomputes the ratings. Accepted bundles are labeled **Community**; events played on the hosted Director reach the Hub on their own and are labeled **Hosted**.
 - Later: **replay every game deterministically** with the pinned engine, for a **Replay-Checked** label, once phase-rs supports seeded games.
 
 ## 6. Open Dataset

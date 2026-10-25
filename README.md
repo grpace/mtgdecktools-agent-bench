@@ -45,22 +45,24 @@ The benchmark is an [MTG Deck Tools](https://www.mtgdecktools.com) project. The 
 
 ## Run Your Agent
 
-Paste the setup prompt from [Run Your Agent](https://www.mtgdecktools.com/agent-bench/run) into Claude Code, Codex CLI or another coding agent. It clones this repository, signs you in with GitHub, asks which table, set and seats you want, checks every seat with you, and starts. There are two kinds of table:
+Paste the setup prompt from [Run Your Agent](https://www.mtgdecktools.com/agent-bench/run) into Claude Code, Codex CLI or another coding agent. It clones this repository, asks which table, set and seats you want, checks every seat with you, then signs you in with GitHub (an account at least 30 days old) and starts once you confirm. A dry run shows the whole confirmation without signing in. There are two kinds of table:
 
 - **Private Table:** you bring all 8 agents and play right away; repeat models as you like.
 - **Join the Lobby:** bring 1–4 agents; we seat you with other people's agents and start when 8 are ready.
 
 Your agents run on your own subscription or API key, and a table uses a lot of tokens. The server never sees your keys.
 
-Prefer the terminal? The kit runs from a clone of this repository (it isn't published on npm):
+Prefer the terminal? The kit runs from a clone of this repository at `~/mtgdt-bench` (it isn't published on npm), and every command runs the same way from any folder:
 
 ```bash
 git clone https://github.com/grpace/mtgdecktools-agent-bench.git ~/mtgdt-bench
-cd ~/mtgdt-bench && npm ci
-npm run bench -- setup      # asks the same questions, signs you in, and starts the seats this machine can run
+npm --prefix ~/mtgdt-bench ci
+npm --prefix ~/mtgdt-bench run -s bench -- setup   # asks the same questions, signs you in, and starts the seats this machine can run
 ```
 
-You need Node.js 22 or later, git, and at least one agent harness with MCP support (Claude Code, Codex CLI, Gemini CLI, OpenCode, Cursor, …). Walkthrough, Keep Playing, points and fairness rules: [docs/COMMUNITY.md](docs/COMMUNITY.md). Seating each harness: [docs/HARNESSES.md](docs/HARNESSES.md).
+In the docs, `bench <command>` is short for `npm --prefix ~/mtgdt-bench run -s bench -- <command>`; the CLI's own hints print the full form.
+
+You need macOS or Linux (on Windows, use WSL), Node.js 22 or later, git, and at least one agent harness with MCP support. Claude Code, Cursor CLI and OpenCode have run real tables; Codex CLI and Gemini CLI are supported but untested so far. Walkthrough, Keep Playing, points and fairness rules: [docs/COMMUNITY.md](docs/COMMUNITY.md). Seating each harness: [docs/HARNESSES.md](docs/HARNESSES.md).
 
 ## How Results Are Rated
 
@@ -78,20 +80,20 @@ The full method, its limitations and how it was calibrated: [docs/METHODOLOGY.md
 You need Docker or Podman and Node.js 22 or later. No API key is needed on the server.
 
 ```bash
-git clone https://github.com/grpace/mtgdecktools-agent-bench.git && cd mtgdecktools-agent-bench
-npm ci
-npm run up        # builds the Director, starts the pinned phase-rs engine, prints an admin token once
+git clone https://github.com/grpace/mtgdecktools-agent-bench.git ~/mtgdt-bench
+npm --prefix ~/mtgdt-bench ci
+npm --prefix ~/mtgdt-bench run up        # builds the Director, starts the pinned phase-rs engine, prints an admin token once
 
-npm run bench -- new --set fra --seat "4x claude-code/claude-sonnet-5-5/high" --seat "4x claude-code/claude-haiku-5-5/low"
-npm run bench -- play <event>          # headless seats (or: npm run bench -- seats <event> to seat any harness by hand)
-npm run bench -- status <event>
+npm --prefix ~/mtgdt-bench run -s bench -- new --set fra --seat "4x claude-code/claude-sonnet-5-5/high" --seat "4x claude-code/claude-haiku-5-5/low"
+npm --prefix ~/mtgdt-bench run -s bench -- play <event>          # headless seats (or: npm --prefix ~/mtgdt-bench run -s bench -- seats <event> to seat any harness by hand)
+npm --prefix ~/mtgdt-bench run -s bench -- status <event>
 
-npm run bench -- pull <event>          # logs into runs/<event>/
-npm run bench -- bundle <event>        # results bundle with per-seat usage
-npm run bench -- submit runs/<event>.bundle.tar.gz   # share it: checked by the Hub, shown on mtgdecktools.com as Community
+npm --prefix ~/mtgdt-bench run -s bench -- pull <event>          # logs into runs/<event>/
+npm --prefix ~/mtgdt-bench run -s bench -- bundle <event>        # results bundle with per-seat usage
+npm --prefix ~/mtgdt-bench run -s bench -- submit runs/<event>.bundle.tar.gz   # share it: checked by the Hub, shown on mtgdecktools.com as Community
 ```
 
-No compose? `npm run bench -- up --plain` uses plain `podman`/`docker run`. Without containers for the Director: run phase-server, then `npm run director -- --set fra --agents a,b,c,d,e,f,g,h`, then connect any MCP client to the 8 printed seat URLs. Every pick, build and decision is logged to `runs/<event>/events.jsonl`.
+No compose? `npm --prefix ~/mtgdt-bench run -s bench -- up --plain` uses plain `podman`/`docker run`. Without containers for the Director: run phase-server, then `npm --prefix ~/mtgdt-bench run director -- --set fra --agents a,b,c,d,e,f,g,h`, then connect any MCP client to the 8 printed seat URLs. Every pick, build and decision is logged to `runs/<event>/events.jsonl`.
 
 ## Docs
 
