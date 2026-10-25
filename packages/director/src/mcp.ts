@@ -35,6 +35,17 @@ const WAIT_MS = 40_000;
  */
 const UNSAFE_TEXT = /[\u0000-\u0008\u000B-\u001F\u007F-\u009F\u061C\u200B\u200E\u200F\u202A-\u202E\u2066-\u2069\uFEFF]/g;
 
+/**
+ * The CORS header of the Director's public reads (the report export under /data/, live streams, the lobby's public
+ * views), for answers sent before a route runs (429, 500), so a browser sees them like the route's own answers. Never
+ * for admin, seat or authenticated routes.
+ */
+export function publicReadCors(req: IncomingMessage): Record<string, string> {
+  if (req.method !== 'GET') return {};
+  const path = (req.url ?? '').split('?')[0]!;
+  return /^\/data\/|^\/api\/events\/[^/]+\/live$|^\/api\/lobby(\/(?!tickets\/)|$)/.test(path) ? { 'Access-Control-Allow-Origin': '*' } : {};
+}
+
 export function cleanAgentText(s: string): string {
   // String.prototype.toWellFormed (Node 20+; not in this project's TypeScript lib yet).
   return (s as string & { toWellFormed(): string }).toWellFormed().replace(UNSAFE_TEXT, '');
@@ -247,8 +258,8 @@ export function startHttp(lookup: SeatLookup, cards: CardDb, port: number, host 
   const inflight = new Map<string, number>();
   const ipInflight = new Map<string, number>();
   const maxPerIp = limits.inflightPerIp ?? DEFAULT_MCP_LIMITS.inflightPerIp!;
-  const tooMany = (res: ServerResponse, retry: number, what: string) => {
-    res.writeHead(429, { 'Content-Type': 'application/json', 'Retry-After': String(retry) }).end(JSON.stringify({ error: what }));
+  const tooMany = (res: ServerResponse, retry: number, what: string, headers: Record<string, string> = {}) => {
+    res.writeHead(429, { 'Content-Type': 'application/json', 'Retry-After': String(retry), ...headers }).end(JSON.stringify({ error: what }));
   };
   /** Count a request against its client IP until the response closes; false (and a 429) when the IP is at its cap. */
   const holdIp = (req: IncomingMessage, res: ServerResponse): boolean => {
@@ -256,7 +267,7 @@ export function startHttp(lookup: SeatLookup, cards: CardDb, port: number, host 
     const ip = clientIp(req, limits.trustProxy, limits.proxyHops);
     const n = ipInflight.get(ip) ?? 0;
     if (n >= maxPerIp) {
-      tooMany(res, 5, `at most ${maxPerIp} requests at once from one address`);
+      tooMany(res, 5, `at most ${maxPerIp} requests at once from one address`, publicReadCors(req));
       return false;
     }
     ipInflight.set(ip, n + 1);
@@ -280,7 +291,7 @@ export function startHttp(lookup: SeatLookup, cards: CardDb, port: number, host 
     res.setHeader('Referrer-Policy', 'no-referrer');
     handle(req, res).catch((err) => {
       console.error(`${req.method} ${loggablePath(req.url)}: ${String((err as Error)?.stack ?? err)}`);
-      if (!res.headersSent) res.writeHead(err instanceof URIError || err instanceof TypeError && /URL/.test(String(err)) ? 400 : 500, { 'Content-Type': 'text/plain' }).end('bad request');
+      if (!res.headersSent) res.writeHead(err instanceof URIError || err instanceof TypeError && /URL/.test(String(err)) ? 400 : 500, { 'Content-Type': 'text/plain', ...publicReadCors(req) }).end('bad request');
       else res.destroy();
     });
   });

@@ -13,7 +13,8 @@ import type { CardDb } from './cards.js';
 import { DEFAULT_LOBBY, Lobby, MemoryLobbyStore, type ViewContext } from './lobby.js';
 import { LobbyHttp, MAX_WAITS_PER_TICKET } from './lobby-http.js';
 import { capLine } from './log-cap.js';
-import { cleanAgentText, cleanDecideInput, MAX_BATCH, startHttp, type ExtraRoutes } from './mcp.js';
+import { cleanAgentText, cleanDecideInput, MAX_BATCH, publicReadCors, startHttp, type ExtraRoutes } from './mcp.js';
+import { EventServer } from './server.js';
 import { AgentSeat, MAX_REFUSED_PER_MIN, type DecideInput, type Offer } from './seat.js';
 import { SpectateHub } from './spectate-http.js';
 import { DEFAULT_SPECTATE_POLICY } from './spectate-policy.js';
@@ -309,6 +310,44 @@ await test('lobby: malformed percent-encoding is a 404 (no 500, no stack); long-
   } finally {
     lobby.flush?.();
     server.close();
+  }
+});
+
+await test('public reads answer errors with the same CORS header as successes; admin and authenticated routes get none', async () => {
+  const runs = mkdtempSync(join(tmpdir(), 'cors-runs-'));
+  const data = mkdtempSync(join(tmpdir(), 'cors-data-'));
+  writeFileSync(join(data, 'index.json'), '{}');
+  const srv = new EventServer({ base: { runsDir: runs } as any, publicUrl: 'http://director.test' }, {} as any, {} as CardDb);
+  (srv as any).cfg.dataDir = data; // set after construction: the constructor would start a report export
+  const http = startHttp(() => undefined, {} as CardDb, 0, '127.0.0.1', srv.routes);
+  const base = await listening(http);
+  const acao = async (path: string, init: RequestInit = {}) => {
+    const r = await fetch(`${base}${path}`, init);
+    await r.arrayBuffer();
+    return [r.status, r.headers.get('access-control-allow-origin')];
+  };
+  try {
+    assert.deepEqual(await acao('/data/index.json'), [200, '*']);
+    assert.deepEqual(await acao('/data/events/2026-01-01-00-00-00-fra-0000.json'), [404, '*'], 'a missing report file');
+    assert.deepEqual(await acao('/api/events/2026-01-01-00-00-00-fra-0000/live'), [404, '*'], 'an unknown event\'s live stream');
+    assert.deepEqual(await acao('/api/events/not!an-id/live'), [404, '*'], 'a malformed event id');
+    assert.deepEqual(await acao('/api/lobby/queues/nope'), [503, '*'], 'the lobby\'s public views while it starts (no restore() here)');
+    assert.deepEqual(await acao('/api/admin/status'), [401, null], 'admin: no CORS');
+    assert.deepEqual(await acao('/api/events', { method: 'POST', body: '{}' }), [401, null], 'authenticated: no CORS');
+    assert.deepEqual(await acao('/api/lobby/join', { method: 'POST', body: '{}' }), [503, null], 'a lobby write while it starts: no CORS');
+    assert.deepEqual(await acao('/mcp/0123456789abcdef0123456789abcdef', { method: 'POST', body: '{}' }), [404, null], 'seat URLs: no CORS');
+    // Answers sent before a route runs (the per-address cap, a 500) follow the same rule.
+    const req = (method: string, url: string) => ({ method, url }) as import('node:http').IncomingMessage;
+    assert.deepEqual(publicReadCors(req('GET', '/data/x.json')), { 'Access-Control-Allow-Origin': '*' });
+    assert.deepEqual(publicReadCors(req('GET', '/api/events/e-1/live?since=3')), { 'Access-Control-Allow-Origin': '*' });
+    assert.deepEqual(publicReadCors(req('GET', '/api/lobby/schedule')), { 'Access-Control-Allow-Origin': '*' });
+    for (const [m, u] of [['GET', '/api/lobby/tickets/abc'], ['POST', '/api/lobby/join'], ['GET', '/api/admin/lobby'], ['GET', '/api/events'], ['POST', '/data/x.json']]) {
+      assert.deepEqual(publicReadCors(req(m!, u!)), {}, `${m} ${u}`);
+    }
+  } finally {
+    http.close();
+    rmSync(runs, { recursive: true, force: true });
+    rmSync(data, { recursive: true, force: true });
   }
 });
 

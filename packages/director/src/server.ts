@@ -1059,16 +1059,19 @@ export class EventServer {
     const path = url.pathname.replace(/\/+$/, '') || '/';
     const ip = clientIp(req, !!this.cfg.trustProxy, this.cfg.proxyHops);
 
+    // Public reads that browsers fetch (mtgdecktools.com): their errors carry the same CORS header as their answers, so
+    // a page can tell "not found" or "slow down" from "unreachable". Authenticated and admin routes never get one.
+    const publicCors = { 'Access-Control-Allow-Origin': '*' };
     if (path.startsWith('/data/') && this.cfg.dataDir && req.method === 'GET') {
       const wait = this.dataLimiter.take(ip);
-      if (wait) return json(429, { error: 'too many requests' }, { 'Retry-After': String(wait) });
+      if (wait) return json(429, { error: 'too many requests' }, { 'Retry-After': String(wait), ...publicCors });
       const rel = path.slice('/data/'.length);
       const root = resolve(this.cfg.dataDir);
       const file = resolve(root, rel);
       const inside = relative(root, file);
       // Confined to the export directory (DIR-16), no dot-files or dot-directories (DIR-12).
       if (!inside || inside.startsWith('..') || isAbsolute(inside) || rel.split('/').some((seg) => seg.startsWith('.'))
-        || !existsSync(file) || !statSync(file).isFile()) return json(404, { error: 'not found' });
+        || !existsSync(file) || !statSync(file).isFile()) return json(404, { error: 'not found' }, publicCors);
       const type = extname(file) === '.json' ? 'application/json' : extname(file) === '.md' ? 'text/markdown; charset=utf-8' : 'application/octet-stream';
       res.writeHead(200, { 'Content-Type': type, 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=60' });
       createReadStream(file).on('error', () => res.destroy()).pipe(res);
@@ -1077,11 +1080,11 @@ export class EventServer {
     if (!path.startsWith('/api/')) return false;
 
     // The spectator stream has its own per-IP limits (spectate-http.ts).
-    const live = path.match(/^\/api\/events\/([\w-]+)\/live$/);
+    const live = path.match(/^\/api\/events\/([^/]+)\/live$/);
     if (live && (req.method === 'GET' || req.method === 'OPTIONS')) {
       const id = live[1]!;
-      if (!EVENT_ID_RE.test(id)) return json(404, { error: 'no such event' });
-      return (await this.spectate.handle(req, res, id, this.events.get(id)?.spectator)) || json(404, { error: 'no such event' });
+      if (!EVENT_ID_RE.test(id)) return json(404, { error: 'no such event' }, publicCors);
+      return (await this.spectate.handle(req, res, id, this.events.get(id)?.spectator)) || json(404, { error: 'no such event' }, publicCors);
     }
     const wait = this.apiLimiter.take(ip);
     // The lobby's public reads are fetched by browsers (mtgdecktools.com): let them see the 429 too.

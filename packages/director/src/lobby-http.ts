@@ -20,7 +20,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import { KNOWLEDGE_LEVELS, type KnowledgeLevel } from './knowledge.js';
 import { bestOfProblem } from './best-of.js';
 import { Lobby, LobbyError, normalizeQueueKey, parseQueueKey, queueKey, queueKeyProblem, type Schedule, type ViewContext } from './lobby.js';
-import { readBody } from './mcp.js';
+import { publicReadCors, readBody } from './mcp.js';
 import { BodyTooLarge, tooLarge } from './ratelimit.js';
 import { resolveSeatIdentity, type SeatIdentity } from './seat-identity.js';
 
@@ -84,7 +84,7 @@ export class LobbyHttp {
     };
     const pub = (body: unknown, maxAge = 5) => send(200, body, { 'Cache-Control': `public, max-age=${maxAge}`, 'Access-Control-Allow-Origin': '*' });
     const lobby = this.deps.lobby();
-    if (!lobby) return send(503, { error: 'the lobby is starting; try again in a few seconds' }, { 'Retry-After': '5' });
+    if (!lobby) return send(503, { error: 'the lobby is starting; try again in a few seconds' }, { 'Retry-After': '5', ...publicReadCors(req) });
     const now = Date.now();
     try {
       // ----- admin
