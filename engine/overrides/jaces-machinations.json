@@ -1,0 +1,668 @@
+{
+  "card": "Jace's Machinations",
+  "title": "the whole spell does nothing: the instant-speed loyalty permission is unparsed, and it stops the empower too",
+  "status": "active",
+  "kind": "parser",
+  "upstream_issue": null,
+  "marks_supported": true,
+  "applies_to": {
+    "server_version": "0.117.0",
+    "build_commit": "09c286c",
+    "card_data_sha256": "84d5fd2af84e2f125b740eeb05637785b2e8df26d34e41a2cd628697dae30513",
+    "entry_sha256": "3d39a82aa7b93091a04d6e6cb301ab92af3f4d9f1c7f3babab1dc7317b5c5c02"
+  },
+  "rules": {
+    "oracle": "Until end of turn, you may activate loyalty abilities of Jace planeswalkers you control on any player's turn any time you could cast an instant.\nEmpower Jace 8. (Put eight loyalty counters on a Jace token you control. If you don't control one, first create a blue Jace planeswalker token with \"[−1]: Surveil 1\" and \"[−3]: Draw a card.\")",
+    "cr": [
+      "606.3",
+      "611.2c",
+      "613.1",
+      "701.71a",
+      "608.2c"
+    ],
+    "actual": "The first sentence is an Unimplemented{unbound_subject} node at the root of the spell, and an unimplemented root stops the whole spell: it resolves without creating or empowering a Jace, and no permission is granted. The coverage report lists the card as unsupported.",
+    "expected": "Until end of turn, you may activate loyalty abilities of Jace planeswalkers you control at instant timing on any player's turn (CR 606.3's sorcery-timing rule is lifted; once per turn per permanent still applies). The permission modifies the rules, so per CR 611.2c it applies to every Jace planeswalker you control during that turn, including the Jace token the spell's own Empower Jace 8 creates and any Jace that arrives later that turn. Then empower Jace 8 (CR 701.71a): put eight loyalty counters on a Jace token you control, creating one first if you control none.",
+    "diagnosis": "The parser doesn't bind the subject of \"you may activate loyalty abilities of Jace planeswalkers you control … any time you could cast an instant\" and leaves the sentence Unimplemented. The permission itself exists: The Wandering Emperor's StaticMode::ActivateAsInstant{cost_category: PaysLoyalty}, read by restrictions::has_activate_as_instant_permission from statics on battlefield objects. A spell can graft it until end of turn with GenericEffect + AddStaticMode, but register_transient_effect (game/effects/effect.rs) freezes a broadcast `affected` filter to the objects there at resolution (it keeps the filter live only for MayLookAtFaceDown, CastFromHandFree, ReduceAbilityCost and MustAttackAwayFromSource). So the plain shape misses the Jace token the empower creates right after, and any Jace that arrives later that turn.",
+    "suggested_fix": "Parser: lower the sentence to GenericEffect{static_abilities: [{affected: Typed{Planeswalker, Subtype Jace, controller You}, modifications: [AddStaticMode{ActivateAsInstant{cost_category: PaysLoyalty}}]}], duration: UntilEndOfTurn}. Engine: add StaticMode::ActivateAsInstant to the modes register_transient_effect keeps dynamic (a rules-modifying effect, CR 611.2c), like MustAttackAwayFromSource: layers.rs then grafts it onto every object the live filter matches. (Related: Teferi, Master of Time; the Teferi, Temporal Archmage and Teferi's Talent emblems need the same permission from the command zone.)",
+    "override_note": "Replaces the Unimplemented root with that GenericEffect, in printed order (the Empower Jace 8 sub-ability is unchanged). The modifications also carry AddStaticMode{MayLookAtFaceDown}: it is the one mode that steers register_transient_effect onto its dynamic branch without other effects, so the `affected` filter stays live and layers.rs grafts ActivateAsInstant onto every Jace planeswalker you control on each pass (layers.rs skips the MayLookAtFaceDown modification itself). Its own effect is nil: it would let you look at face-down Jace planeswalkers you control, which you may already look at (CR 708.5), and a face-down permanent is never a Jace planeswalker. This leans on engine internals, so it is pinned to this build and re-tested on every upgrade. One difference from the rules remains: the grafted permission is an ability on each Jace, so a Jace that loses all abilities and then gains a loyalty ability later that turn wouldn't have it; in FRA no effect can make your Jace lose its abilities (Flourishing Grapple hits only red or white permanents an opponent controls, Infinite Coursework only creatures)."
+  },
+  "patch": [
+    {
+      "op": "test",
+      "path": "/abilities/0/effect",
+      "value": {
+        "type": "Unimplemented",
+        "name": "unbound_subject",
+        "description": "you may activate loyalty abilities of Jace planeswalkers you control on any player's turn any time you could cast an instant"
+      }
+    },
+    {
+      "op": "test",
+      "path": "/abilities/0/duration",
+      "value": "UntilEndOfTurn"
+    },
+    {
+      "op": "test",
+      "path": "/abilities/0/sub_ability/effect",
+      "value": {
+        "type": "EmpowerJace",
+        "count": {
+          "type": "Fixed",
+          "value": 8
+        }
+      }
+    },
+    {
+      "op": "replace",
+      "path": "/abilities/0/effect",
+      "value": {
+        "type": "GenericEffect",
+        "static_abilities": [
+          {
+            "mode": {
+              "ActivateAsInstant": {
+                "cost_category": "PaysLoyalty"
+              }
+            },
+            "affected": {
+              "type": "Typed",
+              "type_filters": [
+                "Planeswalker",
+                {
+                  "Subtype": "Jace"
+                }
+              ],
+              "controller": "You",
+              "properties": []
+            },
+            "modifications": [
+              {
+                "type": "AddStaticMode",
+                "mode": "MayLookAtFaceDown"
+              },
+              {
+                "type": "AddStaticMode",
+                "mode": {
+                  "ActivateAsInstant": {
+                    "cost_category": "PaysLoyalty"
+                  }
+                }
+              }
+            ],
+            "condition": null,
+            "affected_zone": null,
+            "effect_zone": null,
+            "active_zones": [],
+            "characteristic_defining": false,
+            "description": "Until end of turn, you may activate loyalty abilities of Jace planeswalkers you control on any player's turn any time you could cast an instant."
+          }
+        ],
+        "duration": "UntilEndOfTurn",
+        "target": null
+      }
+    }
+  ],
+  "tests": [
+    {
+      "name": "Cast on the opponent's turn with no Jace: empower Jace 8 creates a token with 8 loyalty, and its [-3] is offered that turn",
+      "setup": [
+        {
+          "card": "Jace's Machinations",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 1
+      },
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "cast": {
+            "card": "Jace's Machinations"
+          }
+        },
+        {
+          "offered": {
+            "label": "token [-3]",
+            "activate": {
+              "card": "Jace",
+              "ability": 1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "offered": {
+            "token [-3]": true
+          },
+          "objects": [
+            {
+              "card": "Jace",
+              "controller": 0,
+              "zone": "Battlefield",
+              "loyalty": 8
+            }
+          ]
+        },
+        "bug": {
+          "offered": {
+            "token [-3]": false
+          },
+          "objects": [
+            {
+              "card": "Jace",
+              "controller": 0,
+              "zone": "Battlefield",
+              "count": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Cast on the opponent's turn with a Jace token (5): it goes to 13, and its [-3] draws a card on that turn (CR 606.3 lifted)",
+      "setup": [
+        {
+          "card": "Jace's Machinations",
+          "owner": 0,
+          "zone": "Exile"
+        },
+        {
+          "card": "Way of the Mind Sculptor",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "cast": {
+            "card": "Way of the Mind Sculptor"
+          }
+        },
+        {
+          "advance": {
+            "phase": "PreCombatMain",
+            "active": 1
+          }
+        },
+        {
+          "debug": "MoveToZone",
+          "object": {
+            "card": "Jace's Machinations",
+            "owner": 0,
+            "zone": "Exile"
+          },
+          "data": {
+            "to_zone": "Hand",
+            "simulate": false
+          }
+        },
+        {
+          "cast": {
+            "card": "Jace's Machinations"
+          }
+        },
+        {
+          "activate": {
+            "card": "Jace",
+            "ability": 1,
+            "if_offered": true,
+            "label": "token [-3]"
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "offered": {
+            "token [-3]": true
+          },
+          "objects": [
+            {
+              "card": "Jace",
+              "controller": 0,
+              "zone": "Battlefield",
+              "loyalty": 10
+            }
+          ],
+          "hand": [
+            8,
+            null
+          ]
+        },
+        "bug": {
+          "offered": {
+            "token [-3]": false
+          },
+          "objects": [
+            {
+              "card": "Jace",
+              "controller": 0,
+              "zone": "Battlefield",
+              "loyalty": 5
+            }
+          ],
+          "hand": [
+            7,
+            null
+          ]
+        }
+      }
+    },
+    {
+      "name": "Cast in your own beginning of combat: the token's [-3] can be activated there, not only at sorcery speed",
+      "setup": [
+        {
+          "card": "Jace's Machinations",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Way of the Mind Sculptor",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "cast": {
+            "card": "Way of the Mind Sculptor"
+          }
+        },
+        {
+          "advance": {
+            "phase": "BeginCombat",
+            "active": 0
+          }
+        },
+        {
+          "cast": {
+            "card": "Jace's Machinations"
+          }
+        },
+        {
+          "activate": {
+            "card": "Jace",
+            "ability": 1,
+            "if_offered": true,
+            "label": "token [-3]"
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "offered": {
+            "token [-3]": true
+          },
+          "objects": [
+            {
+              "card": "Jace",
+              "controller": 0,
+              "zone": "Battlefield",
+              "loyalty": 10
+            }
+          ],
+          "hand": [
+            8,
+            null
+          ]
+        },
+        "bug": {
+          "offered": {
+            "token [-3]": false
+          },
+          "objects": [
+            {
+              "card": "Jace",
+              "controller": 0,
+              "zone": "Battlefield",
+              "loyalty": 5
+            }
+          ],
+          "hand": [
+            7,
+            null
+          ]
+        }
+      }
+    },
+    {
+      "name": "A Jace that arrives after it resolved is covered too (CR 611.2c): Jace, Reality Sculptor cast afterwards activates [+1] in combat",
+      "setup": [
+        {
+          "card": "Jace's Machinations",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Jace, Reality Sculptor",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "cast": {
+            "card": "Jace's Machinations"
+          }
+        },
+        {
+          "cast": {
+            "card": "Jace, Reality Sculptor"
+          }
+        },
+        {
+          "advance": {
+            "phase": "BeginCombat",
+            "active": 0
+          }
+        },
+        {
+          "offered": {
+            "label": "Reality Sculptor [+1] in combat",
+            "activate": {
+              "card": "Jace, Reality Sculptor",
+              "ability": 0
+            }
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "offered": {
+            "Reality Sculptor [+1] in combat": true
+          },
+          "objects": [
+            {
+              "card": "Jace",
+              "controller": 0,
+              "zone": "Battlefield",
+              "loyalty": 8
+            }
+          ]
+        },
+        "bug": {
+          "offered": {
+            "Reality Sculptor [+1] in combat": false
+          },
+          "objects": [
+            {
+              "card": "Jace",
+              "controller": 0,
+              "zone": "Battlefield",
+              "count": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Still once per turn per planeswalker: after the token's [-1], its [-3] isn't offered (CR 606.3)",
+      "setup": [
+        {
+          "card": "Jace's Machinations",
+          "owner": 0,
+          "zone": "Exile"
+        },
+        {
+          "card": "Way of the Mind Sculptor",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "cast": {
+            "card": "Way of the Mind Sculptor"
+          }
+        },
+        {
+          "advance": {
+            "phase": "PreCombatMain",
+            "active": 1
+          }
+        },
+        {
+          "debug": "MoveToZone",
+          "object": {
+            "card": "Jace's Machinations",
+            "owner": 0,
+            "zone": "Exile"
+          },
+          "data": {
+            "to_zone": "Hand",
+            "simulate": false
+          }
+        },
+        {
+          "cast": {
+            "card": "Jace's Machinations"
+          }
+        },
+        {
+          "activate": {
+            "card": "Jace",
+            "ability": 0,
+            "if_offered": true,
+            "label": "token [-1]"
+          }
+        },
+        {
+          "offered": {
+            "label": "token [-3] again",
+            "activate": {
+              "card": "Jace",
+              "ability": 1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "offered": {
+            "token [-1]": true,
+            "token [-3] again": false
+          },
+          "objects": [
+            {
+              "card": "Jace",
+              "controller": 0,
+              "zone": "Battlefield",
+              "loyalty": 12
+            }
+          ]
+        },
+        "bug": {
+          "offered": {
+            "token [-1]": false,
+            "token [-3] again": false
+          },
+          "objects": [
+            {
+              "card": "Jace",
+              "controller": 0,
+              "zone": "Battlefield",
+              "loyalty": 5
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Only until end of turn: cast on the opponent's turn, the token can't activate in your next upkeep",
+      "setup": [
+        {
+          "card": "Jace's Machinations",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 1
+      },
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "cast": {
+            "card": "Jace's Machinations"
+          }
+        },
+        {
+          "advance": {
+            "phase": "Upkeep",
+            "active": 0
+          }
+        },
+        {
+          "offered": {
+            "label": "token [-3] next upkeep",
+            "activate": {
+              "card": "Jace",
+              "ability": 1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "offered": {
+            "token [-3] next upkeep": false
+          },
+          "objects": [
+            {
+              "card": "Jace",
+              "controller": 0,
+              "zone": "Battlefield",
+              "loyalty": 8
+            }
+          ]
+        },
+        "bug": {
+          "offered": {
+            "token [-3] next upkeep": false
+          },
+          "objects": [
+            {
+              "card": "Jace",
+              "controller": 0,
+              "zone": "Battlefield",
+              "count": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Only Jaces you control: the opponent's Jace, Reality Sculptor can't activate in your combat",
+      "setup": [
+        {
+          "card": "Jace's Machinations",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Jace, Reality Sculptor",
+          "owner": 1,
+          "zone": "Battlefield",
+          "counters": {
+            "loyalty": 5
+          }
+        }
+      ],
+      "phase": {
+        "phase": "BeginCombat",
+        "active": 0
+      },
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "cast": {
+            "card": "Jace's Machinations"
+          }
+        },
+        {
+          "offered": {
+            "label": "opponent's Jace [+1]",
+            "activate": {
+              "card": "Jace, Reality Sculptor",
+              "by": 1,
+              "ability": 0
+            }
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "offered": {
+            "opponent's Jace [+1]": false
+          },
+          "objects": [
+            {
+              "card": "Jace",
+              "controller": 0,
+              "zone": "Battlefield",
+              "loyalty": 8
+            }
+          ]
+        },
+        "bug": {
+          "offered": {
+            "opponent's Jace [+1]": false
+          },
+          "objects": [
+            {
+              "card": "Jace",
+              "controller": 0,
+              "zone": "Battlefield",
+              "count": 0
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "history": [
+    {
+      "date": "2026-10-25",
+      "status": "active",
+      "note": "Written against Oracle text and CR 606.3/611.2c/701.71a; tested on 0.117.0 (09c286c): upstream resolves the spell without empowering or granting anything; with the override, the token's loyalty abilities can be activated on the opponent's turn and in your combat, a Jace cast after it resolved can activate in combat, once per turn still holds, the permission ends at end of turn and doesn't reach the opponent's Jaces."
+    }
+  ]
+}

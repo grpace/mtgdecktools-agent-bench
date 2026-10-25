@@ -1,0 +1,463 @@
+{
+  "card": "Theorist's Sanctum",
+  "title": "the optional behold is dropped, so the land always enters tapped",
+  "status": "active",
+  "kind": "parser",
+  "upstream_issue": null,
+  "marks_supported": true,
+  "applies_to": {
+    "server_version": "0.117.0",
+    "build_commit": "09c286c",
+    "card_data_sha256": "84d5fd2af84e2f125b740eeb05637785b2e8df26d34e41a2cd628697dae30513",
+    "entry_sha256": "9a781a1d040fe4d66ba4fae23bea20dc6105c92ad4db0028fa64ecb6e90f6fca"
+  },
+  "rules": {
+    "oracle": "({T}: Add {U}.)\nAs this land enters, you may behold a Jace. If you don't, this land enters tapped. (To behold a Jace, choose a Jace you control or reveal a Jace card from your hand.)\n{2}{U}, {T}: Empower Jace 2.",
+    "cr": [
+      "701.4a",
+      "614.1c",
+      "614.12",
+      "305.7",
+      "608.2c"
+    ],
+    "actual": "The parser swallows \"you may behold a Jace. If you don't,\" (Swallow:Condition_If and Swallow:Optional_YouMay in phase-rs's coverage report) and keeps a mandatory \"this land enters tapped\" replacement, so the land always enters tapped, even when you control a Jace or have one in hand. The coverage report lists the card as unsupported.",
+    "expected": "As the land enters, you may behold a Jace: choose a Jace you control, or reveal a Jace card from your hand (CR 701.4a). If you do, it enters untapped; if you don't (you decline, or have no Jace to behold), it enters tapped. The {T}: Add {U} and the {2}{U}, {T}: Empower Jace 2 abilities are unaffected.",
+    "diagnosis": "The as-enters replacement keeps only its \"enters tapped\" consequence; the optional behold that gates it is lost. The natural shape, a MayCost replacement with AbilityCost::Behold, still doesn't work on 0.117.0: pay_replacement_may_cost (game/replacement.rs) has no Behold arm and supported_at_resolution (game/costs.rs) lists Behold as unsupported, so the land would always enter tapped.",
+    "suggested_fix": "Parser: lower \"As this land enters, you may behold a [quality]. If you don't, this land enters tapped.\" to the replacement's execute = optional Effect::Behold{filter: [quality]} with a SequentialSibling SetTapState{Tap, SelfRef} gated on Not(EffectOutcome OptionalEffectPerformed), the shape Sarkhan, Dragon Ascendant uses for its \"you may behold … If you do\" (with the condition negated), or teach pay_replacement_may_cost and supported_at_resolution a Behold arm.",
+    "override_note": "Replaces the replacement's execute with that chain. Effect::Behold offers your Jaces on the battlefield and the Jace cards in your hand (a hand card is revealed, a permanent isn't), asks which one when there are several, and whiffs with none, which the \"if you don't\" gate reads as not done. Because Behold isn't an event modifier, the tap runs as the replacement's follow-up just after the land is put onto the battlefield, before any player gets priority (game/engine_replacement.rs apply_post_replacement_effect). That is the path phase-rs's own reveal lands (RevealFromHand on_decline) and shock lands take, so it is as faithful as those: it would differ from entering tapped only for a \"whenever a permanent becomes tapped\" trigger, and no FRA card has one."
+  },
+  "patch": [
+    {
+      "op": "test",
+      "path": "/replacements/0/event",
+      "value": "Moved"
+    },
+    {
+      "op": "test",
+      "path": "/replacements/0/mode",
+      "value": {
+        "type": "Mandatory"
+      }
+    },
+    {
+      "op": "test",
+      "path": "/replacements/0/execute",
+      "value": {
+        "kind": "Spell",
+        "effect": {
+          "type": "SetTapState",
+          "target": {
+            "type": "SelfRef"
+          },
+          "scope": {
+            "type": "Single"
+          },
+          "state": {
+            "type": "Tap"
+          }
+        },
+        "cost": null,
+        "sub_ability": null,
+        "duration": null,
+        "description": null,
+        "target_prompt": null,
+        "condition": null,
+        "optional_targeting": false,
+        "optional": false,
+        "forward_result": false
+      }
+    },
+    {
+      "op": "replace",
+      "path": "/replacements/0/execute",
+      "value": {
+        "kind": "Spell",
+        "effect": {
+          "type": "Behold",
+          "filter": {
+            "type": "Typed",
+            "type_filters": [
+              {
+                "Subtype": "Jace"
+              }
+            ],
+            "controller": null,
+            "properties": []
+          }
+        },
+        "cost": null,
+        "sub_ability": {
+          "kind": "Spell",
+          "effect": {
+            "type": "SetTapState",
+            "target": {
+              "type": "SelfRef"
+            },
+            "scope": {
+              "type": "Single"
+            },
+            "state": {
+              "type": "Tap"
+            }
+          },
+          "cost": null,
+          "sub_ability": null,
+          "duration": null,
+          "description": null,
+          "target_prompt": null,
+          "condition": {
+            "type": "Not",
+            "condition": {
+              "type": "EffectOutcome",
+              "signal": "OptionalEffectPerformed"
+            }
+          },
+          "optional_targeting": false,
+          "optional": false,
+          "forward_result": false,
+          "sub_link": "SequentialSibling"
+        },
+        "duration": null,
+        "description": null,
+        "target_prompt": null,
+        "condition": null,
+        "optional_targeting": false,
+        "optional": true,
+        "forward_result": false
+      }
+    }
+  ],
+  "tests": [
+    {
+      "name": "A Jace card in hand: behold it (reveal) and the land enters untapped",
+      "setup": [
+        {
+          "card": "Theorist's Sanctum",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Jace, Reality Sculptor",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "play": {
+            "card": "Theorist's Sanctum"
+          }
+        }
+      ],
+      "answers": {
+        "optional": [
+          true
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Theorist's Sanctum",
+              "owner": 0,
+              "zone": "Battlefield",
+              "tapped": false
+            }
+          ],
+          "zones": [
+            {
+              "card": "Jace, Reality Sculptor",
+              "owner": 0,
+              "zone": "Hand"
+            }
+          ]
+        },
+        "bug": {
+          "objects": [
+            {
+              "card": "Theorist's Sanctum",
+              "owner": 0,
+              "zone": "Battlefield",
+              "tapped": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "A Jace you control (a Jace token): behold it and the land enters untapped",
+      "setup": [
+        {
+          "card": "Theorist's Sanctum",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Way of the Mind Sculptor",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "cast": {
+            "card": "Way of the Mind Sculptor"
+          }
+        },
+        {
+          "play": {
+            "card": "Theorist's Sanctum"
+          }
+        }
+      ],
+      "answers": {
+        "optional": [
+          true
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Theorist's Sanctum",
+              "owner": 0,
+              "zone": "Battlefield",
+              "tapped": false
+            },
+            {
+              "card": "Jace",
+              "controller": 0,
+              "zone": "Battlefield",
+              "loyalty": 5
+            }
+          ]
+        },
+        "bug": {
+          "objects": [
+            {
+              "card": "Theorist's Sanctum",
+              "owner": 0,
+              "zone": "Battlefield",
+              "tapped": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "A Jace in hand and one on the battlefield: behold one of them, the land enters untapped",
+      "setup": [
+        {
+          "card": "Theorist's Sanctum",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Jace, Reality Sculptor",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Way of the Mind Sculptor",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "cast": {
+            "card": "Way of the Mind Sculptor"
+          }
+        },
+        {
+          "play": {
+            "card": "Theorist's Sanctum"
+          }
+        }
+      ],
+      "answers": {
+        "optional": [
+          true
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Theorist's Sanctum",
+              "owner": 0,
+              "zone": "Battlefield",
+              "tapped": false
+            }
+          ],
+          "zones": [
+            {
+              "card": "Jace, Reality Sculptor",
+              "owner": 0,
+              "zone": "Hand"
+            }
+          ]
+        },
+        "bug": {
+          "objects": [
+            {
+              "card": "Theorist's Sanctum",
+              "owner": 0,
+              "zone": "Battlefield",
+              "tapped": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Choosing not to behold with a Jace in hand: the land enters tapped",
+      "setup": [
+        {
+          "card": "Theorist's Sanctum",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Jace, Reality Sculptor",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "play": {
+            "card": "Theorist's Sanctum"
+          }
+        }
+      ],
+      "answers": {
+        "optional": [
+          false
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Theorist's Sanctum",
+              "owner": 0,
+              "zone": "Battlefield",
+              "tapped": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "No Jace anywhere: the land enters tapped",
+      "setup": [
+        {
+          "card": "Theorist's Sanctum",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "play": {
+            "card": "Theorist's Sanctum"
+          }
+        }
+      ],
+      "answers": {
+        "optional": [
+          true
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Theorist's Sanctum",
+              "owner": 0,
+              "zone": "Battlefield",
+              "tapped": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Only a Jace: a non-Jace planeswalker in hand doesn't count (the land enters tapped)",
+      "setup": [
+        {
+          "card": "Theorist's Sanctum",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Chandra, Torch of Defiance",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "play": {
+            "card": "Theorist's Sanctum"
+          }
+        }
+      ],
+      "answers": {
+        "optional": [
+          true
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Theorist's Sanctum",
+              "owner": 0,
+              "zone": "Battlefield",
+              "tapped": true
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "history": [
+    {
+      "date": "2026-10-25",
+      "status": "active",
+      "note": "Written against Oracle text and CR 701.4a/614.1c; tested on 0.117.0 (09c286c): upstream enters tapped even when you behold a Jace from hand or the battlefield; with the override it enters untapped then, and tapped when you decline, have no Jace, or only a non-Jace planeswalker."
+    }
+  ]
+}

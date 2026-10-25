@@ -1,0 +1,421 @@
+{
+  "card": "Hall of Echoes",
+  "title": "the legend-rule exemption is unparsed, so the copy of a legendary creature dies at once",
+  "status": "active",
+  "kind": "parser",
+  "upstream_issue": null,
+  "marks_supported": true,
+  "applies_to": {
+    "server_version": "0.117.0",
+    "build_commit": "09c286c",
+    "card_data_sha256": "84d5fd2af84e2f125b740eeb05637785b2e8df26d34e41a2cd628697dae30513",
+    "entry_sha256": "56839595a175cd63a5b19d43c547a10dc903c245adbb465bfd6efc8e8a9f38a3"
+  },
+  "rules": {
+    "oracle": "{T}: Add {C}.\n{5}: This land becomes a copy of target creature you control until end of turn. The \"legend rule\" doesn't apply to permanents you control this turn.",
+    "cr": [
+      "704.5j",
+      "611.2c",
+      "707.2",
+      "613.1",
+      "514.2"
+    ],
+    "actual": "The second sentence is an Unimplemented{unrecognized_clause_head} sub-ability, so it does nothing: when Hall becomes a copy of a legendary creature you control, the legend rule (CR 704.5j) puts one of the two into the graveyard at once. The coverage report lists the card as unsupported.",
+    "expected": "After Hall becomes a copy of target creature you control until end of turn, the legend rule doesn't apply to permanents you control for the rest of the turn. This modifies the rules, so per CR 611.2c it covers every permanent you control during that turn, including ones that arrive or come under your control later; the opponent's permanents are unaffected. When the turn ends (CR 514.2), the legend rule applies again at the next state-based action check.",
+    "diagnosis": "The parser doesn't recognize a clause starting with \"The \\\"legend rule\\\" doesn't apply\" in an effect position (the printed static form, as on Mirror Box, parses). The exemption exists: StaticMode::LegendRuleDoesntApply, checked per permanent by sba::legend_rule_exempt. A one-shot GenericEffect + AddStaticMode grant of it would work, but register_transient_effect (game/effects/effect.rs) freezes a broadcast `affected` filter to the permanents there at resolution, so a legendary permanent arriving later that turn would miss it.",
+    "suggested_fix": "Parser: lower \"The \\\"legend rule\\\" doesn't apply to permanents you control this turn\" to GenericEffect{static_abilities: [{affected: Typed{Permanent, controller You}, modifications: [AddStaticMode{LegendRuleDoesntApply}]}], duration: UntilEndOfTurn}. Engine: add StaticMode::LegendRuleDoesntApply to the modes register_transient_effect keeps dynamic (a rules-modifying effect, CR 611.2c), like MustAttackAwayFromSource.",
+    "override_note": "Replaces the Unimplemented sub-ability effect with that GenericEffect (the BecomeCopy root is unchanged). The modifications also carry AddStaticMode{MayLookAtFaceDown}: it is the one mode that steers register_transient_effect onto its dynamic branch without other effects, so the `affected` filter stays live and layers.rs grafts LegendRuleDoesntApply onto every permanent you control on each pass (layers.rs skips the MayLookAtFaceDown modification itself). Its own effect is nil: it lets you look at face-down permanents you control, which you may already do (CR 708.5). This leans on engine internals, so it is pinned to this build and re-tested on every upgrade. One difference from the rules remains: the exemption is grafted as an ability on each permanent, so if two or more same-named legendary permanents you control each lose all abilities from an effect that starts later that turn, the legend rule applies to those; by the rules it still wouldn't. In FRA that takes the opponent's Flourishing Grapple on each of them in that one turn (it hits only red or white permanents), or your own Infinite Coursework on each (an Aura, so not on the opponent's turn)."
+  },
+  "patch": [
+    {
+      "op": "test",
+      "path": "/abilities/1/effect/type",
+      "value": "BecomeCopy"
+    },
+    {
+      "op": "test",
+      "path": "/abilities/1/sub_ability/effect",
+      "value": {
+        "type": "Unimplemented",
+        "name": "unrecognized_clause_head",
+        "description": "The \"legend rule\" doesn't apply to permanents you control"
+      }
+    },
+    {
+      "op": "test",
+      "path": "/abilities/1/sub_ability/duration",
+      "value": "UntilEndOfTurn"
+    },
+    {
+      "op": "replace",
+      "path": "/abilities/1/sub_ability/effect",
+      "value": {
+        "type": "GenericEffect",
+        "static_abilities": [
+          {
+            "mode": "LegendRuleDoesntApply",
+            "affected": {
+              "type": "Typed",
+              "type_filters": [
+                "Permanent"
+              ],
+              "controller": "You",
+              "properties": []
+            },
+            "modifications": [
+              {
+                "type": "AddStaticMode",
+                "mode": "MayLookAtFaceDown"
+              },
+              {
+                "type": "AddStaticMode",
+                "mode": "LegendRuleDoesntApply"
+              }
+            ],
+            "condition": null,
+            "affected_zone": null,
+            "effect_zone": null,
+            "active_zones": [],
+            "characteristic_defining": false,
+            "description": "The \"legend rule\" doesn't apply to permanents you control this turn."
+          }
+        ],
+        "duration": "UntilEndOfTurn",
+        "target": null
+      }
+    }
+  ],
+  "tests": [
+    {
+      "name": "Hall becomes a copy of your legendary creature: both stay (the legend rule doesn't apply this turn)",
+      "setup": [
+        {
+          "card": "Hall of Echoes",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Isamaru, Hound of Konda",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "activate": {
+            "card": "Hall of Echoes",
+            "ability": 1,
+            "targets": [
+              {
+                "card": "Isamaru, Hound of Konda",
+                "owner": 0
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Isamaru, Hound of Konda",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 2
+            }
+          ]
+        },
+        "bug": {
+          "objects": [
+            {
+              "card": "Isamaru, Hound of Konda",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Legendary permanents that arrive later that turn are covered too (CR 611.2c): two Isamarus cast after Hall's ability resolved both stay",
+      "setup": [
+        {
+          "card": "Hall of Echoes",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Isamaru, Hound of Konda",
+          "owner": 0,
+          "zone": "Hand",
+          "count": 2
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "activate": {
+            "card": "Hall of Echoes",
+            "ability": 1,
+            "targets": [
+              {
+                "card": "Grizzly Bears",
+                "owner": 0
+              }
+            ]
+          }
+        },
+        {
+          "cast": {
+            "card": "Isamaru, Hound of Konda"
+          }
+        },
+        {
+          "cast": {
+            "card": "Isamaru, Hound of Konda"
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Isamaru, Hound of Konda",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 2
+            }
+          ],
+          "zones": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 2
+            }
+          ]
+        },
+        "bug": {
+          "objects": [
+            {
+              "card": "Isamaru, Hound of Konda",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Only this turn: at the next turn the legend rule applies again and one Isamaru goes to the graveyard",
+      "setup": [
+        {
+          "card": "Hall of Echoes",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Isamaru, Hound of Konda",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Isamaru, Hound of Konda",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "activate": {
+            "card": "Hall of Echoes",
+            "ability": 1,
+            "targets": [
+              {
+                "card": "Grizzly Bears",
+                "owner": 0
+              }
+            ]
+          }
+        },
+        {
+          "cast": {
+            "card": "Isamaru, Hound of Konda"
+          }
+        },
+        {
+          "advance": {
+            "phase": "Upkeep",
+            "active": 1
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Isamaru, Hound of Konda",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1
+            }
+          ],
+          "zones": [
+            {
+              "card": "Isamaru, Hound of Konda",
+              "owner": 0,
+              "zone": "Graveyard",
+              "count": 1
+            },
+            {
+              "card": "Hall of Echoes",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Only permanents you control: an opponent's second Isamaru arriving that turn still meets the legend rule",
+      "setup": [
+        {
+          "card": "Hall of Echoes",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Isamaru, Hound of Konda",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Isamaru, Hound of Konda",
+          "owner": 1,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Isamaru, Hound of Konda",
+          "owner": 1,
+          "zone": "Exile"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "activate": {
+            "card": "Hall of Echoes",
+            "ability": 1,
+            "targets": [
+              {
+                "card": "Isamaru, Hound of Konda",
+                "owner": 0
+              }
+            ]
+          }
+        },
+        {
+          "debug": "MoveToZone",
+          "object": {
+            "card": "Isamaru, Hound of Konda",
+            "owner": 1,
+            "zone": "Exile"
+          },
+          "data": {
+            "to_zone": "Battlefield",
+            "simulate": false
+          }
+        },
+        {
+          "advance": {
+            "phase": "BeginCombat",
+            "active": 0
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Isamaru, Hound of Konda",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 2
+            },
+            {
+              "card": "Isamaru, Hound of Konda",
+              "owner": 1,
+              "zone": "Battlefield",
+              "count": 1
+            }
+          ]
+        },
+        "bug": {
+          "objects": [
+            {
+              "card": "Isamaru, Hound of Konda",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1
+            },
+            {
+              "card": "Isamaru, Hound of Konda",
+              "owner": 1,
+              "zone": "Battlefield",
+              "count": 1
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "history": [
+    {
+      "date": "2026-10-25",
+      "status": "active",
+      "note": "Written against Oracle text and CR 704.5j/611.2c; tested on 0.117.0 (09c286c): upstream puts one of the two legends into the graveyard as soon as Hall copies a legendary creature; with the override both stay, two legends cast later that turn both stay, the legend rule returns at the next turn, and the opponent's permanents are unaffected."
+    }
+  ]
+}

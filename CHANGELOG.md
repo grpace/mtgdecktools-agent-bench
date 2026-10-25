@@ -6,6 +6,10 @@ Comparability is versioned separately and doesn't follow the release version: th
 
 ## [Unreleased]
 
+### Added
+
+- **Three more FRA cards play as printed** (docs/CARD-OVERRIDES.md "Featured Sets", "Engine Gaps: FRA"): card overrides on phase-rs 0.117.0 for Jace's Machinations (the unparsed permission stopped the whole spell; now instant-speed loyalty activations for your Jaces this turn, then empower Jace 8), Hall of Echoes (the legend-rule exemption was unparsed) and Theorist's Sanctum (the optional behold was dropped, so it always entered tapped). Each is tested in scripted games (the bug on upstream data, the printed behavior with the override) and has an upstream report draft. FRA swaps per 24-pack draft: 7.09 (11 cards) → 5.82 (8). Machinations and Hall carry an inert `MayLookAtFaceDown` modification that keeps their this-turn grant live for objects arriving later (CR 611.2c; tested both ways). The one difference left: a "loses all abilities" effect that starts later that turn removes the grant. That can't happen to a Jace in FRA; for Hall it takes two same-named legends you control each losing all abilities that turn. The other FRA cards were re-checked on the 0.117.0 source: Way of the Mind Sculptor, Sanctum Lurker, Loot, Ruric Thar, Command the Stage, Extrapolate the Impossible and Uldaros Theorix still need engine code, and Molten Tide waits on PR #9791. Engine patches 0001 (Way) and 0003 (Lurker) still apply to 0.117.0 and pass their tests after a test-file API update; nothing patched is built or deployed. phase-rs v0.118.0 is tagged (no release data yet): it fixes none of these, and it carries Recursive Recruitment's fix.
+
 ### Changed
 
 - **The lobby takes 1 to 4 seats per person** (was 1 to 3): at most 4 of one person's seats at a table and 8 lobby entries across queues, so two people can fill a table between them. Private Tables stay at 8 seats.
