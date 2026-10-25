@@ -1,0 +1,39 @@
+# External uptime check (LAUNCH-CHECKLIST H-1): every 10 minutes, from GitHub's runners rather than our own host,
+# so a server that is down or unreachable still gets noticed. A failing run is GitHub's alert: it e-mails whoever
+# last changed this schedule (Settings → Notifications → Actions). The ops check on the host (scripts/ops-check.sh)
+# covers everything else (disk, backups, queues). Scheduled runs can start late when GitHub is busy.
+name: Uptime
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: uptime
+  cancel-in-progress: false
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Director and Hub answer /health
+        shell: bash
+        run: |
+          main() {
+            local failed=0 url body
+            for url in https://bench.mtgdecktools.com/health https://bench-data.mtgdecktools.com/health; do
+              # Three tries over about a minute, so one slow answer or a deploy's restart doesn't alert.
+              body=""
+              for attempt in 1 2 3; do
+                if body="$(curl -fsS --max-time 15 "$url")" && grep -q '"ok": *true' <<<"$body"; then break; fi
+                body=""; sleep 20
+              done
+              if [ -n "$body" ]; then echo "ok   $url"; else echo "DOWN $url"; failed=1; fi
+            done
+            return "$failed"
+          }
+          main
