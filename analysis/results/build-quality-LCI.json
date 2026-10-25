@@ -1,0 +1,137 @@
+{
+ "set": "LCI",
+ "games_eval": 78707,
+ "decks_eval": 17066,
+ "games_fit": 78039,
+ "auc_model": 0.5677,
+ "archetype_weight": 0.52,
+ "auc_quality": 0.566,
+ "auc_lift_only": 0.5436,
+ "auc_overall_gih": 0.5604,
+ "auc_quality_with_pair_base": 0.5489,
+ "auc_gp_lift": 0.5628,
+ "auc_skill_play": 0.592,
+ "auc_skill_play_quality": 0.6054,
+ "deck_pearson": 0.2625,
+ "deck_spearman": 0.2551,
+ "deck_pearson_quality": 0.255,
+ "deck_pearson_overall_gih": 0.2303,
+ "calibration_deciles": [
+  {
+   "pred": 0.4432,
+   "obs": 0.4475,
+   "games": 7869,
+   "quality_pp": -1.34
+  },
+  {
+   "pred": 0.4918,
+   "obs": 0.5037,
+   "games": 7871,
+   "quality_pp": -0.72
+  },
+  {
+   "pred": 0.5146,
+   "obs": 0.5123,
+   "games": 7868,
+   "quality_pp": -0.44
+  },
+  {
+   "pred": 0.5339,
+   "obs": 0.5324,
+   "games": 7874,
+   "quality_pp": -0.21
+  },
+  {
+   "pred": 0.5503,
+   "obs": 0.5522,
+   "games": 7867,
+   "quality_pp": -0.01
+  },
+  {
+   "pred": 0.5657,
+   "obs": 0.559,
+   "games": 7870,
+   "quality_pp": 0.19
+  },
+  {
+   "pred": 0.5813,
+   "obs": 0.5773,
+   "games": 7874,
+   "quality_pp": 0.39
+  },
+  {
+   "pred": 0.5984,
+   "obs": 0.594,
+   "games": 7872,
+   "quality_pp": 0.6
+  },
+  {
+   "pred": 0.6191,
+   "obs": 0.6205,
+   "games": 7871,
+   "quality_pp": 0.87
+  },
+  {
+   "pred": 0.6556,
+   "obs": 0.6617,
+   "games": 7871,
+   "quality_pp": 1.37
+  }
+ ],
+ "calibration_max_abs_err": 0.0119,
+ "brier_model": 0.2433,
+ "brier_constant": 0.2469,
+ "slope_quality_only_logit_per_pp": 0.3085,
+ "slope_raw_logit_per_pp": 0.3053,
+ "pair_base_raw_logit_per_pp": 0.0279,
+ "slope_adj_logit_per_pp": 0.2348,
+ "slope_adj_se": 0.0091,
+ "pair_base_adj_logit_per_pp": 0.0238,
+ "pair_base_adj_se": 0.0036,
+ "skill_coef": 3.7406,
+ "quality_sd_pp": 0.796,
+ "auc_skill_play_quality_structure": 0.6056,
+ "structure_coefs": {
+  "lands_below_p10": {
+   "coef": 0.092,
+   "se": 0.0366,
+   "share_flagged": 0.028
+  },
+  "lands_above_p90": {
+   "coef": -0.0386,
+   "se": 0.0443,
+   "share_flagged": 0.011
+  },
+  "creatures_below_p10": {
+   "coef": -0.0104,
+   "se": 0.0128,
+   "share_flagged": 0.085
+  },
+  "two_drops_below_p10": {
+   "coef": 0.0265,
+   "se": 0.0147,
+   "share_flagged": 0.07
+  },
+  "five_plus_above_p90": {
+   "coef": 0.0035,
+   "se": 0.0148,
+   "share_flagged": 0.081
+  },
+  "secondary_sources_below_p10": {
+   "coef": 0.0185,
+   "se": 0.0216,
+   "share_flagged": 0.055
+  }
+ },
+ "noise": {
+  "on_play_wr": 0.5893,
+  "on_draw_wr": 0.5238,
+  "play_advantage_elo": 23.1,
+  "cov_game1_game2": -0.00131,
+  "deck_logit_sd_mom": 0.275,
+  "quality_logit_sd_raw": 0.243,
+  "quality_logit_sd_adj": 0.187,
+  "method": "Arena pairs players by record, so outcomes within a deck are not exchangeable (game 1 / game 2 covariance is ~0 or negative) and whole-deck win-rate variance is compressed: deck_logit_sd_mom is a lower bound. quality_logit_sd_* = spread of deck strength explained by the quality score (raw, and holding player skill fixed)."
+ },
+ "verdict": "validated"
+}

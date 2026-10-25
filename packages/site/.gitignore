@@ -1,0 +1,4 @@
+dist/
+dist-data/
+dist-data.tmp-*/
+dist-data.old-*/

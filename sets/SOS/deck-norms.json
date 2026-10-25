@@ -1,0 +1,48 @@
+{
+ "set": "SOS",
+ "format": "PremierDraft",
+ "generator": "analysis/draft_eval/build_eval.py",
+ "generated_at": "2026-10-22T01:51:42Z",
+ "source": "17Lands public game data (game_data_public.<SET>.PremierDraft.csv.gz)",
+ "license_note": "Derived from 17Lands public datasets (17lands.com, CC BY 4.0 per the 17Lands public datasets page). Per-card and per-archetype aggregates computed by this project; not a 17Lands product and not endorsed by 17Lands. Credit 17Lands when you reuse it.",
+ "requires": {
+  "archetypes_generated_at": "2026-10-21T23:18:34Z"
+ },
+ "definitions": {
+  "winners": "decks (draft_id, build_index; 38-45 cards) with >= 6 recorded game wins",
+  "quantiles": "p10, p25, p50, p75, p90",
+  "two_minus": "non-land cards with mana value <= 2",
+  "five_plus": "non-land cards with mana value >= 5",
+  "src_primary": "lands producing the pair color more non-land cards need (hard pips)",
+  "src_secondary": "lands producing the other pair color",
+  "src_splash": "lands producing the scarcest splash color (decks with a splash only)",
+  "quality": "mean archetype value of the non-land cards (see analysis/draft_eval/build_eval.py)"
+ },
+ "scoring": {
+  "baseline_win_rate": 0.5538,
+  "splash_delta": -0.0118,
+  "archetype_weight": 0.523,
+  "replacement_quantile": 0.1,
+  "quality_ref": 0.5644,
+  "slope_logit_per_pp": 0.1577,
+  "pair_base_logit_per_pp": 0.0549,
+  "validation": {
+   "auc_model": 0.5603,
+   "auc_quality": 0.5497,
+   "auc_overall_gih": 0.558,
+   "deck_pearson": 0.2221,
+   "deck_spearman": 0.2212,
+   "calibration_max_abs_err": 0.0332,
+   "slope_adj_se": 0.0113,
+   "games_eval": 47110
+  },
+  "verdict": "validated"
+ },
+ "pairs": {
+  "WB": {"decks":2987,"lands":[16.0,16.0,17.0,17.0,17.0],"nonland":[23.0,23.0,23.0,24.0,24.0],"creatures":[11.0,12.0,13.0,15.0,16.0],"two_minus":[9.0,10.0,12.0,14.0,15.0],"five_plus":[0.0,1.0,2.0,3.0,4.0],"avg_mv":[2.333,2.5,2.667,2.87,3.043],"src_primary":[8.0,8.0,9.0,9.0,10.0],"src_secondary":[8.0,8.0,8.0,9.0,9.0],"src_splash":[2.0,2.0,3.0,3.0,4.0],"splash_share":0.093,"quality":[0.557,0.561,0.565,0.57,0.573],"replacement":0.5009,"all_decks":{"decks":21545,"lands":[16.0,16.0,17.0,17.0,17.0],"quality":[0.553,0.558,0.563,0.567,0.571]}},
+  "WR": {"decks":3697,"lands":[16.0,17.0,17.0,17.0,17.0],"nonland":[23.0,23.0,23.0,24.0,24.0],"creatures":[10.0,11.0,13.0,14.0,15.0],"two_minus":[8.0,10.0,11.0,13.0,14.0],"five_plus":[1.0,2.0,3.0,4.0,5.0],"avg_mv":[2.478,2.667,2.87,3.043,3.261],"src_primary":[8.0,8.0,9.0,9.0,10.0],"src_secondary":[8.0,8.0,8.0,9.0,9.0],"src_splash":[1.0,2.0,2.0,3.0,4.0],"splash_share":0.14,"quality":[0.558,0.563,0.567,0.571,0.574],"replacement":0.502,"all_decks":{"decks":25621,"lands":[16.0,17.0,17.0,17.0,17.0],"quality":[0.554,0.559,0.564,0.568,0.572]}},
+  "UR": {"decks":2666,"lands":[17.0,17.0,17.0,17.0,17.0],"nonland":[23.0,23.0,23.0,23.0,24.0],"creatures":[4.0,6.0,9.0,11.0,13.0],"two_minus":[7.0,8.0,10.0,11.0,13.0],"five_plus":[3.0,4.0,5.0,6.0,7.0],"avg_mv":[2.783,3.0,3.217,3.435,3.609],"src_primary":[7.0,8.0,9.0,9.0,10.0],"src_secondary":[7.0,7.0,8.0,9.0,9.0],"src_splash":[1.0,1.0,2.0,3.0,4.0],"splash_share":0.512,"quality":[0.563,0.568,0.573,0.579,0.583],"replacement":0.5202,"all_decks":{"decks":25448,"lands":[16.0,17.0,17.0,17.0,17.0],"quality":[0.559,0.564,0.57,0.575,0.58]}},
+  "UG": {"decks":1336,"lands":[17.0,17.0,17.0,17.0,17.0],"nonland":[23.0,23.0,23.0,23.0,24.0],"creatures":[8.0,10.0,12.0,14.0,15.0],"two_minus":[7.0,9.0,10.0,12.0,13.0],"five_plus":[2.0,3.0,4.0,6.0,7.0],"avg_mv":[2.696,2.87,3.087,3.304,3.522],"src_primary":[7.0,7.0,8.0,9.0,9.0],"src_secondary":[6.0,7.0,8.0,8.0,9.0],"src_splash":[1.0,2.0,2.0,3.0,4.0],"splash_share":0.674,"quality":[0.561,0.565,0.571,0.576,0.58],"replacement":0.5231,"all_decks":{"decks":12783,"lands":[16.0,17.0,17.0,17.0,17.0],"quality":[0.557,0.562,0.568,0.573,0.578]}},
+  "BG": {"decks":1725,"lands":[16.0,17.0,17.0,17.0,17.0],"nonland":[23.0,23.0,23.0,24.0,24.0],"creatures":[11.0,12.0,14.0,15.0,16.0],"two_minus":[8.0,9.0,10.0,12.0,13.0],"five_plus":[0.0,1.0,2.0,3.0,4.0],"avg_mv":[2.522,2.652,2.826,3.0,3.174],"src_primary":[8.0,8.0,9.0,9.0,10.0],"src_secondary":[7.0,8.0,8.0,9.0,9.0],"src_splash":[1.0,2.0,2.0,3.0,4.0],"splash_share":0.295,"quality":[0.553,0.556,0.561,0.565,0.569],"replacement":0.513,"all_decks":{"decks":16933,"lands":[16.0,17.0,17.0,17.0,17.0],"quality":[0.55,0.554,0.558,0.563,0.567]}}
+ }
+}

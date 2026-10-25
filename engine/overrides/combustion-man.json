@@ -1,0 +1,800 @@
+{
+  "card": "Combustion Man",
+  "title": "the attack trigger's unless clause is unparsed, so the trigger does nothing",
+  "status": "active",
+  "kind": "parser",
+  "upstream_issue": null,
+  "marks_supported": true,
+  "applies_to": {
+    "server_version": "0.116.0",
+    "build_commit": "3f79456",
+    "card_data_sha256": "c4cfb737d0c0b1b135d3a353d71a95606f6ee147727bc11c3d16b82ece33da41",
+    "entry_sha256": "1cdbd2620425a572763a96250b708990c50f671bb85ca0eaa78a43bddb8e5d60"
+  },
+  "rules": {
+    "oracle": "Whenever Combustion Man attacks, destroy target permanent unless its controller has Combustion Man deal damage to them equal to his power.",
+    "cr": [
+      "508.1m",
+      "508.3a",
+      "603.3d",
+      "118.12",
+      "608.2b",
+      "608.2h",
+      "701.8a",
+      "702.12b"
+    ],
+    "actual": "The attack trigger's effect is Unimplemented (\"Unsupported unless clause\"): no target is chosen and nothing happens, so no permanent is ever destroyed and no one is ever dealt damage.",
+    "expected": "When Combustion Man attacks, his controller chooses a target permanent (any permanent, including one of their own). On resolution, that permanent's controller chooses: either Combustion Man deals damage to them equal to his power as the trigger resolves (his last known power if he has left the battlefield), and the permanent is not destroyed, or they decline and the permanent is destroyed (an indestructible permanent survives). If the target is illegal on resolution, the trigger does nothing and no one chooses.",
+    "diagnosis": "parse_unless_have_deal_damage_cost (parser/oracle_effect/mod.rs) handles \"unless its controller has ~ deal N damage to them\" (Lava Blister, Blazing Salvo) by reading the amount with parse_count_expr right after \"deal \" and then requiring the tail to be exactly \"damage to them\". Combustion Man's amount comes after the recipient (\"deal damage to them equal to his power\"), so parse_count_expr fails on \"damage to them equal to his power\", no unless modifier is produced, and the whole sentence falls back to the \"Unsupported unless clause\" Unimplemented effect.",
+    "suggested_fix": "In parse_unless_have_deal_damage_cost, also accept \"deal damage to them equal to <quantity>\" (the trailing-amount word order), parsing the quantity with the same \"equal to\" quantity parser DealDamage already uses, with \"his\"/\"her\"/\"its\" power of the source resolving to QuantityRef::Power { scope: Source }. Combustion Man should then produce execute.effect Destroy { target: Typed [Permanent] } with unless_pay { cost: EffectCost { DealDamage { amount: Ref Power { scope: Source }, target: Player } }, payer: ParentTargetController }. Integration tests: attack with Combustion Man targeting an opponent's creature; the opponent pays and takes 4 (or 7 after Giant Growth in response), or declines and the creature is destroyed; targeting your own permanent makes you the payer.",
+    "override_note": "The patch gives the trigger the exact shape Lava Blister and Dwarven Driller already run (Destroy with unless_pay EffectCost DealDamage, payer ParentTargetController), with the amount Ref Power { scope: Source } (Cyclops Gladiator's \"damage equal to its power\"). The target is declared when the trigger is put on the stack (CR 603.3d) and may be any permanent. On resolution the engine asks the target's controller (CR 118.12); paying has the trigger's source deal the damage, with the amount computed then (CR 608.2h: his current power, or his last known power if he has left the battlefield), and skips the destruction; declining destroys the permanent (CR 701.8a; indestructible prevents it, CR 702.12b). An illegal target makes the trigger do nothing (CR 608.2b). The cases cover both choices: paying (4 damage; 7 after Giant Growth in response; 6 with two +1/+1 counters; 4 by last known information after he left the battlefield; you take it when you target your own Forest) and declining (the permanent is destroyed, an indestructible one survives), plus an illegal target."
+  },
+  "patch": [
+    {
+      "op": "test",
+      "path": "/triggers/0/execute/effect",
+      "value": {
+        "type": "Unimplemented",
+        "name": "Unsupported unless clause",
+        "description": "destroy target permanent unless its controller has ~ deal damage to them equal to his power (unless: its controller has ~ deal damage to them equal to his power)"
+      }
+    },
+    {
+      "op": "replace",
+      "path": "/triggers/0/execute/effect",
+      "value": {
+        "type": "Destroy",
+        "target": {
+          "type": "Typed",
+          "type_filters": [
+            "Permanent"
+          ],
+          "controller": null,
+          "properties": []
+        },
+        "cant_regenerate": false
+      }
+    },
+    {
+      "op": "add",
+      "path": "/triggers/0/execute/unless_pay",
+      "value": {
+        "cost": {
+          "type": "EffectCost",
+          "effect": {
+            "type": "DealDamage",
+            "amount": {
+              "type": "Ref",
+              "qty": {
+                "type": "Power",
+                "scope": {
+                  "type": "Source"
+                }
+              }
+            },
+            "target": {
+              "type": "Player"
+            }
+          }
+        },
+        "payer": {
+          "type": "ParentTargetController"
+        }
+      }
+    }
+  ],
+  "tests": [
+    {
+      "name": "the opponent pays: Combustion Man deals them damage equal to his power (4) and the creature survives (CR 118.12)",
+      "setup": [
+        {
+          "card": "Combustion Man",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 1,
+          "zone": "Battlefield"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "attack": [
+            {
+              "card": "Combustion Man",
+              "owner": 0
+            }
+          ]
+        },
+        {
+          "resolve": true
+        }
+      ],
+      "answers": {
+        "targets": [
+          {
+            "card": "Grizzly Bears",
+            "owner": 1,
+            "zone": "Battlefield"
+          }
+        ],
+        "unless": [
+          true
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            16
+          ],
+          "zones": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Battlefield"
+            }
+          ]
+        },
+        "bug": {
+          "life": [
+            20,
+            20
+          ],
+          "zones": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Battlefield"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "the opponent declines to take the damage: their creature is destroyed",
+      "setup": [
+        {
+          "card": "Combustion Man",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 1,
+          "zone": "Battlefield"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "attack": [
+            {
+              "card": "Combustion Man",
+              "owner": 0
+            }
+          ]
+        },
+        {
+          "resolve": true
+        }
+      ],
+      "answers": {
+        "targets": [
+          {
+            "card": "Grizzly Bears",
+            "owner": 1,
+            "zone": "Battlefield"
+          }
+        ],
+        "unless": [
+          false
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            20
+          ],
+          "zones": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Graveyard"
+            }
+          ]
+        },
+        "bug": {
+          "life": [
+            20,
+            20
+          ],
+          "zones": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Battlefield"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "target your own permanent: you are its controller and decline, so it is destroyed",
+      "setup": [
+        {
+          "card": "Combustion Man",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Forest",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 1,
+          "zone": "Battlefield"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "attack": [
+            {
+              "card": "Combustion Man",
+              "owner": 0
+            }
+          ]
+        },
+        {
+          "resolve": true
+        }
+      ],
+      "answers": {
+        "targets": [
+          {
+            "card": "Forest",
+            "owner": 0,
+            "zone": "Battlefield"
+          }
+        ],
+        "unless": [
+          false
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            20
+          ],
+          "zones": [
+            {
+              "card": "Forest",
+              "owner": 0,
+              "zone": "Graveyard"
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Battlefield"
+            }
+          ]
+        },
+        "bug": {
+          "life": [
+            20,
+            20
+          ],
+          "zones": [
+            {
+              "card": "Forest",
+              "owner": 0,
+              "zone": "Battlefield"
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Battlefield"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "the target leaves before the trigger resolves: nothing happens, no one is asked (CR 608.2b)",
+      "setup": [
+        {
+          "card": "Combustion Man",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 1,
+          "zone": "Battlefield"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "attack": [
+            {
+              "card": "Combustion Man",
+              "owner": 0
+            }
+          ]
+        },
+        {
+          "debug": "MoveToZone",
+          "object": {
+            "card": "Grizzly Bears",
+            "owner": 1,
+            "zone": "Battlefield"
+          },
+          "data": {
+            "to_zone": "Exile",
+            "simulate": false
+          }
+        },
+        {
+          "resolve": true
+        }
+      ],
+      "answers": {
+        "targets": [
+          {
+            "card": "Grizzly Bears",
+            "owner": 1,
+            "zone": "Battlefield"
+          }
+        ],
+        "unless": [
+          false
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            20
+          ],
+          "zones": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Exile"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "an indestructible target whose controller declines: nothing is destroyed",
+      "setup": [
+        {
+          "card": "Combustion Man",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Darksteel Myr",
+          "owner": 1,
+          "zone": "Battlefield"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "attack": [
+            {
+              "card": "Combustion Man",
+              "owner": 0
+            }
+          ]
+        },
+        {
+          "resolve": true
+        }
+      ],
+      "answers": {
+        "targets": [
+          {
+            "card": "Darksteel Myr",
+            "owner": 1,
+            "zone": "Battlefield"
+          }
+        ],
+        "unless": [
+          false
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            20
+          ],
+          "zones": [
+            {
+              "card": "Darksteel Myr",
+              "owner": 1,
+              "zone": "Battlefield"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Giant Growth on him in response: the payer takes 7, his power as the trigger resolves (CR 608.2h)",
+      "setup": [
+        {
+          "card": "Combustion Man",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 1,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Giant Growth",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "attack": [
+            {
+              "card": "Combustion Man",
+              "owner": 0
+            }
+          ]
+        },
+        {
+          "cast": {
+            "card": "Giant Growth",
+            "targets": [
+              {
+                "card": "Combustion Man",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        }
+      ],
+      "answers": {
+        "targets": [
+          {
+            "card": "Grizzly Bears",
+            "owner": 1,
+            "zone": "Battlefield"
+          }
+        ],
+        "unless": [
+          true
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            13
+          ],
+          "zones": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Battlefield"
+            }
+          ]
+        },
+        "bug": {
+          "life": [
+            20,
+            20
+          ],
+          "zones": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Battlefield"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "target your own Forest and pay: you take the 4 damage and the Forest survives",
+      "setup": [
+        {
+          "card": "Combustion Man",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Forest",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 1,
+          "zone": "Battlefield"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "attack": [
+            {
+              "card": "Combustion Man",
+              "owner": 0
+            }
+          ]
+        },
+        {
+          "resolve": true
+        }
+      ],
+      "answers": {
+        "targets": [
+          {
+            "card": "Forest",
+            "owner": 0,
+            "zone": "Battlefield"
+          }
+        ],
+        "unless": [
+          true
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "life": [
+            16,
+            20
+          ],
+          "zones": [
+            {
+              "card": "Forest",
+              "owner": 0,
+              "zone": "Battlefield"
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Battlefield"
+            }
+          ]
+        },
+        "bug": {
+          "life": [
+            20,
+            20
+          ],
+          "zones": [
+            {
+              "card": "Forest",
+              "owner": 0,
+              "zone": "Battlefield"
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Battlefield"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "two +1/+1 counters: power 6, the payer takes 6",
+      "setup": [
+        {
+          "card": "Combustion Man",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false,
+          "counters": {
+            "P1P1": 2
+          }
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 1,
+          "zone": "Battlefield"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "attack": [
+            {
+              "card": "Combustion Man",
+              "owner": 0
+            }
+          ]
+        },
+        {
+          "resolve": true
+        }
+      ],
+      "answers": {
+        "targets": [
+          {
+            "card": "Grizzly Bears",
+            "owner": 1,
+            "zone": "Battlefield"
+          }
+        ],
+        "unless": [
+          true
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            14
+          ],
+          "zones": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Battlefield"
+            }
+          ]
+        },
+        "bug": {
+          "life": [
+            20,
+            20
+          ],
+          "zones": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Battlefield"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "he leaves the battlefield before the trigger resolves: the payer takes his last known power, 4 (CR 608.2h)",
+      "setup": [
+        {
+          "card": "Combustion Man",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 1,
+          "zone": "Battlefield"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "attack": [
+            {
+              "card": "Combustion Man",
+              "owner": 0
+            }
+          ]
+        },
+        {
+          "debug": "MoveToZone",
+          "object": {
+            "card": "Combustion Man",
+            "owner": 0,
+            "zone": "Battlefield"
+          },
+          "data": {
+            "to_zone": "Hand",
+            "simulate": false
+          }
+        },
+        {
+          "resolve": true
+        }
+      ],
+      "answers": {
+        "targets": [
+          {
+            "card": "Grizzly Bears",
+            "owner": 1,
+            "zone": "Battlefield"
+          }
+        ],
+        "unless": [
+          true
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            16
+          ],
+          "zones": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Battlefield"
+            }
+          ]
+        },
+        "bug": {
+          "life": [
+            20,
+            20
+          ],
+          "zones": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Battlefield"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "history": [
+    {
+      "date": "2026-10-23",
+      "status": "active",
+      "note": "Written against Oracle text and CR 118.12, 603.3d, 608.2b and 608.2h; tested on phase-rs 0.116.0 (3f79456). Upstream's trigger does nothing; with the override the target's controller chooses between taking damage equal to his power and losing the permanent."
+    }
+  ]
+}

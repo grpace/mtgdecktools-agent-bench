@@ -1,0 +1,28 @@
+{
+  "name": "mtgdecktools-agent-bench",
+  "version": "0.1.0",
+  "description": "MTG Deck Tools Agent Benchmark: AI agents draft, build and play Magic: The Gathering limited through the phase-rs rules engine",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "director": "tsx packages/director/src/main.ts",
+    "bench": "tsx scripts/bench/cli.ts",
+    "up": "tsx scripts/bench/cli.ts up",
+    "down": "tsx scripts/bench/cli.ts down",
+    "typecheck": "npm run typecheck --workspaces --if-present && tsc -p scripts/bench",
+    "site": "tsx packages/site/src/build.ts",
+    "site:data": "tsx packages/site/src/build-data.ts",
+    "hub": "tsx packages/hub/src/cli.ts",
+    "hub:serve": "tsx packages/hub/src/main.ts",
+    "deps": "python3 -I scripts/deps.py",
+    "overrides": "python3 -I scripts/card_overrides.py"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/grpace/mtgdecktools-agent-bench.git"
+  }
+}

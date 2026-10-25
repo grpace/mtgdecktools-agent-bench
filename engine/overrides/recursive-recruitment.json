@@ -1,0 +1,481 @@
+{
+  "card": "Recursive Recruitment",
+  "title": "the flashback bonus (+1/+1 counters for every three cards in your graveyard) does nothing",
+  "status": "active",
+  "kind": "parser",
+  "upstream_issue": "https://github.com/phase-rs/phase/pull/10219",
+  "marks_supported": true,
+  "applies_to": {
+    "server_version": "0.116.0",
+    "build_commit": "3f79456",
+    "card_data_sha256": "c4cfb737d0c0b1b135d3a353d71a95606f6ee147727bc11c3d16b82ece33da41",
+    "entry_sha256": "52bbeee28896093db666d8b93ed82ce495b138c93b5dab3c1803d8f0dc6b7943"
+  },
+  "rules": {
+    "oracle": "Create two 2/2 colorless Wizard Soldier creature tokens named Cadet. If this spell was cast from a graveyard, put a +1/+1 counter on each of them for every three cards in your graveyard.\nFlashback {6}{U}{B}",
+    "cr": [
+      "111.1",
+      "107.1a",
+      "601.2a",
+      "608.2c",
+      "702.34a",
+      "404.1"
+    ],
+    "actual": "Cast with flashback, the spell makes two plain 2/2 Cadets: the counter clause is Unimplemented (put_counter_tail), so no counters are ever put on them.",
+    "expected": "Cast from a graveyard (flashback), each of the two Cadets just created gets one +1/+1 counter for every three cards in its controller's graveyard, rounded down (CR 107.1a), counted as the spell resolves. The spell is on the stack then, not in the graveyard, so it doesn't count itself (CR 601.2a, 702.34a); it is exiled as it leaves the stack. Cast from hand, there are no counters. Only the new Cadets get counters, not other creatures (CR 608.2c).",
+    "diagnosis": "Two parser gaps: \"each of them\" after a token-creating clause isn't bound to the tokens the chain just created (it should be LastCreated, as \"on them\" already is), and \"for every three <things>\" has no quantity parse (it is the per-each count divided by three, rounded down). The clause falls through to Unimplemented put_counter_tail; the WasCast Graveyard gate on it is already right.",
+    "suggested_fix": "In parser/oracle_effect/counter.rs, bind the anaphor \"each of them\" after a token-creating clause to TargetFilter::LastCreated, as \"them\" already is, and route it to PutCounter, not PutCounterAll. In parser/oracle_effect/lower.rs (parse_for_each_multiplier_prefix), parse \"for every K <noun>\" as QuantityExpr::DivideRounded { inner: <the \"for each <noun>\" quantity>, divisor: K, rounding: Down }. The clause then lowers to PutCounter { counter_type: P1P1, count: DivideRounded { inner: ZoneCardCount { zone: Graveyard, card_types: [], scope: Controller }, divisor: 3, rounding: Down }, target: LastCreated } under the existing WasCast { zone: Graveyard } condition. Open PR #10219 does exactly this, parser-only.",
+    "override_note": "The patch replaces only the Unimplemented effect, with the shape PR #10219 pins in its tests. The WasCast Graveyard condition already on the step keeps the counters to a flashback cast (CR 702.34a). LastCreated resolves to every token the preceding Token effect created (both Cadets), and no other permanent. The count is evaluated once at resolution from the live graveyard and floored (DivideRounded Down, CR 107.1a), while the spell itself is still on the stack (CR 601.2a, 702.34a)."
+  },
+  "patch": [
+    {
+      "op": "test",
+      "path": "/abilities/0/effect/type",
+      "value": "Token"
+    },
+    {
+      "op": "test",
+      "path": "/abilities/0/sub_ability/condition",
+      "value": {
+        "type": "WasCast",
+        "zone": "Graveyard"
+      }
+    },
+    {
+      "op": "test",
+      "path": "/abilities/0/sub_ability/effect",
+      "value": {
+        "type": "Unimplemented",
+        "name": "put_counter_tail",
+        "description": "put a +1/+1 counter on each of them for every three cards in your graveyard"
+      }
+    },
+    {
+      "op": "replace",
+      "path": "/abilities/0/sub_ability/effect",
+      "value": {
+        "type": "PutCounter",
+        "counter_type": "P1P1",
+        "count": {
+          "type": "DivideRounded",
+          "inner": {
+            "type": "Ref",
+            "qty": {
+              "type": "ZoneCardCount",
+              "zone": "Graveyard",
+              "card_types": [],
+              "scope": "Controller"
+            }
+          },
+          "divisor": 3,
+          "rounding": "Down"
+        },
+        "target": {
+          "type": "LastCreated"
+        }
+      }
+    }
+  ],
+  "tests": [
+    {
+      "name": "cast from hand with 9 cards in the graveyard: two 2/2 Cadets, no counters",
+      "setup": [
+        {
+          "card": "Recursive Recruitment",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Graveyard",
+          "count": 9
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "cast": {
+            "card": "Recursive Recruitment"
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "zones": [
+            {
+              "card": "Recursive Recruitment",
+              "owner": 0,
+              "zone": "Graveyard"
+            }
+          ],
+          "objects": [
+            {
+              "card": "Cadet",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 2,
+              "counters": {},
+              "power": 2,
+              "toughness": 2
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "flashback with 2 other cards in the graveyard: no counters (the spell is on the stack, not counted; CR 601.2a, 702.34a)",
+      "setup": [
+        {
+          "card": "Recursive Recruitment",
+          "owner": 0,
+          "zone": "Graveyard"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Graveyard",
+          "count": 2
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "cast": {
+            "card": "Recursive Recruitment",
+            "from": "Graveyard"
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "zones": [
+            {
+              "card": "Recursive Recruitment",
+              "owner": 0,
+              "zone": "Exile"
+            }
+          ],
+          "objects": [
+            {
+              "card": "Cadet",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 2,
+              "counters": {},
+              "power": 2,
+              "toughness": 2
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "flashback with 3 other cards: one +1/+1 counter on each Cadet (CR 107.1a)",
+      "setup": [
+        {
+          "card": "Recursive Recruitment",
+          "owner": 0,
+          "zone": "Graveyard"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Graveyard",
+          "count": 3
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "cast": {
+            "card": "Recursive Recruitment",
+            "from": "Graveyard"
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "zones": [
+            {
+              "card": "Recursive Recruitment",
+              "owner": 0,
+              "zone": "Exile"
+            }
+          ],
+          "objects": [
+            {
+              "card": "Cadet",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 2,
+              "counters": {
+                "P1P1": 1
+              },
+              "power": 3,
+              "toughness": 3
+            }
+          ]
+        },
+        "bug": {
+          "zones": [
+            {
+              "card": "Recursive Recruitment",
+              "owner": 0,
+              "zone": "Exile"
+            }
+          ],
+          "objects": [
+            {
+              "card": "Cadet",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 2,
+              "counters": {},
+              "power": 2,
+              "toughness": 2
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "flashback with 7 other cards: floor(7/3) = two +1/+1 counters on each Cadet, and the spell is exiled (CR 702.34a)",
+      "setup": [
+        {
+          "card": "Recursive Recruitment",
+          "owner": 0,
+          "zone": "Graveyard"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Graveyard",
+          "count": 7
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "cast": {
+            "card": "Recursive Recruitment",
+            "from": "Graveyard"
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "zones": [
+            {
+              "card": "Recursive Recruitment",
+              "owner": 0,
+              "zone": "Exile"
+            }
+          ],
+          "objects": [
+            {
+              "card": "Cadet",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 2,
+              "counters": {
+                "P1P1": 2
+              },
+              "power": 4,
+              "toughness": 4
+            }
+          ]
+        },
+        "bug": {
+          "zones": [
+            {
+              "card": "Recursive Recruitment",
+              "owner": 0,
+              "zone": "Exile"
+            }
+          ],
+          "objects": [
+            {
+              "card": "Cadet",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 2,
+              "counters": {},
+              "power": 2,
+              "toughness": 2
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "flashback: only the two new Cadets get counters, not two Cadet tokens already under your control (CR 608.2c)",
+      "setup": [
+        {
+          "card": "Recursive Recruitment",
+          "owner": 0,
+          "zone": "Graveyard"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Graveyard",
+          "count": 6
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "debug": "CreateToken",
+          "data": {
+            "request": {
+              "type": "Custom",
+              "data": {
+                "owner": 1,
+                "characteristics": {
+                  "display_name": "Cadet",
+                  "power": 2,
+                  "toughness": 2,
+                  "core_types": [
+                    "Creature"
+                  ],
+                  "subtypes": [
+                    "Wizard",
+                    "Soldier"
+                  ],
+                  "supertypes": [],
+                  "colors": [],
+                  "keywords": []
+                }
+              }
+            },
+            "count": 2,
+            "run_etb": false
+          }
+        },
+        {
+          "debug": "SetController",
+          "object": {
+            "card": "Cadet",
+            "owner": 1,
+            "zone": "Battlefield",
+            "controller": 1
+          },
+          "data": {
+            "controller": 0
+          }
+        },
+        {
+          "debug": "SetController",
+          "object": {
+            "card": "Cadet",
+            "owner": 1,
+            "zone": "Battlefield",
+            "controller": 1
+          },
+          "data": {
+            "controller": 0
+          }
+        },
+        {
+          "cast": {
+            "card": "Recursive Recruitment",
+            "from": "Graveyard"
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "zones": [
+            {
+              "card": "Recursive Recruitment",
+              "owner": 0,
+              "zone": "Exile"
+            }
+          ],
+          "objects": [
+            {
+              "card": "Cadet",
+              "owner": 1,
+              "controller": 0,
+              "zone": "Battlefield",
+              "count": 2,
+              "counters": {},
+              "power": 2,
+              "toughness": 2
+            },
+            {
+              "card": "Cadet",
+              "owner": 0,
+              "controller": 0,
+              "zone": "Battlefield",
+              "count": 2,
+              "counters": {
+                "P1P1": 2
+              },
+              "power": 4,
+              "toughness": 4
+            }
+          ]
+        },
+        "bug": {
+          "objects": [
+            {
+              "card": "Cadet",
+              "owner": 1,
+              "controller": 0,
+              "zone": "Battlefield",
+              "count": 2,
+              "counters": {}
+            },
+            {
+              "card": "Cadet",
+              "owner": 0,
+              "controller": 0,
+              "zone": "Battlefield",
+              "count": 2,
+              "counters": {}
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "history": [
+    {
+      "date": "2026-10-23",
+      "status": "active",
+      "note": "Written against Oracle text and CR 107.1a, 601.2a, 608.2c and 702.34a, mirroring open PR #10219's shape; tested on 0.116.0 (3f79456)."
+    }
+  ]
+}

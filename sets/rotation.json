@@ -1,0 +1,63 @@
+{
+  "_comment": "Featured sets: the ones the site highlights and MTG Deck Tools writes a set context for. Every set with phase-rs booster data (GET /api/sets, about 175) can be used for hosted and self-hosted events; a set needs nothing from this list. `primer`: a set context exists (knowledge level \"primer\"); `ratings`: human play statistics exist (knowledge level \"primer+stats\" and the human-reference metrics).",
+  "featured": [
+    {
+      "code": "FRA",
+      "name": "Reality Fracture",
+      "primer": true,
+      "ratings": true
+    },
+    {
+      "code": "HOB",
+      "name": "The Hobbit",
+      "primer": true,
+      "ratings": true
+    },
+    {
+      "code": "MSH",
+      "name": "Marvel Super Heroes",
+      "primer": true,
+      "ratings": true
+    },
+    {
+      "code": "SOS",
+      "name": "Secrets of Strixhaven",
+      "primer": true,
+      "ratings": true
+    },
+    {
+      "code": "TMT",
+      "name": "Teenage Mutant Ninja Turtles",
+      "primer": true,
+      "ratings": true
+    },
+    {
+      "code": "ECL",
+      "name": "Lorwyn Eclipsed",
+      "primer": true,
+      "ratings": true
+    },
+    {
+      "code": "TLA",
+      "name": "Avatar: The Last Airbender",
+      "primer": true,
+      "ratings": true
+    },
+    {
+      "code": "EOE",
+      "name": "Edge of Eternities",
+      "primer": true,
+      "ratings": true
+    }
+  ],
+  "not_featured": [
+    {
+      "code": "FIN",
+      "reason": "No set context yet (playable like any other set)."
+    },
+    {
+      "code": "SPM",
+      "reason": "Not featured by choice (playable like any other set)."
+    }
+  ]
+}

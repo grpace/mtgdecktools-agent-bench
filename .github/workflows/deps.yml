@@ -1,0 +1,300 @@
+# Weekly dependency refresh (docs/UPGRADING.md, "Automation"). Runs `npm run deps -- check`. When something
+# changed upstream it refreshes the 17Lands data (changed featured sets and newly published sets only; a full
+# refresh of every set is a local command) and the Set Context, then opens or updates ONE pull request. A newer
+# phase-rs engine gets its own pull request: upgrade-phase.sh runs the smoke event against the candidate before
+# switching the pin, and CI runs it again on that branch. Nothing is ever pushed to main or deployed.
+#
+# Needs: Settings → Actions → General → "Allow GitHub Actions to create and approve pull requests".
+# Pull requests opened with GITHUB_TOKEN don't trigger other workflows, so this workflow starts CI on the
+# branch itself (`gh workflow run ci.yml`); its checks then show on the pull request.
+#
+# Least privilege (CI-2): the jobs that run third-party code (npm ci, uv, 17Lands and Set Context parsing, the newest
+# phase-server image) have a read-only token that no checkout persists. They hand the change over as a patch
+# artifact. Only the small *-pr jobs can write: they run git and gh and nothing from the repository, refuse a patch
+# that touches anything but the refreshed paths, and pass the token to `git push` and `gh` alone.
+name: Dependencies
+
+on:
+  # DISABLED while the repo is private (Actions minutes): no schedule, manual runs only. Meanwhile run
+  # `npm run deps -- check` locally once a week (docs/UPGRADING.md). Re-enable at public launch: see docs/RELEASING.md
+  # ("Going public"): uncomment the schedule.
+  # schedule:
+  #   - cron: '23 7 * * 1' # Mondays 07:23 UTC
+  workflow_dispatch:
+    inputs:
+      what:
+        description: What to refresh
+        type: choice
+        options: [all, data, phase]
+        default: all
+      max_sets:
+        description: '17Lands: most sets to rebuild in one run (each takes 3-10 minutes)'
+        default: '6'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deps
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Check upstreams
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    outputs:
+      data: ${{ steps.plan.outputs.data }}
+      phase: ${{ steps.plan.outputs.phase }}
+      phase_image: ${{ steps.plan.outputs.phase_image }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: npm run deps -- check
+        env:
+          GITHUB_TOKEN: ${{ github.token }} # only raises the GitHub API rate limit for reading phase-rs tags
+        run: npm run deps -- check --json deps-check.json
+      - id: plan
+        run: |
+          python3 -I - >> "$GITHUB_OUTPUT" <<'EOF'
+          import json
+          r = json.load(open("deps-check.json"))
+          l17, sc, ph = r.get("17lands", {}), r.get("set_context", {}), r.get("phase", {})
+          print("data=" + ("true" if l17.get("changed") or l17.get("new") or sc.get("site_changed") else "false"))
+          print("phase=" + ("true" if ph.get("update_available") else "false"))
+          lock = json.load(open("engine/phase.lock.json"))
+          print(f"phase_image={lock['image']}@{lock['digest']}")
+          EOF
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: deps-check
+          path: deps-check.json
+          retention-days: 30
+
+  data:
+    name: Refresh 17Lands data and Set Context
+    needs: check
+    if: needs.check.outputs.data == 'true' && (github.event_name == 'schedule' || inputs.what != 'phase')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 300
+    outputs:
+      changed: ${{ steps.change.outputs.changed }}
+    services:
+      # The pinned engine, only to copy its card and booster data (card colors and rarities for the analysis).
+      phase:
+        image: ${{ needs.check.outputs.phase_image }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: uv (analysis environment)
+        run: python3 -m pip install --user --quiet uv==0.11.19
+      - name: Engine card data from the pinned phase-server
+        env:
+          PHASE_CONTAINER: ${{ job.services.phase.id }}
+        run: |
+          mkdir -p data
+          for _ in $(seq 1 120); do
+            docker exec "$PHASE_CONTAINER" sh -c 'test -s /var/lib/phase-server/draft-pools.json && test -s /var/lib/phase-server/card-data.json' && break
+            sleep 2
+          done
+          docker cp "$PHASE_CONTAINER:/var/lib/phase-server/card-data.json" data/
+          docker cp "$PHASE_CONTAINER:/var/lib/phase-server/draft-pools.json" data/
+      - name: Disk space (17Lands files are large; each set's raw files are deleted after deriving)
+        run: |
+          df -h .
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL || true
+          df -h .
+      - name: Refresh 17Lands (changed featured sets and new sets)
+        env:
+          MAX_SETS: ${{ inputs.max_sets || '6' }}
+        run: npm run deps -- update 17lands --featured-and-new --max-sets "$MAX_SETS" --summary tmp/summary-17lands.md
+      - name: Refresh Set Context (published copies on mtgdecktools.com)
+        run: npm run deps -- update set-context --from-site --summary tmp/summary-set-context.md
+      - name: Package the change for the pull request job
+        id: change
+        run: |
+          set -euo pipefail
+          npm run deps -- verify
+          git add deps sets analysis/models analysis/results
+          mkdir -p tmp/change
+          if git diff --cached --quiet; then echo "Nothing changed."; echo "changed=false" >> "$GITHUB_OUTPUT"; exit 0; fi
+          git diff --cached --binary --no-renames > tmp/change/change.patch
+          {
+            echo "Weekly dependency refresh by \`npm run deps\` (docs/UPGRADING.md). Review with the checklist there (\"What to check in a pull request\")."
+            echo
+            echo "## Summary"
+            cat tmp/summary-17lands.md tmp/summary-set-context.md 2>/dev/null || true
+            echo
+            echo "## Files"
+            echo '```'
+            git diff --cached --stat | tail -60
+            echo '```'
+            echo
+            echo "## deps/manifest.json"
+            echo '```diff'
+            git diff --cached -- deps/manifest.json | head -300
+            echo '```'
+          } > tmp/change/pr-body.md
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+      - if: steps.change.outputs.changed == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: deps-data-change
+          path: tmp/change/
+          retention-days: 7
+
+  data-pr:
+    name: Open or update the data pull request
+    needs: data
+    if: needs.data.outputs.changed == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: deps-data-change
+          path: ${{ runner.temp }}/change
+      - name: Push deps/data-refresh and open or update its pull request (git and gh only)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CHANGE: ${{ runner.temp }}/change
+        run: |
+          set -euo pipefail
+          # The patch comes from a job that ran third-party code: only the refreshed data may change, as plain files.
+          git apply --index "$CHANGE/change.patch"
+          bad="$(git diff --cached --name-only --no-renames | grep -vE '^(deps|sets|analysis/models|analysis/results)/' || true)"
+          if [ -n "$bad" ]; then echo "::error::the change touches paths outside the data refresh:"; echo "$bad"; exit 1; fi
+          if git diff --cached --summary | grep -E 'mode (100755|120000)'; then echo "::error::the change adds executables or symlinks"; exit 1; fi
+          branch=deps/data-refresh
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$branch"
+          git commit -q -m "chore(deps): refresh 17Lands data and Set Context ($(date -u +%F))"
+          # The token reaches git through a credential helper reading the environment: never in argv or .git/config.
+          git -c credential.helper= -c 'credential.helper=!f() { test "$1" = get && echo username=x-access-token && echo "password=$GH_TOKEN"; }; f' \
+            push -f origin "$branch"
+          if [ "$(gh pr view "$branch" --json state -q .state 2>/dev/null || true)" = "OPEN" ]; then
+            gh pr edit "$branch" --body-file "$CHANGE/pr-body.md"
+          else
+            gh pr create --base main --head "$branch" --title "chore(deps): 17Lands data and Set Context refresh" --body-file "$CHANGE/pr-body.md"
+          fi
+          gh workflow run ci.yml --ref "$branch"
+
+  phase:
+    name: phase-rs engine upgrade
+    needs: check
+    if: needs.check.outputs.phase == 'true' && (github.event_name == 'schedule' || inputs.what != 'data')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    outputs:
+      version: ${{ steps.change.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: The pinned engine and its data (the upgrade compares against them)
+        run: |
+          image="$(node -p "const l=require('./engine/phase.lock.json'); l.image + '@' + l.digest")"
+          podman run -d --name mtgdt-phase -p 127.0.0.1:9374:9374 -v mtgdt-phase-data:/var/lib/phase-server "$image"
+          mkdir -p data
+          for _ in $(seq 1 120); do
+            podman exec mtgdt-phase sh -c 'test -s /var/lib/phase-server/draft-pools.json && test -s /var/lib/phase-server/card-data.json' && break
+            sleep 2
+          done
+          podman cp mtgdt-phase:/var/lib/phase-server/card-data.json data/
+          podman cp mtgdt-phase:/var/lib/phase-server/draft-pools.json data/
+          python3 -I scripts/refresh-phase-data.py data
+      - name: Upgrade (pull, protocol and data report, smoke event, switch the pin only if it passes)
+        run: npm run deps -- update phase --summary tmp/summary-phase.md
+      - name: Package the change for the pull request job
+        id: change
+        run: |
+          set -euo pipefail
+          git add engine/phase.lock.json deploy/compose.yaml deploy/compose.local.yaml deps/manifest.json
+          if git diff --cached --quiet; then echo "Pin unchanged."; exit 0; fi
+          version="$(node -p "require('./engine/phase.lock.json').server_version")"
+          [[ "$version" =~ ^[0-9A-Za-z._-]{1,64}$ ]] || { echo "::error::unexpected server_version: $version"; exit 1; }
+          mkdir -p tmp/change
+          git diff --cached --binary --no-renames > tmp/change/change.patch
+          {
+            echo "Engine upgrade by \`npm run deps -- update phase\`. The smoke event passed against the candidate before the pin moved; CI runs it again on this branch."
+            echo
+            echo "## Summary"
+            cat tmp/summary-phase.md
+            echo
+            echo "Before merging, read docs/UPGRADING.md (\"phase-rs upgrades\" and \"Deploying an engine upgrade\"): drain, then deploy; deploy.sh archives the outgoing booster data in the Hub."
+          } > tmp/change/pr-body.md
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - if: steps.change.outputs.version != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: deps-phase-change
+          path: tmp/change/
+          retention-days: 7
+
+  phase-pr:
+    name: Open the engine upgrade pull request
+    needs: phase
+    if: needs.phase.outputs.version != ''
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: deps-phase-change
+          path: ${{ runner.temp }}/change
+      - name: Push deps/phase-<version> and open its pull request (git and gh only)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CHANGE: ${{ runner.temp }}/change
+          VERSION: ${{ needs.phase.outputs.version }}
+        run: |
+          set -euo pipefail
+          [[ "$VERSION" =~ ^[0-9A-Za-z._-]{1,64}$ ]] || { echo "::error::unexpected version: $VERSION"; exit 1; }
+          # The patch comes from a job that ran the candidate engine: only the pin files may change.
+          git apply --index "$CHANGE/change.patch"
+          bad="$(git diff --cached --name-only --no-renames | grep -vxE 'engine/phase\.lock\.json|deploy/compose\.yaml|deploy/compose\.local\.yaml|deps/manifest\.json' || true)"
+          if [ -n "$bad" ]; then echo "::error::the change touches files outside the engine pin:"; echo "$bad"; exit 1; fi
+          if git diff --cached --summary | grep -E 'mode (100755|120000)'; then echo "::error::the change adds executables or symlinks"; exit 1; fi
+          # The token reaches git through a credential helper reading the environment: never in argv or .git/config.
+          authed() { git -c credential.helper= -c 'credential.helper=!f() { test "$1" = get && echo username=x-access-token && echo "password=$GH_TOKEN"; }; f' "$@"; }
+          branch="deps/phase-$VERSION"
+          if authed ls-remote --exit-code --heads origin "$branch" >/dev/null; then echo "$branch already exists."; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git commit -q -m "chore(engine): phase-rs $VERSION"
+          authed push origin "$branch"
+          gh pr create --base main --head "$branch" --title "chore(engine): phase-rs $VERSION" --body-file "$CHANGE/pr-body.md"
+          gh workflow run ci.yml --ref "$branch"

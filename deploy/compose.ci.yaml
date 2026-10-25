@@ -1,0 +1,22 @@
+# CI only (scripts/image-check.sh, the "Image" job in .github/workflows/ci.yml): an override on deploy/compose.yaml
+# that boots the hosted stack as Coolify runs it, plus what the check needs: the Director and Hub on loopback ports,
+# and a secret in phase-server's environment the way Coolify's env_file puts one there (its `env -i` must drop it).
+# `coolify`: Coolify attaches every container to the service's project network as well as its own (LAUNCH-CHECKLIST
+# H-8), so the check runs with that shared network too: phase-server and Postgres must still be out of reach on it.
+services:
+  phase-server:
+    environment:
+      ADMIN_TOKEN: ${ADMIN_TOKEN}
+    networks: [coolify]
+  card-data:
+    networks: [coolify]
+  director:
+    ports: ["127.0.0.1:${IMAGE_CHECK_DIRECTOR_PORT:-18787}:8787"]
+    networks: [coolify]
+  hub-db:
+    networks: [coolify]
+  hub:
+    ports: ["127.0.0.1:${IMAGE_CHECK_HUB_PORT:-18788}:8787"]
+    networks: [coolify]
+networks:
+  coolify: {}

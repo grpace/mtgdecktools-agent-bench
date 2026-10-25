@@ -1,0 +1,695 @@
+{
+  "card": "Essence Burn",
+  "title": "any black permanent is a legal target, and the would-die exile rider does nothing",
+  "status": "active",
+  "kind": "parser",
+  "upstream_issue": "https://github.com/phase-rs/phase/pull/10032",
+  "marks_supported": true,
+  "applies_to": {
+    "server_version": "0.116.0",
+    "build_commit": "3f79456",
+    "card_data_sha256": "c4cfb737d0c0b1b135d3a353d71a95606f6ee147727bc11c3d16b82ece33da41",
+    "entry_sha256": "77c225bb237af31d23246c73929a5e6d15ee6851b65073a536b22b7f0c9115ef"
+  },
+  "rules": {
+    "oracle": "Essence Burn deals 5 damage to target black or green creature or planeswalker. If that permanent would die this turn, exile it instead.",
+    "cr": [
+      "115.1",
+      "601.2c",
+      "608.2b",
+      "614.1a",
+      "614.6",
+      "700.4",
+      "704.5g",
+      "704.5i",
+      "120.3c",
+      "514.2"
+    ],
+    "actual": "Any black permanent (an enchantment, an artifact, a land) is a legal target, because the color split bound \"black\" to every card type. The second sentence is Unimplemented, so a creature or planeswalker the spell kills goes to its owner's graveyard instead of exile, and so does one that dies later that turn.",
+    "expected": "The target must be a creature or planeswalker that is black or green (CR 115.1). If that permanent would die this turn, from this damage or anything else, it is exiled instead (CR 614.1a, 614.6; \"dies\" is CR 700.4: a creature or planeswalker put into a graveyard from the battlefield, which covers lethal damage, CR 704.5g, and 0 loyalty, CR 704.5i). The effect ends at the end of the turn (CR 514.2). If the target is illegal on resolution, the spell does nothing (CR 608.2b).",
+    "diagnosis": "The target parser splits \"black or green creature or planeswalker\" as \"black\" | \"green creature\" | \"green planeswalker\", so the black branch gets type filter Any. The die-exile rider parser (try_parse_die_exile_rider) only accepts the subjects \"it\"/\"that creature\" and not \"that permanent\", so the sentence falls through to Unimplemented unparsed_replacement.",
+    "suggested_fix": "In parser/oracle_target.rs, distribute a color disjunction over a following card-type disjunction: \"black or green creature or planeswalker\" should produce Or[Creature+Black, Planeswalker+Black, Creature+Green, Planeswalker+Green], never a bare Typed{Any, HasColor Black} branch. In parser/oracle_effect/mod.rs, let try_parse_die_exile_rider accept \"that permanent\" as its subject, producing the same AddTargetReplacement (event Moved, valid_card SelfRef, destination_zone Graveyard, execute ChangeZone Battlefield->Exile SelfRef, consume_on_apply, expiry EndOfTurn, target Any) that Agate Assault and Torch the Tower already get. Open PR #10032 does both.",
+    "override_note": "The patch installs exactly the shape PR #10032's lowered snapshot gives the card: the four-way Creature/Planeswalker x Black/Green target, and the AddTargetReplacement rider byte-identical to Agate Assault's and Torch the Tower's. The rider is a replacement effect created on resolution (CR 614.1a) bound to the targeted permanent (valid_card SelfRef): when it would move from the battlefield to a graveyard this turn it is exiled instead. Creature lethal damage (CR 704.5g) and planeswalker zero loyalty (CR 704.5i) both route through the moved-replacement pipeline in 0.116.0, and the rider is pruned at cleanup (CR 514.2). The rest of PR #10032's runtime work keeps resolution-created replacements across face changes and copy effects (CR 707.2, 708, 710), which a plain creature or planeswalker never meets in play."
+  },
+  "patch": [
+    {
+      "op": "test",
+      "path": "/abilities/0/effect/type",
+      "value": "DealDamage"
+    },
+    {
+      "op": "test",
+      "path": "/abilities/0/effect/target",
+      "value": {
+        "type": "Or",
+        "filters": [
+          {
+            "type": "Typed",
+            "type_filters": [
+              "Any"
+            ],
+            "controller": null,
+            "properties": [
+              {
+                "type": "HasColor",
+                "color": "Black"
+              }
+            ]
+          },
+          {
+            "type": "Typed",
+            "type_filters": [
+              "Creature"
+            ],
+            "controller": null,
+            "properties": [
+              {
+                "type": "HasColor",
+                "color": "Green"
+              }
+            ]
+          },
+          {
+            "type": "Typed",
+            "type_filters": [
+              "Planeswalker"
+            ],
+            "controller": null,
+            "properties": [
+              {
+                "type": "HasColor",
+                "color": "Green"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "op": "test",
+      "path": "/abilities/0/sub_ability",
+      "value": {
+        "kind": "Spell",
+        "effect": {
+          "type": "Unimplemented",
+          "name": "unparsed_replacement",
+          "description": "If that permanent would die this turn, exile it instead"
+        },
+        "cost": null,
+        "sub_ability": null,
+        "duration": null,
+        "description": null,
+        "target_prompt": null,
+        "condition": null,
+        "optional_targeting": false,
+        "optional": false,
+        "forward_result": false,
+        "sub_link": "SequentialSibling"
+      }
+    },
+    {
+      "op": "replace",
+      "path": "/abilities/0/effect/target",
+      "value": {
+        "type": "Or",
+        "filters": [
+          {
+            "type": "Typed",
+            "type_filters": [
+              "Creature"
+            ],
+            "controller": null,
+            "properties": [
+              {
+                "type": "HasColor",
+                "color": "Black"
+              }
+            ]
+          },
+          {
+            "type": "Typed",
+            "type_filters": [
+              "Planeswalker"
+            ],
+            "controller": null,
+            "properties": [
+              {
+                "type": "HasColor",
+                "color": "Black"
+              }
+            ]
+          },
+          {
+            "type": "Typed",
+            "type_filters": [
+              "Creature"
+            ],
+            "controller": null,
+            "properties": [
+              {
+                "type": "HasColor",
+                "color": "Green"
+              }
+            ]
+          },
+          {
+            "type": "Typed",
+            "type_filters": [
+              "Planeswalker"
+            ],
+            "controller": null,
+            "properties": [
+              {
+                "type": "HasColor",
+                "color": "Green"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "op": "replace",
+      "path": "/abilities/0/sub_ability",
+      "value": {
+        "kind": "Spell",
+        "effect": {
+          "type": "AddTargetReplacement",
+          "replacement": {
+            "event": "Moved",
+            "execute": {
+              "kind": "Spell",
+              "effect": {
+                "type": "ChangeZone",
+                "origin": "Battlefield",
+                "destination": "Exile",
+                "target": {
+                  "type": "SelfRef"
+                },
+                "owner_library": false,
+                "enter_transformed": false,
+                "enter_tapped": false,
+                "enters_attacking": false
+              },
+              "cost": null,
+              "sub_ability": null,
+              "duration": null,
+              "description": null,
+              "target_prompt": null,
+              "condition": null,
+              "optional_targeting": false,
+              "optional": false,
+              "forward_result": false
+            },
+            "mode": {
+              "type": "Mandatory"
+            },
+            "valid_card": {
+              "type": "SelfRef"
+            },
+            "description": null,
+            "condition": null,
+            "destination_zone": "Graveyard",
+            "consume_on_apply": true,
+            "expiry": {
+              "type": "EndOfTurn"
+            }
+          },
+          "target": {
+            "type": "Any"
+          }
+        },
+        "cost": null,
+        "sub_ability": null,
+        "duration": null,
+        "description": null,
+        "target_prompt": null,
+        "condition": null,
+        "optional_targeting": false,
+        "optional": false,
+        "forward_result": false
+      }
+    }
+  ],
+  "tests": [
+    {
+      "name": "black creature: 5 damage, and it is exiled instead of dying",
+      "setup": [
+        {
+          "card": "Essence Burn",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Walking Corpse",
+          "owner": 1,
+          "zone": "Battlefield"
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "cast": {
+            "card": "Essence Burn",
+            "targets": [
+              {
+                "card": "Walking Corpse",
+                "owner": 1,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            20
+          ],
+          "zones": [
+            {
+              "card": "Walking Corpse",
+              "owner": 1,
+              "zone": "Exile"
+            },
+            {
+              "card": "Essence Burn",
+              "owner": 0,
+              "zone": "Graveyard"
+            }
+          ]
+        },
+        "bug": {
+          "zones": [
+            {
+              "card": "Walking Corpse",
+              "owner": 1,
+              "zone": "Graveyard"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "green planeswalker: loyalty 3 goes to 0 and it is exiled instead of dying (CR 120.3c, 704.5i, 700.4)",
+      "setup": [
+        {
+          "card": "Essence Burn",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Garruk Wildspeaker",
+          "owner": 1,
+          "zone": "Battlefield",
+          "counters": {
+            "loyalty": 3
+          }
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "cast": {
+            "card": "Essence Burn",
+            "targets": [
+              {
+                "card": "Garruk Wildspeaker",
+                "owner": 1,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            20
+          ],
+          "zones": [
+            {
+              "card": "Garruk Wildspeaker",
+              "owner": 1,
+              "zone": "Exile"
+            }
+          ]
+        },
+        "bug": {
+          "zones": [
+            {
+              "card": "Garruk Wildspeaker",
+              "owner": 1,
+              "zone": "Graveyard"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "a black enchantment and a red creature are not legal targets: the green creature is the only one (CR 115.1, 601.2c)",
+      "setup": [
+        {
+          "card": "Essence Burn",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Phyrexian Arena",
+          "owner": 1,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Raging Goblin",
+          "owner": 1,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 1,
+          "zone": "Battlefield"
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "cast": {
+            "card": "Essence Burn",
+            "targets": [
+              {
+                "card": "Phyrexian Arena",
+                "owner": 1,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "zones": [
+            {
+              "card": "Phyrexian Arena",
+              "owner": 1,
+              "zone": "Battlefield"
+            },
+            {
+              "card": "Raging Goblin",
+              "owner": 1,
+              "zone": "Battlefield"
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Exile"
+            }
+          ]
+        },
+        "bug": {
+          "zones": [
+            {
+              "card": "Phyrexian Arena",
+              "owner": 1,
+              "zone": "Battlefield"
+            },
+            {
+              "card": "Raging Goblin",
+              "owner": 1,
+              "zone": "Battlefield"
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Battlefield"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "only a black enchantment and a red creature on the battlefield: no legal target, so Essence Burn can't be cast (CR 115.1, 601.2c)",
+      "setup": [
+        {
+          "card": "Essence Burn",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Phyrexian Arena",
+          "owner": 1,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Raging Goblin",
+          "owner": 1,
+          "zone": "Battlefield"
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "offered": {
+            "label": "cast Essence Burn",
+            "cast": {
+              "card": "Essence Burn"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "offered": {
+            "cast Essence Burn": false
+          },
+          "zones": [
+            {
+              "card": "Essence Burn",
+              "owner": 0,
+              "zone": "Hand"
+            }
+          ]
+        },
+        "bug": {
+          "offered": {
+            "cast Essence Burn": true
+          }
+        }
+      }
+    },
+    {
+      "name": "survives the 5 damage, then later damage the same turn kills it: exiled",
+      "setup": [
+        {
+          "card": "Essence Burn",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Shock",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Colossal Dreadmaw",
+          "owner": 1,
+          "zone": "Battlefield"
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "cast": {
+            "card": "Essence Burn",
+            "targets": [
+              {
+                "card": "Colossal Dreadmaw",
+                "owner": 1,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "cast": {
+            "card": "Shock",
+            "targets": [
+              {
+                "card": "Colossal Dreadmaw",
+                "owner": 1,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "zones": [
+            {
+              "card": "Colossal Dreadmaw",
+              "owner": 1,
+              "zone": "Exile"
+            }
+          ]
+        },
+        "bug": {
+          "zones": [
+            {
+              "card": "Colossal Dreadmaw",
+              "owner": 1,
+              "zone": "Graveyard"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "survives the 5 damage: the rider ends with the turn, so dying on a later turn goes to the graveyard (CR 514.2)",
+      "setup": [
+        {
+          "card": "Essence Burn",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Colossal Dreadmaw",
+          "owner": 1,
+          "zone": "Battlefield"
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "advance": {
+            "phase": "PreCombatMain",
+            "active": 0
+          }
+        },
+        {
+          "cast": {
+            "card": "Essence Burn",
+            "targets": [
+              {
+                "card": "Colossal Dreadmaw",
+                "owner": 1,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "advance": {
+            "phase": "PreCombatMain",
+            "active": 1
+          }
+        },
+        {
+          "debug": "Sacrifice",
+          "object": {
+            "card": "Colossal Dreadmaw",
+            "owner": 1,
+            "zone": "Battlefield"
+          },
+          "data": {}
+        },
+        {
+          "advance": {
+            "phase": "PostCombatMain",
+            "active": 1
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "zones": [
+            {
+              "card": "Colossal Dreadmaw",
+              "owner": 1,
+              "zone": "Graveyard"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "target gone before resolution: no damage, no rider (CR 608.2b)",
+      "setup": [
+        {
+          "card": "Essence Burn",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 1,
+          "zone": "Battlefield"
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "cast": {
+            "card": "Essence Burn",
+            "targets": [
+              {
+                "card": "Grizzly Bears",
+                "owner": 1,
+                "zone": "Battlefield"
+              }
+            ],
+            "respond": [
+              {
+                "debug": "Sacrifice",
+                "object": {
+                  "card": "Grizzly Bears",
+                  "owner": 1,
+                  "zone": "Battlefield"
+                },
+                "data": {}
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "zones": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Graveyard"
+            },
+            {
+              "card": "Essence Burn",
+              "owner": 0,
+              "zone": "Graveyard"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "history": [
+    {
+      "date": "2026-10-23",
+      "status": "active",
+      "note": "Written against Oracle text and CR 115.1, 608.2b, 614.1a, 700.4 and 704.5g/i, mirroring open PR #10032's lowered shape; tested on 0.116.0 (3f79456)."
+    }
+  ]
+}

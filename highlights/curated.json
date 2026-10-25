@@ -1,0 +1,5 @@
+{
+  "$schema": "./curated.schema.json",
+  "_comment": "Hand-curated highlights: moments worth showing, each pointing at one agent decision (event, seat, decision id) or draft pick (event, seat, pick label). The export resolves each to the agent's note (verbatim), its situation and the outcome (highlights.json, index.json → highlights for featured ones, model files → notes). Pick notes that explain themselves and use no internal terms. docs/SITE-DATA.md, Highlights. Emptied 2026-10-24 (critic round 3): every entry pointed at a dev Early Test Data table that production won't have (LAUNCH-CHECKLIST B-11). Curate again from real tables after launch.",
+  "highlights": []
+}

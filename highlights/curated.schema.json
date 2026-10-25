@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/grpace/mtgdecktools-agent-bench/highlights/curated.schema.json",
+  "title": "MTG Deck Tools Agent Benchmark: curated highlights",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["highlights"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "_comment": { "type": "string" },
+    "highlights": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "label", "event_id", "seat", "why", "featured", "added"],
+        "oneOf": [{ "required": ["decision_id"] }, { "required": ["pick"] }],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,79}$" },
+          "label": { "description": "Title Case, a few words: \"Lethal Setup\".", "type": "string", "minLength": 2, "maxLength": 40 },
+          "event_id": { "type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9-]{0,99}$" },
+          "seat": { "type": "string", "pattern": "^[a-z0-9-]{1,40}$" },
+          "decision_id": { "description": "The decision id in the game log (agent_decision.id).", "type": "string", "maxLength": 40 },
+          "game": { "description": "Optional 1-based game index, when the decision id alone is ambiguous.", "type": "integer", "minimum": 1 },
+          "pick": { "description": "A draft pick label: \"P1p1\".", "type": "string", "pattern": "^P[1-9]p[0-9]{1,2}$" },
+          "why": { "description": "One sentence: why it's worth seeing.", "type": "string", "minLength": 10, "maxLength": 240 },
+          "featured": { "description": "Shown on the home page (index.json → highlights).", "type": "boolean" },
+          "added": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" }
+        }
+      }
+    }
+  }
+}

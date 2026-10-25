@@ -1,0 +1,894 @@
+{
+  "card": "Shadow Urchin",
+  "title": "the \"creature you control with counters dies\" trigger has an unknown mode and never fires",
+  "status": "active",
+  "kind": "parser",
+  "upstream_issue": null,
+  "marks_supported": true,
+  "applies_to": {
+    "server_version": "0.116.0",
+    "build_commit": "3f79456",
+    "card_data_sha256": "c4cfb737d0c0b1b135d3a353d71a95606f6ee147727bc11c3d16b82ece33da41",
+    "entry_sha256": "b8ce70c0170d2c42782c32847fe475d9c3f8b65b8395a366eb7ccf109188df40"
+  },
+  "rules": {
+    "oracle": "Whenever this creature attacks, blight 1. (Put a -1/-1 counter on a creature you control.)\nWhenever a creature you control with one or more counters on it dies, exile that many cards from the top of your library. Until your next end step, you may play those cards.",
+    "cr": [
+      "603.2",
+      "603.6c",
+      "603.10a",
+      "700.4",
+      "608.2h",
+      "122.2",
+      "611.2a"
+    ],
+    "actual": "The second trigger has `mode: Unknown(\"Whenever a creature you control with one or more counters on it dies\")` with no `valid_card`, so it never triggers: nothing is exiled when a creature you control dies with counters on it.",
+    "expected": "Whenever a creature you control dies (battlefield to graveyard, CR 700.4) and it had one or more counters on it as it last existed on the battlefield (CR 603.10a, 608.2h), you exile that many cards from the top of your library, counting every counter of every kind, and you may play them until your next end step. It sees Shadow Urchin's own death too (a leaves-the-battlefield trigger looks back in time, CR 603.10a). A creature without counters, or an opponent's creature, does nothing.",
+    "diagnosis": "The trigger-subject parser recognizes \"Whenever a creature you control dies\" and \"Whenever a creature you control with a +1/+1 counter on it dies\", but not the counter-agnostic \"with one or more counters on it\" qualifier, so the whole trigger line falls through to `TriggerMode::Unknown`. The body was parsed (ExileTop plus the PlayFromExile permission until your next end step), but \"that many\" was left as `EventContextAmount`, which has no amount on a zone-change event.",
+    "suggested_fix": "In the trigger parser, accept \"a creature you control with one or more counters on it dies\" (and \"with a counter on it\") as `TriggerMode::ChangesZone { origin: Battlefield, destination: Graveyard }` with `valid_card: Typed Creature controller You` and the condition `TriggerCondition::HadCounters { counter_type: None }`, which reads the departure LKI (game/triggers.rs:16419), the shape Felisa, Fang of Silverquill already gets for \"if it had counters on it\". Bind \"that many\" in the body to `QuantityRef::CountersOn { scope: EventSource }` (no counter type: all counters), again as for Felisa. Integration test: a creature with two +1/+1 counters dies and the top two cards are exiled and playable; a creature without counters dies and nothing happens.",
+    "override_note": "The patch gives the trigger Felisa's tested shape: a ChangesZone battlefield-to-graveyard trigger (\"dies\", CR 700.4) for creatures you control, gated on HadCounters with no counter type, which reads the creature's counters from its last-known information as it left the battlefield (CR 603.10a, 608.2h; counters cease to exist on a zone change, CR 122.2), and \"that many\" is the number of counters of all kinds on it then (CountersOn EventSource). As a leaves-the-battlefield trigger it also sees Shadow Urchin's own death (CR 603.10a). A gate on the dying creature's state as it left is the same as the trigger event's \"with one or more counters on it\": it is checked on that last-known information both when the trigger event happens and, being unchanging, on resolution. The exile and the play permission until your next end step (upstream's existing ExileTop and PlayFromExile with UntilNextStepOf End) are unchanged. In the sandbox with the override, exiled cards were also actually cast in the windows the cases show as offered."
+  },
+  "patch": [
+    {
+      "op": "test",
+      "path": "/triggers/1/mode",
+      "value": {
+        "Unknown": "Whenever a creature you control with one or more counters on it dies"
+      }
+    },
+    {
+      "op": "test",
+      "path": "/triggers/1/valid_card",
+      "value": null
+    },
+    {
+      "op": "test",
+      "path": "/triggers/1/condition",
+      "value": null
+    },
+    {
+      "op": "test",
+      "path": "/triggers/1/execute/effect/count",
+      "value": {
+        "type": "Ref",
+        "qty": {
+          "type": "EventContextAmount"
+        }
+      }
+    },
+    {
+      "op": "replace",
+      "path": "/triggers/1/mode",
+      "value": "ChangesZone"
+    },
+    {
+      "op": "replace",
+      "path": "/triggers/1/valid_card",
+      "value": {
+        "type": "Typed",
+        "type_filters": [
+          "Creature"
+        ],
+        "controller": "You",
+        "properties": []
+      }
+    },
+    {
+      "op": "replace",
+      "path": "/triggers/1/origin",
+      "value": "Battlefield"
+    },
+    {
+      "op": "replace",
+      "path": "/triggers/1/destination",
+      "value": "Graveyard"
+    },
+    {
+      "op": "replace",
+      "path": "/triggers/1/condition",
+      "value": {
+        "type": "HadCounters",
+        "counter_type": null
+      }
+    },
+    {
+      "op": "replace",
+      "path": "/triggers/1/execute/effect/count",
+      "value": {
+        "type": "Ref",
+        "qty": {
+          "type": "CountersOn",
+          "scope": {
+            "type": "EventSource"
+          }
+        }
+      }
+    }
+  ],
+  "tests": [
+    {
+      "name": "a creature you control with two counters dies: exile the top two cards of your library",
+      "deck_card": "Grizzly Bears",
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "setup": [
+        {
+          "card": "Shadow Urchin",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Raging Goblin",
+          "owner": 0,
+          "zone": "Battlefield",
+          "counters": {
+            "P1P1": 2
+          }
+        },
+        {
+          "card": "Lightning Bolt",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "steps": [
+        {
+          "cast": {
+            "card": "Lightning Bolt",
+            "targets": [
+              {
+                "card": "Raging Goblin",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "zones": [
+            {
+              "card": "Raging Goblin",
+              "owner": 0,
+              "zone": "Graveyard"
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "zone": "Exile",
+              "count": 2
+            },
+            {
+              "card": "Shadow Urchin",
+              "owner": 0,
+              "zone": "Battlefield"
+            }
+          ],
+          "library": [
+            31,
+            33
+          ]
+        },
+        "bug": {
+          "zones": [
+            {
+              "card": "Raging Goblin",
+              "owner": 0,
+              "zone": "Graveyard"
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "zone": "Exile",
+              "count": 0
+            }
+          ],
+          "library": [
+            33,
+            33
+          ]
+        }
+      }
+    },
+    {
+      "name": "the exiled cards can be played until your next end step: a creature dies in your main phase, they're playable then but not in your end step",
+      "deck_card": "Shock",
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "setup": [
+        {
+          "card": "Shadow Urchin",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Raging Goblin",
+          "owner": 0,
+          "zone": "Battlefield",
+          "counters": {
+            "P1P1": 2
+          }
+        },
+        {
+          "card": "Lightning Bolt",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "steps": [
+        {
+          "cast": {
+            "card": "Lightning Bolt",
+            "targets": [
+              {
+                "card": "Raging Goblin",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "offered": {
+            "label": "exiled card playable in your main phase",
+            "cast": {
+              "card": "Shock",
+              "from": "Exile"
+            }
+          }
+        },
+        {
+          "advance": {
+            "phase": "End",
+            "active": 0
+          }
+        },
+        {
+          "offered": {
+            "label": "exiled card playable in your end step",
+            "cast": {
+              "card": "Shock",
+              "from": "Exile"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "zones": [
+            {
+              "card": "Shock",
+              "owner": 0,
+              "zone": "Exile",
+              "count": 2
+            }
+          ],
+          "offered": {
+            "exiled card playable in your main phase": true,
+            "exiled card playable in your end step": false
+          }
+        },
+        "bug": {
+          "zones": [
+            {
+              "card": "Shock",
+              "owner": 0,
+              "zone": "Exile",
+              "count": 0
+            }
+          ],
+          "offered": {
+            "exiled card playable in your main phase": false,
+            "exiled card playable in your end step": false
+          }
+        }
+      }
+    },
+    {
+      "name": "a creature dies during an opponent's turn: playable through their end step and your next turn, until your end step",
+      "deck_card": "Shock",
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "setup": [
+        {
+          "card": "Shadow Urchin",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Raging Goblin",
+          "owner": 0,
+          "zone": "Battlefield",
+          "counters": {
+            "P1P1": 2
+          }
+        },
+        {
+          "card": "Lightning Bolt",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "steps": [
+        {
+          "advance": {
+            "phase": "PreCombatMain",
+            "active": 1
+          }
+        },
+        {
+          "cast": {
+            "card": "Lightning Bolt",
+            "targets": [
+              {
+                "card": "Raging Goblin",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "advance": {
+            "phase": "End",
+            "active": 1
+          }
+        },
+        {
+          "offered": {
+            "label": "playable in the opponent's end step",
+            "cast": {
+              "card": "Shock",
+              "from": "Exile"
+            }
+          }
+        },
+        {
+          "advance": {
+            "phase": "PreCombatMain",
+            "active": 0
+          }
+        },
+        {
+          "offered": {
+            "label": "playable in your next main phase",
+            "cast": {
+              "card": "Shock",
+              "from": "Exile"
+            }
+          }
+        },
+        {
+          "advance": {
+            "phase": "End",
+            "active": 0
+          }
+        },
+        {
+          "offered": {
+            "label": "playable in your end step",
+            "cast": {
+              "card": "Shock",
+              "from": "Exile"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "zones": [
+            {
+              "card": "Shock",
+              "owner": 0,
+              "zone": "Exile",
+              "count": 2
+            }
+          ],
+          "offered": {
+            "playable in the opponent's end step": true,
+            "playable in your next main phase": true,
+            "playable in your end step": false
+          }
+        },
+        "bug": {
+          "zones": [
+            {
+              "card": "Shock",
+              "owner": 0,
+              "zone": "Exile",
+              "count": 0
+            }
+          ],
+          "offered": {
+            "playable in the opponent's end step": false,
+            "playable in your next main phase": false,
+            "playable in your end step": false
+          }
+        }
+      }
+    },
+    {
+      "name": "\"play\": an exiled land can be played as your land for the turn",
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "setup": [
+        {
+          "card": "Shadow Urchin",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Raging Goblin",
+          "owner": 0,
+          "zone": "Battlefield",
+          "counters": {
+            "P1P1": 1
+          }
+        },
+        {
+          "card": "Lightning Bolt",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "steps": [
+        {
+          "cast": {
+            "card": "Lightning Bolt",
+            "targets": [
+              {
+                "card": "Raging Goblin",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "offered": {
+            "label": "exiled Mountain playable",
+            "play": {
+              "card": "Mountain",
+              "from": "Exile"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "zones": [
+            {
+              "card": "Mountain",
+              "owner": 0,
+              "zone": "Exile",
+              "count": 1
+            }
+          ],
+          "offered": {
+            "exiled Mountain playable": true
+          }
+        },
+        "bug": {
+          "zones": [
+            {
+              "card": "Mountain",
+              "owner": 0,
+              "zone": "Exile",
+              "count": 0
+            }
+          ],
+          "offered": {
+            "exiled Mountain playable": false
+          }
+        }
+      }
+    },
+    {
+      "name": "Shadow Urchin itself dies with a counter on it: it sees its own death (CR 603.10a), exile one",
+      "deck_card": "Grizzly Bears",
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "setup": [
+        {
+          "card": "Shadow Urchin",
+          "owner": 0,
+          "zone": "Battlefield",
+          "counters": {
+            "M1M1": 1
+          }
+        },
+        {
+          "card": "Lightning Bolt",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "steps": [
+        {
+          "cast": {
+            "card": "Lightning Bolt",
+            "targets": [
+              {
+                "card": "Shadow Urchin",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "zones": [
+            {
+              "card": "Shadow Urchin",
+              "owner": 0,
+              "zone": "Graveyard"
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "zone": "Exile",
+              "count": 1
+            }
+          ],
+          "library": [
+            32,
+            33
+          ]
+        },
+        "bug": {
+          "zones": [
+            {
+              "card": "Shadow Urchin",
+              "owner": 0,
+              "zone": "Graveyard"
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "zone": "Exile",
+              "count": 0
+            }
+          ],
+          "library": [
+            33,
+            33
+          ]
+        }
+      }
+    },
+    {
+      "name": "attacks: blight 1 kills a 1/1, which died with a counter: exile one",
+      "deck_card": "Grizzly Bears",
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "setup": [
+        {
+          "card": "Shadow Urchin",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Raging Goblin",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": true
+        }
+      ],
+      "answers": {
+        "select": [
+          {
+            "card": "Raging Goblin",
+            "owner": 0,
+            "zone": "Battlefield"
+          }
+        ]
+      },
+      "steps": [
+        {
+          "attack": [
+            {
+              "card": "Shadow Urchin",
+              "owner": 0,
+              "zone": "Battlefield"
+            }
+          ]
+        },
+        {
+          "resolve": true
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "zones": [
+            {
+              "card": "Raging Goblin",
+              "owner": 0,
+              "zone": "Graveyard"
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "zone": "Exile",
+              "count": 1
+            }
+          ],
+          "library": [
+            32,
+            33
+          ]
+        },
+        "bug": {
+          "zones": [
+            {
+              "card": "Raging Goblin",
+              "owner": 0,
+              "zone": "Graveyard"
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "zone": "Exile",
+              "count": 0
+            }
+          ],
+          "library": [
+            33,
+            33
+          ]
+        }
+      }
+    },
+    {
+      "name": "attacks: blight 1 puts a -1/-1 counter on the chosen creature you control",
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "setup": [
+        {
+          "card": "Shadow Urchin",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": true
+        },
+        {
+          "card": "Raging Goblin",
+          "owner": 1,
+          "zone": "Battlefield"
+        }
+      ],
+      "answers": {
+        "select": [
+          {
+            "card": "Grizzly Bears",
+            "owner": 0,
+            "zone": "Battlefield"
+          }
+        ]
+      },
+      "steps": [
+        {
+          "attack": [
+            {
+              "card": "Shadow Urchin",
+              "owner": 0,
+              "zone": "Battlefield"
+            }
+          ]
+        },
+        {
+          "resolve": true
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 1,
+              "toughness": 1,
+              "counters": {
+                "M1M1": 1
+              }
+            },
+            {
+              "card": "Shadow Urchin",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 3,
+              "toughness": 4,
+              "counters": {}
+            },
+            {
+              "card": "Raging Goblin",
+              "owner": 1,
+              "zone": "Battlefield",
+              "counters": {}
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "a creature you control with no counters dies: nothing is exiled",
+      "deck_card": "Grizzly Bears",
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "setup": [
+        {
+          "card": "Shadow Urchin",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Raging Goblin",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Lightning Bolt",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "steps": [
+        {
+          "cast": {
+            "card": "Lightning Bolt",
+            "targets": [
+              {
+                "card": "Raging Goblin",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "zones": [
+            {
+              "card": "Raging Goblin",
+              "owner": 0,
+              "zone": "Graveyard"
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "zone": "Exile",
+              "count": 0
+            }
+          ],
+          "library": [
+            33,
+            33
+          ]
+        }
+      }
+    },
+    {
+      "name": "an opponent's creature with counters dies: nothing is exiled",
+      "deck_card": "Grizzly Bears",
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "setup": [
+        {
+          "card": "Shadow Urchin",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Raging Goblin",
+          "owner": 1,
+          "zone": "Battlefield",
+          "counters": {
+            "P1P1": 2
+          }
+        },
+        {
+          "card": "Lightning Bolt",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "steps": [
+        {
+          "cast": {
+            "card": "Lightning Bolt",
+            "targets": [
+              {
+                "card": "Raging Goblin",
+                "owner": 1,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "zones": [
+            {
+              "card": "Raging Goblin",
+              "owner": 1,
+              "zone": "Graveyard"
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "zone": "Exile",
+              "count": 0
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Exile",
+              "count": 0
+            }
+          ],
+          "library": [
+            33,
+            33
+          ]
+        }
+      }
+    }
+  ],
+  "history": [
+    {
+      "date": "2026-10-23",
+      "status": "active",
+      "note": "Written against Oracle text and CR 603.10a, 608.2h and 700.4; tested on 0.116.0 (3f79456)."
+    }
+  ]
+}

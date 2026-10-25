@@ -1,0 +1,411 @@
+{
+  "card": "Heated Argument",
+  "title": "the optional 2 damage hits the caster instead of the creature's controller",
+  "status": "active",
+  "kind": "parser",
+  "upstream_issue": "https://github.com/phase-rs/phase/issues/10205",
+  "applies_to": {
+    "server_version": "0.116.0",
+    "build_commit": "3f79456",
+    "card_data_sha256": "c4cfb737d0c0b1b135d3a353d71a95606f6ee147727bc11c3d16b82ece33da41",
+    "entry_sha256": "43a0dc6f24f4f5367c5e80e4fc42a7da1a2565c16401fc50837fcf20dfcc72a2"
+  },
+  "rules": {
+    "oracle": "Heated Argument deals 6 damage to target creature. You may exile a card from your graveyard. If you do, Heated Argument also deals 2 damage to that creature's controller.",
+    "cr": [
+      "608.2b",
+      "608.2c",
+      "608.2h",
+      "109.4",
+      "704.3",
+      "603.3b"
+    ],
+    "actual": "When the caster exiles a card from their graveyard, the optional 2 damage is dealt to the caster, not to the controller of the targeted creature.",
+    "expected": "\"That creature\" is the creature targeted by the first sentence (CR 608.2c: instructions are followed in the order written, and later text refers back to earlier text). The 2 damage goes to its controller; if the creature has left the battlefield by then, its last known information gives the controller (CR 608.2h). If the target is illegal on resolution, nothing happens and no card is exiled (CR 608.2b, and the card's ruling).",
+    "diagnosis": "The 2-damage step targets ParentTargetController, but its parent in the chain is the Graveyard->Exile step. That step's resolution-time choice (the exiled card) becomes the parent target, so \"that creature's controller\" resolves to the exiled card's owner, the caster. A card in exile has no controller at all (CR 109.4).",
+    "suggested_fix": "have the parser bind \"that creature's controller\" to the first instruction's target when an intervening \"you may [zone change]. If you do,\" step sits between them, or have ParentTargetController skip a parent whose only target is its own resolution-time zone choice.",
+    "override_note": "The override reorders the chain: the optional exile comes first, then the 6 damage (a sibling, so it happens whether or not you exile), then the 2 damage as a step of the 6-damage instruction, gated on the exile. All of it happens during one resolution with no player getting priority and no state-based actions in between (CR 704.3), and triggered abilities wait until it is done (CR 603.3b), so exiling before the damage instead of after can't be observed. The 6 damage still targets, so an illegal target still stops the whole spell (CR 608.2b)."
+  },
+  "patch": [
+    {
+      "op": "test",
+      "path": "/abilities/0/sub_ability/sub_ability/effect/target",
+      "value": {
+        "type": "ParentTargetController"
+      }
+    },
+    {
+      "op": "test",
+      "path": "/abilities/0/sub_ability/effect/type",
+      "value": "ChangeZone"
+    },
+    {
+      "op": "replace",
+      "path": "/abilities/0",
+      "value": {
+        "kind": "Spell",
+        "effect": {
+          "type": "ChangeZone",
+          "origin": "Graveyard",
+          "destination": "Exile",
+          "target": {
+            "type": "Typed",
+            "type_filters": [
+              "Card"
+            ],
+            "controller": "You",
+            "properties": [
+              {
+                "type": "InZone",
+                "zone": "Graveyard"
+              }
+            ]
+          },
+          "owner_library": false,
+          "enter_transformed": false,
+          "enter_tapped": false,
+          "enters_attacking": false
+        },
+        "cost": null,
+        "sub_ability": {
+          "kind": "Spell",
+          "effect": {
+            "type": "DealDamage",
+            "amount": {
+              "type": "Fixed",
+              "value": 6
+            },
+            "target": {
+              "type": "Typed",
+              "type_filters": [
+                "Creature"
+              ],
+              "controller": null,
+              "properties": []
+            }
+          },
+          "cost": null,
+          "sub_ability": {
+            "kind": "Spell",
+            "effect": {
+              "type": "DealDamage",
+              "amount": {
+                "type": "Fixed",
+                "value": 2
+              },
+              "target": {
+                "type": "ParentTargetController"
+              }
+            },
+            "cost": null,
+            "sub_ability": null,
+            "duration": null,
+            "description": null,
+            "target_prompt": null,
+            "condition": {
+              "type": "EffectOutcome",
+              "signal": "OptionalEffectPerformed"
+            },
+            "optional_targeting": false,
+            "optional": false,
+            "forward_result": false
+          },
+          "duration": null,
+          "description": null,
+          "target_prompt": null,
+          "condition": null,
+          "optional_targeting": false,
+          "optional": false,
+          "forward_result": false,
+          "sub_link": "SequentialSibling"
+        },
+        "duration": null,
+        "description": "~ deals 6 damage to target creature. You may exile a card from your graveyard. If you do, ~ also deals 2 damage to that creature's controller.",
+        "target_prompt": null,
+        "condition": null,
+        "optional_targeting": false,
+        "optional": true,
+        "target_choice_timing": "Resolution",
+        "forward_result": false
+      }
+    }
+  ],
+  "tests": [
+    {
+      "name": "exile a card: 2 damage to the creature's controller",
+      "setup": [
+        {
+          "card": "Heated Argument",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Mountain",
+          "owner": 0,
+          "zone": "Battlefield",
+          "count": 5
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Graveyard"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 1,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Raging Goblin",
+          "owner": 0,
+          "zone": "Battlefield"
+        }
+      ],
+      "cast": {
+        "card": "Heated Argument",
+        "targets": [
+          {
+            "card": "Grizzly Bears",
+            "owner": 1,
+            "zone": "Battlefield"
+          }
+        ]
+      },
+      "answers": {
+        "optional": [
+          true
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            18
+          ],
+          "zones": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Graveyard"
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "zone": "Exile"
+            },
+            {
+              "card": "Raging Goblin",
+              "owner": 0,
+              "zone": "Battlefield"
+            }
+          ]
+        },
+        "bug": {
+          "life": [
+            18,
+            20
+          ]
+        }
+      }
+    },
+    {
+      "name": "decline the exile: no 2 damage",
+      "setup": [
+        {
+          "card": "Heated Argument",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Mountain",
+          "owner": 0,
+          "zone": "Battlefield",
+          "count": 5
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Graveyard"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 1,
+          "zone": "Battlefield"
+        }
+      ],
+      "cast": {
+        "card": "Heated Argument",
+        "targets": [
+          {
+            "card": "Grizzly Bears",
+            "owner": 1,
+            "zone": "Battlefield"
+          }
+        ]
+      },
+      "answers": {
+        "optional": [
+          false
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            20
+          ],
+          "zones": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Graveyard"
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "zone": "Graveyard"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "empty graveyard: no 2 damage",
+      "setup": [
+        {
+          "card": "Heated Argument",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Mountain",
+          "owner": 0,
+          "zone": "Battlefield",
+          "count": 5
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 1,
+          "zone": "Battlefield"
+        }
+      ],
+      "cast": {
+        "card": "Heated Argument",
+        "targets": [
+          {
+            "card": "Grizzly Bears",
+            "owner": 1,
+            "zone": "Battlefield"
+          }
+        ]
+      },
+      "answers": {
+        "optional": [
+          true
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            20
+          ],
+          "zones": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Graveyard"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "target gone before resolution: nothing happens (CR 608.2b)",
+      "setup": [
+        {
+          "card": "Heated Argument",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Mountain",
+          "owner": 0,
+          "zone": "Battlefield",
+          "count": 5
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Graveyard"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 1,
+          "zone": "Battlefield"
+        }
+      ],
+      "cast": {
+        "card": "Heated Argument",
+        "targets": [
+          {
+            "card": "Grizzly Bears",
+            "owner": 1,
+            "zone": "Battlefield"
+          }
+        ]
+      },
+      "respond": [
+        {
+          "debug": "MoveToZone",
+          "object": {
+            "card": "Grizzly Bears",
+            "owner": 1,
+            "zone": "Battlefield"
+          },
+          "data": {
+            "to_zone": "Exile",
+            "simulate": false
+          }
+        }
+      ],
+      "answers": {
+        "optional": [
+          true
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            20
+          ],
+          "zones": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "zone": "Graveyard"
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Exile"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "history": [
+    {
+      "date": "2026-10-22",
+      "status": "active",
+      "note": "Written against Oracle text and CR 608.2b/c/h after two independent agent reports in one SOS event; reproduced in a scripted sandbox game on 0.115.0 (6485512)."
+    },
+    {
+      "date": "2026-10-23",
+      "status": "active",
+      "note": "Re-pinned to phase-rs 0.116.0 (3f79456): the card's entry is unchanged (entry_sha256 43a0dc6f…) and issue #10205 is still open; `npm run overrides -- test` still shows the bug on 0.116.0's upstream data and the fix with the override."
+    }
+  ]
+}

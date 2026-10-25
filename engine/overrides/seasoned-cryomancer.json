@@ -1,0 +1,894 @@
+{
+  "card": "Seasoned Cryomancer",
+  "title": "discarding nonland cards to its enters trigger never taps or stuns anything",
+  "status": "active",
+  "kind": "parser",
+  "upstream_issue": null,
+  "marks_supported": true,
+  "applies_to": {
+    "server_version": "0.116.0",
+    "build_commit": "3f79456",
+    "card_data_sha256": "c4cfb737d0c0b1b135d3a353d71a95606f6ee147727bc11c3d16b82ece33da41",
+    "entry_sha256": "228b5bed3ed0f87e78853ac7ed539fd9b48f1ce6718fe736c61c5130063d297b"
+  },
+  "rules": {
+    "oracle": "When this creature enters, draw two cards, then discard two cards. When you discard one or more nonland cards this way, tap up to that many target creatures and put a stun counter on each of them.\n{3}{U}{U}, Exile this card from your graveyard: Draw two cards.",
+    "cr": [
+      "603.12",
+      "603.3d",
+      "115.1",
+      "601.2c",
+      "122.1d",
+      "608.2c"
+    ],
+    "actual": "The enters trigger draws two and discards two, but the reflexive \"When you discard one or more nonland cards this way\" trigger is Unimplemented (zone_change_reflexive_unbound_referent): no creature is ever tapped or stunned.",
+    "expected": "If one or more of the discarded cards are nonland cards, a reflexive triggered ability triggers (CR 603.12). Its controller chooses up to N target creatures as it is put on the stack (CR 603.3d, 601.2c), where N is the number of nonland cards discarded this way (one or two), and on resolution taps them and puts a stun counter on each. Discarding two lands means no trigger. A stunned permanent stays tapped through its controller's next untap step, losing the counter instead (CR 122.1d). The graveyard ability is already right.",
+    "diagnosis": "zone_change_reflexive.rs fails closed when the reflexive body both says \"target\" and contains an anaphor (\"each of them\" lowers to PutCounter target ParentTarget), on the theory that the anaphor might refer to an unbound referent from before the reflexive. Here \"them\" is the reflexive's own targets, the ordinary \"tap up to N target creatures and put a stun counter on each of them\" shape (Out Cold), so the guard over-rejects.",
+    "suggested_fix": "In parser/oracle_effect/zone_change_reflexive.rs, before rejecting a reflexive body for an unbound referent, resolve anaphors against the body's own target phrase: when \"them\"/\"each of them\" follows \"target <noun>\" inside the same reflexive clause, it binds to those targets (ParentTarget within the body chain), so the body lowers like Out Cold's SetTapState(Creature, multi_target) -> PutCounter(stun, ParentTarget). For \"up to that many\", count only the cards matching the trigger's filter: multi_target { min: 0, max: FilteredTrackedSetSize { filter: nonland card, caused_by: Discarded } } (EventContextAmount, as used by Nyssa of Traken, would count all discarded cards), under condition And[WhenYouDo, ZoneChangedThisWay(nonland card)]. Narset of the Ancient Way, Three Dog, Galaxy News DJ and Vivien's Invocation hit the same guard.",
+    "override_note": "The patch builds the reflexive from shapes 0.116.0 already runs: the gate And[WhenYouDo, ZoneChangedThisWay(nonland card)] with a multi_target slot count from Nyssa of Traken (\"When you sacrifice one or more artifacts this way, tap up to that many target creatures\"), the count of nonland cards discarded from Seasoned Pyromancer (FilteredTrackedSetSize, caused_by Discarded, which leaves out the drawn cards of the same draw-then-discard), and the tap-and-stun body from Out Cold. The reflexive goes on the stack after the discard with its targets chosen then (CR 603.12, 603.3d), from 0 up to the number of nonland cards discarded; with no nonland card discarded it doesn't trigger. Tests cover two, one and zero nonland discards, choosing fewer targets, and the stun counter at the next untap step (CR 122.1d)."
+  },
+  "patch": [
+    {
+      "op": "test",
+      "path": "/triggers/0/execute/effect/type",
+      "value": "Draw"
+    },
+    {
+      "op": "test",
+      "path": "/triggers/0/execute/sub_ability/effect/type",
+      "value": "Discard"
+    },
+    {
+      "op": "test",
+      "path": "/triggers/0/execute/sub_ability/sub_ability",
+      "value": {
+        "kind": "Spell",
+        "effect": {
+          "type": "Unimplemented",
+          "name": "zone_change_reflexive_unbound_referent",
+          "description": "When you discard one or more nonland cards this way, tap up to that many target creatures and put a stun counter on each of them"
+        },
+        "cost": null,
+        "sub_ability": null,
+        "duration": null,
+        "description": null,
+        "target_prompt": null,
+        "condition": null,
+        "optional_targeting": false,
+        "optional": false,
+        "forward_result": false,
+        "sub_link": "SequentialSibling"
+      }
+    },
+    {
+      "op": "replace",
+      "path": "/triggers/0/execute/sub_ability/sub_ability",
+      "value": {
+        "kind": "Spell",
+        "effect": {
+          "type": "SetTapState",
+          "target": {
+            "type": "Typed",
+            "type_filters": [
+              "Creature"
+            ],
+            "controller": null,
+            "properties": []
+          },
+          "scope": {
+            "type": "Single"
+          },
+          "state": {
+            "type": "Tap"
+          }
+        },
+        "cost": null,
+        "sub_ability": {
+          "kind": "Spell",
+          "effect": {
+            "type": "PutCounter",
+            "counter_type": "stun",
+            "count": {
+              "type": "Fixed",
+              "value": 1
+            },
+            "target": {
+              "type": "ParentTarget"
+            }
+          },
+          "cost": null,
+          "sub_ability": null,
+          "duration": null,
+          "description": null,
+          "target_prompt": null,
+          "condition": null,
+          "optional_targeting": false,
+          "optional": false,
+          "forward_result": false
+        },
+        "duration": null,
+        "description": null,
+        "target_prompt": null,
+        "condition": {
+          "type": "And",
+          "conditions": [
+            {
+              "type": "WhenYouDo"
+            },
+            {
+              "type": "ZoneChangedThisWay",
+              "filter": {
+                "type": "Typed",
+                "type_filters": [
+                  "Card",
+                  {
+                    "Non": "Land"
+                  }
+                ],
+                "controller": null,
+                "properties": []
+              }
+            }
+          ]
+        },
+        "optional_targeting": false,
+        "optional": false,
+        "multi_target": {
+          "min": 0,
+          "max": {
+            "type": "Ref",
+            "qty": {
+              "type": "FilteredTrackedSetSize",
+              "filter": {
+                "type": "Typed",
+                "type_filters": [
+                  "Card",
+                  {
+                    "Non": "Land"
+                  }
+                ],
+                "controller": null,
+                "properties": []
+              },
+              "caused_by": "Discarded"
+            }
+          }
+        },
+        "forward_result": false,
+        "sub_link": "SequentialSibling"
+      }
+    }
+  ],
+  "tests": [
+    {
+      "name": "discard two nonland cards: tap up to two target creatures and put a stun counter on each (CR 603.12)",
+      "setup": [
+        {
+          "card": "Seasoned Cryomancer",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Shock",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Opt",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 1,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Walking Corpse",
+          "owner": 1,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Raging Goblin",
+          "owner": 1,
+          "zone": "Battlefield"
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "cast": {
+            "card": "Seasoned Cryomancer"
+          }
+        }
+      ],
+      "answers": {
+        "select": [
+          {
+            "card": "Shock",
+            "owner": 0,
+            "zone": "Hand"
+          },
+          {
+            "card": "Opt",
+            "owner": 0,
+            "zone": "Hand"
+          }
+        ],
+        "targets": [
+          {
+            "card": "Grizzly Bears",
+            "owner": 1,
+            "zone": "Battlefield"
+          },
+          {
+            "card": "Walking Corpse",
+            "owner": 1,
+            "zone": "Battlefield"
+          }
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "zones": [
+            {
+              "card": "Shock",
+              "owner": 0,
+              "zone": "Graveyard"
+            },
+            {
+              "card": "Opt",
+              "owner": 0,
+              "zone": "Graveyard"
+            },
+            {
+              "card": "Seasoned Cryomancer",
+              "owner": 0,
+              "zone": "Battlefield"
+            }
+          ],
+          "hand": [
+            9,
+            null
+          ],
+          "objects": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Battlefield",
+              "tapped": true,
+              "counters": {
+                "stun": 1
+              }
+            },
+            {
+              "card": "Walking Corpse",
+              "owner": 1,
+              "zone": "Battlefield",
+              "tapped": true,
+              "counters": {
+                "stun": 1
+              }
+            },
+            {
+              "card": "Raging Goblin",
+              "owner": 1,
+              "zone": "Battlefield",
+              "tapped": false,
+              "counters": {}
+            }
+          ]
+        },
+        "bug": {
+          "zones": [
+            {
+              "card": "Shock",
+              "owner": 0,
+              "zone": "Graveyard"
+            },
+            {
+              "card": "Opt",
+              "owner": 0,
+              "zone": "Graveyard"
+            }
+          ],
+          "objects": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Battlefield",
+              "tapped": false,
+              "counters": {}
+            },
+            {
+              "card": "Walking Corpse",
+              "owner": 1,
+              "zone": "Battlefield",
+              "tapped": false,
+              "counters": {}
+            },
+            {
+              "card": "Raging Goblin",
+              "owner": 1,
+              "zone": "Battlefield",
+              "tapped": false,
+              "counters": {}
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "stunned creatures stay tapped through their controller's untap step, losing the stun counter instead (CR 122.1d)",
+      "setup": [
+        {
+          "card": "Seasoned Cryomancer",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Shock",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Opt",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 1,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Walking Corpse",
+          "owner": 1,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Raging Goblin",
+          "owner": 1,
+          "zone": "Battlefield"
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "cast": {
+            "card": "Seasoned Cryomancer"
+          }
+        },
+        {
+          "advance": {
+            "phase": "PreCombatMain",
+            "active": 1
+          }
+        }
+      ],
+      "answers": {
+        "select": [
+          {
+            "card": "Shock",
+            "owner": 0,
+            "zone": "Hand"
+          },
+          {
+            "card": "Opt",
+            "owner": 0,
+            "zone": "Hand"
+          }
+        ],
+        "targets": [
+          {
+            "card": "Grizzly Bears",
+            "owner": 1,
+            "zone": "Battlefield"
+          },
+          {
+            "card": "Walking Corpse",
+            "owner": 1,
+            "zone": "Battlefield"
+          }
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Battlefield",
+              "tapped": true,
+              "counters": {}
+            },
+            {
+              "card": "Walking Corpse",
+              "owner": 1,
+              "zone": "Battlefield",
+              "tapped": true,
+              "counters": {}
+            },
+            {
+              "card": "Raging Goblin",
+              "owner": 1,
+              "zone": "Battlefield",
+              "tapped": false,
+              "counters": {}
+            }
+          ]
+        },
+        "bug": {
+          "objects": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Battlefield",
+              "tapped": false,
+              "counters": {}
+            },
+            {
+              "card": "Walking Corpse",
+              "owner": 1,
+              "zone": "Battlefield",
+              "tapped": false,
+              "counters": {}
+            },
+            {
+              "card": "Raging Goblin",
+              "owner": 1,
+              "zone": "Battlefield",
+              "tapped": false,
+              "counters": {}
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "discard one nonland card and one land: up to one target, a second target is not offered",
+      "setup": [
+        {
+          "card": "Seasoned Cryomancer",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Shock",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 1,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Walking Corpse",
+          "owner": 1,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Raging Goblin",
+          "owner": 1,
+          "zone": "Battlefield"
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "cast": {
+            "card": "Seasoned Cryomancer"
+          }
+        }
+      ],
+      "answers": {
+        "select": [
+          {
+            "card": "Shock",
+            "owner": 0,
+            "zone": "Hand"
+          },
+          {
+            "card": "Mountain",
+            "owner": 0,
+            "zone": "Hand"
+          }
+        ],
+        "targets": [
+          {
+            "card": "Grizzly Bears",
+            "owner": 1,
+            "zone": "Battlefield"
+          },
+          {
+            "card": "Walking Corpse",
+            "owner": 1,
+            "zone": "Battlefield"
+          }
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "zones": [
+            {
+              "card": "Shock",
+              "owner": 0,
+              "zone": "Graveyard"
+            },
+            {
+              "card": "Mountain",
+              "owner": 0,
+              "zone": "Graveyard"
+            }
+          ],
+          "objects": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Battlefield",
+              "tapped": true,
+              "counters": {
+                "stun": 1
+              }
+            },
+            {
+              "card": "Walking Corpse",
+              "owner": 1,
+              "zone": "Battlefield",
+              "tapped": false,
+              "counters": {}
+            },
+            {
+              "card": "Raging Goblin",
+              "owner": 1,
+              "zone": "Battlefield",
+              "tapped": false,
+              "counters": {}
+            }
+          ]
+        },
+        "bug": {
+          "zones": [
+            {
+              "card": "Shock",
+              "owner": 0,
+              "zone": "Graveyard"
+            },
+            {
+              "card": "Mountain",
+              "owner": 0,
+              "zone": "Graveyard"
+            }
+          ],
+          "objects": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Battlefield",
+              "tapped": false,
+              "counters": {}
+            },
+            {
+              "card": "Walking Corpse",
+              "owner": 1,
+              "zone": "Battlefield",
+              "tapped": false,
+              "counters": {}
+            },
+            {
+              "card": "Raging Goblin",
+              "owner": 1,
+              "zone": "Battlefield",
+              "tapped": false,
+              "counters": {}
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "discard two lands: no reflexive trigger, nothing is tapped",
+      "setup": [
+        {
+          "card": "Seasoned Cryomancer",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 1,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Walking Corpse",
+          "owner": 1,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Raging Goblin",
+          "owner": 1,
+          "zone": "Battlefield"
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "cast": {
+            "card": "Seasoned Cryomancer"
+          }
+        }
+      ],
+      "answers": {
+        "select": [
+          {
+            "card": "Mountain",
+            "owner": 0,
+            "zone": "Hand"
+          },
+          {
+            "card": "Mountain",
+            "owner": 0,
+            "zone": "Hand"
+          }
+        ],
+        "targets": [
+          {
+            "card": "Grizzly Bears",
+            "owner": 1,
+            "zone": "Battlefield"
+          }
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "zones": [
+            {
+              "card": "Mountain",
+              "owner": 0,
+              "zone": "Graveyard",
+              "count": 2
+            },
+            {
+              "card": "Seasoned Cryomancer",
+              "owner": 0,
+              "zone": "Battlefield"
+            }
+          ],
+          "objects": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Battlefield",
+              "tapped": false,
+              "counters": {}
+            },
+            {
+              "card": "Walking Corpse",
+              "owner": 1,
+              "zone": "Battlefield",
+              "tapped": false,
+              "counters": {}
+            },
+            {
+              "card": "Raging Goblin",
+              "owner": 1,
+              "zone": "Battlefield",
+              "tapped": false,
+              "counters": {}
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "discard two nonland cards but choose only one target: only that creature is tapped and stunned",
+      "setup": [
+        {
+          "card": "Seasoned Cryomancer",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Shock",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Opt",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 1,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Walking Corpse",
+          "owner": 1,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Raging Goblin",
+          "owner": 1,
+          "zone": "Battlefield"
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "cast": {
+            "card": "Seasoned Cryomancer"
+          }
+        }
+      ],
+      "answers": {
+        "select": [
+          {
+            "card": "Shock",
+            "owner": 0,
+            "zone": "Hand"
+          },
+          {
+            "card": "Opt",
+            "owner": 0,
+            "zone": "Hand"
+          }
+        ],
+        "targets": [
+          {
+            "card": "Grizzly Bears",
+            "owner": 1,
+            "zone": "Battlefield"
+          },
+          null
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "zones": [
+            {
+              "card": "Shock",
+              "owner": 0,
+              "zone": "Graveyard"
+            },
+            {
+              "card": "Opt",
+              "owner": 0,
+              "zone": "Graveyard"
+            }
+          ],
+          "objects": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Battlefield",
+              "tapped": true,
+              "counters": {
+                "stun": 1
+              }
+            },
+            {
+              "card": "Walking Corpse",
+              "owner": 1,
+              "zone": "Battlefield",
+              "tapped": false,
+              "counters": {}
+            },
+            {
+              "card": "Raging Goblin",
+              "owner": 1,
+              "zone": "Battlefield",
+              "tapped": false,
+              "counters": {}
+            }
+          ]
+        },
+        "bug": {
+          "objects": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Battlefield",
+              "tapped": false,
+              "counters": {}
+            },
+            {
+              "card": "Walking Corpse",
+              "owner": 1,
+              "zone": "Battlefield",
+              "tapped": false,
+              "counters": {}
+            },
+            {
+              "card": "Raging Goblin",
+              "owner": 1,
+              "zone": "Battlefield",
+              "tapped": false,
+              "counters": {}
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "the graveyard ability: {3}{U}{U}, exile this card from your graveyard: draw two cards (unchanged by the override)",
+      "setup": [
+        {
+          "card": "Seasoned Cryomancer",
+          "owner": 0,
+          "zone": "Graveyard"
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "activate": {
+            "card": "Seasoned Cryomancer",
+            "zone": "Graveyard",
+            "text": "Draw two"
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "zones": [
+            {
+              "card": "Seasoned Cryomancer",
+              "owner": 0,
+              "zone": "Exile"
+            }
+          ],
+          "hand": [
+            9,
+            null
+          ]
+        }
+      }
+    }
+  ],
+  "history": [
+    {
+      "date": "2026-10-23",
+      "status": "active",
+      "note": "Written against Oracle text and CR 603.12, 603.3d and 122.1d; tested on 0.116.0 (3f79456)."
+    }
+  ]
+}

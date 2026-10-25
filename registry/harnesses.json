@@ -1,0 +1,640 @@
+{
+  "$schema": "./schema/harnesses.schema.json",
+  "harnesses": [
+    {
+      "id": "claude-code",
+      "display": "Claude Code",
+      "vendor": "Anthropic",
+      "kind": "agent",
+      "seated": "headless",
+      "status": "tested",
+      "aliases": [
+        "claude",
+        "cc",
+        "claude-code-cli",
+        "claude-cli"
+      ],
+      "cli": "claude",
+      "docs": "https://code.claude.com/docs/en/model-config",
+      "model_flag": "--model <id>",
+      "effort": {
+        "flag": "--effort <level>",
+        "args": [
+          "--effort",
+          "{effort}"
+        ],
+        "values": {
+          "low": "low",
+          "medium": "medium",
+          "high": "high",
+          "xhigh": "xhigh",
+          "max": "max"
+        }
+      },
+      "effort_defaults": [
+        {
+          "models": [
+            "claude-opus-5-5"
+          ],
+          "level": "medium",
+          "since": "2.1.280",
+          "source": "https://code.claude.com/docs/en/model-config#adjust-effort-level",
+          "note": "since the version that added Claude Opus 5.5; CLAUDE_CODE_EFFORT_LEVEL, --effort, /effort, modelSettings, or effortLevel in a project, local or managed settings file override it"
+        },
+        {
+          "models": [
+            "claude-sonnet-5-5"
+          ],
+          "level": "medium",
+          "since": "2.1.284",
+          "source": "https://code.claude.com/docs/en/model-config#adjust-effort-level",
+          "note": "since the version that added Claude Sonnet 5.5; settings and CLAUDE_CODE_EFFORT_LEVEL override it"
+        },
+        {
+          "models": [
+            "claude-haiku-5-5"
+          ],
+          "level": "medium",
+          "since": "2.1.293",
+          "source": "https://code.claude.com/docs/en/model-config#adjust-effort-level",
+          "note": "since the version that added Claude Haiku 5.5; settings and CLAUDE_CODE_EFFORT_LEVEL override it"
+        },
+        {
+          "models": [
+            "claude-fable-5-1"
+          ],
+          "level": "high",
+          "since": "2.1.257",
+          "source": "https://code.claude.com/docs/en/model-config#adjust-effort-level",
+          "note": "the general rule (high on every model with effort, except those listed as medium); settings and CLAUDE_CODE_EFFORT_LEVEL override it"
+        }
+      ],
+      "effort_detection": {
+        "where": "session file <config dir>/projects/<cwd>/<session-id>.jsonl, where the config dir is $CLAUDE_CONFIG_DIR or ~/.claude (T3 Code sets a per-account dir such as ~/.claude-accounts/<account>): `effort`, `perTurnEffort` and `version` on every assistant record (since 2.1.212). T3 Code threads write the same file (entrypoint sdk-ts). The stream-json output has no effort field.",
+        "status": "tested",
+        "tested_version": "2.1.306 (headless and via T3 Code, 2026-10-22)",
+        "source": "https://raw.githubusercontent.com/anthropics/claude-code/main/CHANGELOG.md"
+      },
+      "reports": {
+        "format": "claude-stream-json",
+        "version": "system/init line: claude_code_version",
+        "model": "system/init line: model; every assistant message: message.model; final result line: modelUsage (per-model tokens, including helper models)"
+      },
+      "helper_models": [
+        "claude-haiku-*"
+      ],
+      "notes": "Claude Code runs a small Haiku model for background tasks (ANTHROPIC_DEFAULT_HAIKU_MODEL), so a seat's usage lists it next to the seat's own model."
+    },
+    {
+      "id": "codex",
+      "display": "Codex CLI",
+      "vendor": "OpenAI",
+      "kind": "agent",
+      "seated": "headless",
+      "status": "untested",
+      "aliases": [
+        "codex-cli",
+        "openai-codex"
+      ],
+      "cli": "codex",
+      "docs": "https://learn.chatgpt.com/docs/config-file/config-reference",
+      "model_flag": "-m <id>",
+      "effort": {
+        "flag": "-c model_reasoning_effort=\"<level>\"",
+        "args": [
+          "-c",
+          "model_reasoning_effort=\"{effort}\""
+        ],
+        "values": {
+          "none": "none",
+          "minimal": "minimal",
+          "low": "low",
+          "medium": "medium",
+          "high": "high",
+          "xhigh": "xhigh",
+          "max": "max",
+          "ultra": "ultra"
+        }
+      },
+      "effort_defaults": [
+        {
+          "models": [
+            "gpt-6-astra"
+          ],
+          "level": "low",
+          "since": "0.153.1",
+          "source": "https://github.com/openai/codex/blob/rust-v0.163.0/codex-rs/models-manager/models.json",
+          "note": "default_reasoning_level in the bundled model catalog (checked through 0.163.0); OpenAI's /models list can replace it without a release"
+        },
+        {
+          "models": [
+            "gpt-6.1-sol"
+          ],
+          "level": "low",
+          "since": "0.159.1",
+          "source": "https://github.com/openai/codex/blob/rust-v0.163.0/codex-rs/models-manager/models.json",
+          "note": "default_reasoning_level in the bundled model catalog (checked through 0.163.0); the server list can replace it"
+        },
+        {
+          "models": [
+            "gpt-6-luna"
+          ],
+          "level": "medium",
+          "since": "0.156.1",
+          "source": "https://github.com/openai/codex/blob/rust-v0.163.0/codex-rs/models-manager/models.json",
+          "note": "default_reasoning_level in the bundled model catalog (checked through 0.163.0); the server list can replace it"
+        }
+      ],
+      "effort_detection": {
+        "where": "rollout file ~/.codex/sessions/YYYY/MM/DD/rollout-<ts>-<thread_id>.jsonl (or .jsonl.zst): `turn_context` records with payload.model and payload.effort (since 0.35.0; absent when no level was selected). `codex exec --json` prints thread.started.thread_id (the UUID in the file name) but no effort.",
+        "status": "untested",
+        "source": "https://github.com/openai/codex/blob/rust-v0.163.0/codex-rs/protocol/src/protocol.rs"
+      },
+      "reports": {
+        "format": "codex-json",
+        "version": "not in `codex exec --json` output (record `codex --version` when launching)",
+        "model": "not reported by `codex exec --json` (openai/codex#14736): Codex seats are Self-Reported unless a later version adds it"
+      },
+      "helper_models": []
+    },
+    {
+      "id": "gemini-cli",
+      "display": "Gemini CLI",
+      "vendor": "Google",
+      "kind": "agent",
+      "seated": "headless",
+      "status": "untested",
+      "aliases": [
+        "gemini",
+        "google-gemini-cli"
+      ],
+      "cli": "gemini",
+      "docs": "https://github.com/google-gemini/gemini-cli/blob/main/docs/reference/configuration.md",
+      "model_flag": "-m <id>",
+      "effort": null,
+      "effort_defaults": [
+        {
+          "models": [
+            "gemini-3.1-pro-preview"
+          ],
+          "level": "high",
+          "since": "0.44.0",
+          "source": "https://github.com/google-gemini/gemini-cli/blob/v0.65.0/packages/core/src/config/defaultModelConfigs.ts",
+          "note": "thinkingLevel HIGH from chat-base-3; modelConfigs overrides in settings.json change it"
+        },
+        {
+          "models": [
+            "gemini-3.8-flash"
+          ],
+          "level": "high",
+          "since": "0.62.0",
+          "source": "https://github.com/google-gemini/gemini-cli/blob/v0.65.0/packages/core/src/config/defaultModelConfigs.ts",
+          "note": "thinkingLevel HIGH from chat-base-3; modelConfigs overrides in settings.json change it"
+        }
+      ],
+      "effort_detection": {
+        "where": "not recorded: neither stream-json nor session files (~/.gemini/tmp/<hash>/chats/) carry the thinking level",
+        "status": "not-reported",
+        "source": "https://github.com/google-gemini/gemini-cli/blob/v0.65.0/packages/core/src/output/types.ts"
+      },
+      "reports": {
+        "format": "gemini-stream-json",
+        "version": "not in the stream (record `gemini --version` when launching)",
+        "model": "stream-json init line: model; result stats.models (per-model tokens), where present"
+      },
+      "helper_models": [],
+      "notes": "No CLI flag for thinking: it is set per model in settings.json (modelConfigs thinkingConfig.thinkingLevel). Seats record the documented default for the CLI version; Gemini 4 Argon isn't in the CLI's model configs yet, so its level is Unknown."
+    },
+    {
+      "id": "opencode",
+      "display": "OpenCode",
+      "vendor": "SST",
+      "kind": "agent",
+      "seated": "headless",
+      "status": "untested",
+      "aliases": [
+        "open-code",
+        "sst-opencode"
+      ],
+      "cli": "opencode",
+      "docs": "https://opencode.ai/docs/models/",
+      "model_flag": "--model <provider>/<model>",
+      "hosted": {
+        "prefix": "opencode/",
+        "free_suffix": "-free",
+        "display": "OpenCode Zen",
+        "source": "https://opencode.ai/docs/zen/"
+      },
+      "effort": {
+        "flag": "--model <provider>/<model>#<variant>",
+        "model_template": "{model}#{effort}",
+        "values": {
+          "none": "none",
+          "minimal": "minimal",
+          "low": "low",
+          "medium": "medium",
+          "high": "high",
+          "xhigh": "xhigh",
+          "max": "max"
+        }
+      },
+      "effort_defaults": [],
+      "effort_detection": {
+        "where": "~/.local/share/opencode/opencode.db (SQLite, read from a copy): OpenCode 2.x table session_v2 has model {id, providerID, variant}, version and token counts; session_message rows of type assistant carry data.model with the variant. Older 1.x sessions: tables session/message (message.data.modelID, variant). Also `opencode session export <id>`. The --format json events carry no variant. A session without a variant records none.",
+        "status": "tested",
+        "tested_version": "2.1.2 (standalone and via T3 Code, 2026-10-22)",
+        "source": "https://opencode.ai/docs/cli/"
+      },
+      "reports": {
+        "format": "opencode-json",
+        "version": "not in the stream (record `opencode --version` when launching)",
+        "model": "step parts: providerID + modelID (e.g. anthropic/claude-sonnet-5-5)"
+      },
+      "helper_models": [],
+      "notes": "Without a variant OpenCode sends provider base options, and its docs and source disagree on the Anthropic default, so a seat without a variant has Unknown effort unless the session export shows one. opencode/<id> is OpenCode Zen (OpenCode's own model service): the same registry model, flagged as hosted; <id>-free is a time-limited free Zen variant, flagged as free."
+    },
+    {
+      "id": "cursor",
+      "display": "Cursor CLI",
+      "vendor": "Anysphere",
+      "kind": "agent",
+      "seated": "headless",
+      "status": "untested",
+      "aliases": [
+        "cursor-agent",
+        "cursor-cli"
+      ],
+      "cli": "cursor-agent",
+      "docs": "https://cursor.com/docs/cli/reference/parameters",
+      "model_flag": "--model <name> (list them with `cursor-agent models`)",
+      "effort": {
+        "flag": "model name suffix: --model <model>-<level>[-fast] (see `cursor-agent models`); the cursor-agent SDK (T3 Code) takes the level as a model parameter instead",
+        "args": [],
+        "values": {
+          "none": "none",
+          "minimal": "minimal",
+          "low": "low",
+          "medium": "medium",
+          "high": "high",
+          "xhigh": "xhigh",
+          "extra-high": "xhigh",
+          "max": "max"
+        },
+        "fast_suffix": "-fast"
+      },
+      "effort_defaults": [
+        {
+          "models": [
+            "claude-opus-5-5"
+          ],
+          "level": "medium",
+          "source": "https://cursor.com/docs/cli/reference/parameters",
+          "note": "from `cursor-agent models` (2026.10.01, tested): the name without a level, \"Claude Opus 5.5 1M\", is claude-opus-5-5-medium"
+        },
+        {
+          "models": [
+            "claude-fable-5-1"
+          ],
+          "level": "high",
+          "source": "https://cursor.com/docs/cli/reference/parameters",
+          "note": "from `cursor-agent models` (2026.10.01, tested): the name without a level, \"Claude Fable 5.1 1M\", is claude-fable-5-1-high"
+        },
+        {
+          "models": [
+            "gpt-5.6-sol",
+            "gpt-5.6-terra",
+            "gpt-5.6-luna"
+          ],
+          "level": "medium",
+          "source": "https://cursor.com/docs/models",
+          "note": "from `cursor-agent models` (2026.10.19, tested 2026-10-22): the name without a level, \"GPT-5.6 Sol 1M\" (Terra, Luna alike), is gpt-5.6-sol-medium; T3 Code's Cursor catalog also marks Medium as the default"
+        },
+        {
+          "models": [
+            "gpt-5.5"
+          ],
+          "level": "medium",
+          "source": "https://cursor.com/docs/models",
+          "note": "from `cursor-agent models` (2026.10.19, tested 2026-10-22): the name without a level, \"GPT-5.5 1M\", is gpt-5.5-medium"
+        },
+        {
+          "models": [
+            "grok-4.6"
+          ],
+          "level": "high",
+          "source": "https://cursor.com/docs/models",
+          "note": "from `cursor-agent models` (2026.10.19, tested 2026-10-22): the name without a level, \"Grok 4.6\", is cursor-grok-4.6-high; Cursor's Grok 4.6 page says high is the default"
+        },
+        {
+          "models": [
+            "grok-4.5"
+          ],
+          "level": "high",
+          "source": "https://cursor.com/docs/models",
+          "note": "from `cursor-agent models` (2026.10.19, tested 2026-10-22): the name without a level, \"Grok 4.5\", is cursor-grok-4.5-high; Cursor's Grok 4.5 page says high is the default"
+        },
+        {
+          "models": [
+            "kimi-k3"
+          ],
+          "level": "max",
+          "source": "https://cursor.com/docs/models",
+          "note": "from `cursor-agent models` (2026.10.19, tested 2026-10-22): the name without a level, \"Kimi K3\", is kimi-k3-max (also Moonshot's API default)"
+        },
+        {
+          "models": [
+            "muse-spark-1.3"
+          ],
+          "level": "high",
+          "source": "https://cursor.com/docs/models",
+          "note": "from `cursor-agent models` (2026.10.19, tested 2026-10-22): the name without a level, \"Muse Spark 1.3 1M\", is muse-spark-1.3-high"
+        }
+      ],
+      "effort_detection": {
+        "where": "stream-json system/init `model` is a display name with the level (\"Gemini 3.8 Flash Low\"); the cursor-agent SDK store ~/.cursor/projects/<project>/sdk-agent-store/<hash>/agents/<agent>/store.db (blobs) has providerOptions.cursor.modelName with the level and fast mode (\"grok-4.7-xhigh-fast\"). Via T3 Code the level is a model parameter (reasoning_effort, reasoning or effort, by model) in T3 Code's provider log. agent-transcripts/*.jsonl have no model. Names without a level are the defaults below.",
+        "status": "tested",
+        "tested_version": "2026.10.01 (CLI) and the cursor-agent SDK via T3 Code, 2026-10-22",
+        "source": "https://cursor.com/docs/cli/reference/output-format"
+      },
+      "reports": {
+        "format": "cursor-stream-json",
+        "version": "not in the stream (record `cursor-agent --version` when launching)",
+        "model": "stream-json system init line: model (a display name such as \"Claude Sonnet 5.5\", not an id)"
+      },
+      "helper_models": [],
+      "notes": "Effort and fast mode are part of the CLI model name (claude-opus-5-5-high, grok-4.7-xhigh-fast); fast is recorded per seat, not part of the identity. Cursor names Grok 4.6 and 4.5 cursor-grok-4.6-<level>. Claude Haiku 5.5 is launched as its thinking variant; Cursor's \"No Thinking\" Haiku names count as effort none, which Haiku 5.5 doesn't list."
+    },
+    {
+      "id": "claude-desktop",
+      "display": "Claude Desktop",
+      "vendor": "Anthropic",
+      "kind": "agent",
+      "seated": "by-hand",
+      "status": "untested",
+      "aliases": [
+        "claude-app",
+        "claude-desktop-app"
+      ],
+      "cli": null,
+      "docs": "https://support.claude.com/en/articles/11175166-getting-started-with-custom-connectors-using-remote-mcp",
+      "model_flag": "model menu next to the send button",
+      "effort": {
+        "flag": "model menu → Effort (Low, Medium, High, Extra high, Max)",
+        "args": [],
+        "values": {
+          "low": "low",
+          "medium": "medium",
+          "high": "high",
+          "extra high": "xhigh",
+          "xhigh": "xhigh",
+          "max": "max"
+        }
+      },
+      "effort_defaults": [],
+      "effort_detection": {
+        "where": "not documented: no local file is documented to record the model and the effort",
+        "status": "not-reported",
+        "source": "https://support.claude.com/en/articles/8664678-change-the-model-effort-and-thinking-settings"
+      },
+      "reports": {
+        "format": "none",
+        "version": "not recorded",
+        "model": "not recorded in a documented local file"
+      },
+      "helper_models": [],
+      "notes": "Add the seat URL as a custom connector (Customize > Connectors > Add custom connector, no sign-in). Allow the mtg tools with \"Allow always\". The effort menu marks its recommended level \"Default\"; declare the level you picked."
+    },
+    {
+      "id": "cline",
+      "display": "Cline",
+      "vendor": "Cline Bot",
+      "kind": "agent",
+      "seated": "by-hand",
+      "status": "untested",
+      "aliases": [
+        "cline-bot"
+      ],
+      "cli": null,
+      "docs": "https://docs.cline.bot/mcp/configuring-mcp-servers",
+      "model_flag": "Settings > API Provider > model",
+      "effort": null,
+      "effort_defaults": [],
+      "effort_detection": {
+        "where": "tasks are saved locally with tokens and cost; whether the model or thinking setting is recorded isn't documented",
+        "status": "not-reported",
+        "source": "https://docs.cline.bot/core-workflows/task-management"
+      },
+      "reports": {
+        "format": "none",
+        "version": "not recorded",
+        "model": "not recorded in a documented local file"
+      },
+      "helper_models": [],
+      "notes": "Remote server: transport Streamable HTTP ({\"type\":\"streamableHttp\",\"url\":…}). The extension has only an \"Enable Extended Thinking\" checkbox (no levels), so seats record the harness default (Unknown); the Cline CLI takes --thinking none|low|medium|high|xhigh."
+    },
+    {
+      "id": "continue",
+      "display": "Continue",
+      "vendor": "Continue Dev",
+      "kind": "agent",
+      "seated": "by-hand",
+      "status": "untested",
+      "aliases": [
+        "continue-dev",
+        "continuedev"
+      ],
+      "cli": null,
+      "docs": "https://docs.continue.dev/customize/deep-dives/mcp",
+      "model_flag": "models in config.yaml",
+      "effort": null,
+      "effort_defaults": [],
+      "effort_detection": {
+        "where": ".continue/dev_data events; whether the model or reasoning setting is recorded isn't documented",
+        "status": "not-reported",
+        "source": "https://docs.continue.dev/customize/deep-dives/development-data"
+      },
+      "reports": {
+        "format": "none",
+        "version": "not recorded",
+        "model": "not recorded in a documented local file"
+      },
+      "helper_models": [],
+      "notes": "MCP works in agent mode (config.yaml: type streamable-http). Reasoning is a boolean plus a token budget (defaultCompletionOptions.reasoning, reasoningBudgetTokens), not named levels, so seats record Unknown effort."
+    },
+    {
+      "id": "vscode-copilot",
+      "display": "GitHub Copilot in VS Code",
+      "vendor": "Microsoft / GitHub",
+      "kind": "agent",
+      "seated": "by-hand",
+      "status": "untested",
+      "aliases": [
+        "vscode",
+        "vs-code",
+        "copilot",
+        "github-copilot",
+        "copilot-agent-mode"
+      ],
+      "cli": null,
+      "docs": "https://code.visualstudio.com/docs/copilot/reference/mcp-configuration",
+      "model_flag": "chat model picker",
+      "effort": {
+        "flag": "model picker > Thinking Effort (custom agent files: reasoning-effort)",
+        "args": [],
+        "values": {
+          "low": "low",
+          "medium": "medium",
+          "high": "high",
+          "xhigh": "xhigh",
+          "max": "max"
+        }
+      },
+      "effort_defaults": [],
+      "effort_detection": {
+        "where": "Chat: Export Chat (JSON) and OpenTelemetry (gen_ai.request.model); whether effort is recorded isn't documented",
+        "status": "not-reported",
+        "source": "https://code.visualstudio.com/docs/agents/guides/monitoring-agents"
+      },
+      "reports": {
+        "format": "none",
+        "version": "not recorded",
+        "model": "not recorded in a documented local file"
+      },
+      "helper_models": [],
+      "notes": "Agent mode with an HTTP server in .vscode/mcp.json ({\"servers\":{\"mtg\":{\"type\":\"http\",\"url\":…}}}); trust the server in Chat: Manage Tool Approval."
+    },
+    {
+      "id": "devin-desktop",
+      "display": "Devin Desktop",
+      "vendor": "Cognition",
+      "kind": "agent",
+      "seated": "by-hand",
+      "status": "untested",
+      "aliases": [
+        "windsurf",
+        "cascade",
+        "windsurf-cascade"
+      ],
+      "cli": null,
+      "docs": "https://docs.devin.ai/desktop/cascade/mcp",
+      "model_flag": "model menu below the input box",
+      "effort": {
+        "flag": "per-model effort variant in the model hovercard (levels vary by model)",
+        "args": [],
+        "values": {
+          "low": "low",
+          "medium": "medium",
+          "high": "high",
+          "xhigh": "xhigh"
+        }
+      },
+      "effort_defaults": [],
+      "effort_detection": {
+        "where": "a transcript hook can write ~/.windsurf/transcripts/<id>.jsonl; whether model or effort fields appear isn't documented",
+        "status": "not-reported",
+        "source": "https://docs.devin.ai/desktop/cascade/hooks"
+      },
+      "reports": {
+        "format": "none",
+        "version": "not recorded",
+        "model": "not recorded in a documented local file"
+      },
+      "helper_models": [],
+      "notes": "Formerly Windsurf. Remote MCP over Streamable HTTP in ~/.config/devin/mcp_config.json (serverUrl). A beta removed Cascade in favor of Devin Local."
+    },
+    {
+      "id": "antigravity",
+      "display": "Antigravity",
+      "vendor": "Google",
+      "kind": "agent",
+      "seated": "by-hand",
+      "status": "untested",
+      "aliases": [
+        "google-antigravity",
+        "antigravity-cli"
+      ],
+      "cli": null,
+      "docs": "https://antigravity.google/docs/models/",
+      "model_flag": "model menu under the prompt box; the thinking level is part of the model id (gemini-4-argon-high, gemini-3.8-flash-medium)",
+      "effort": {
+        "flag": "thinking level Low, Medium or High, in the model id: <model>-<level>",
+        "args": [],
+        "values": {
+          "low": "low",
+          "medium": "medium",
+          "high": "high"
+        },
+        "name_suffix": "-{effort}"
+      },
+      "effort_defaults": [],
+      "effort_detection": {
+        "where": "conversation DB (SQLite) <uuid>.db: steps and gen_metadata blobs carry the model id with its level (gemini-3.8-flash-medium). Via T3 Code: ~/.t3/userdata/providers/antigravity/<hash>/antigravity-acp/conversations/ (tested 2026-10-22). Standalone: presumably ~/.gemini/antigravity-cli/conversations/ (untested).",
+        "status": "tested",
+        "tested_version": "via T3 Code, 2026-10-22",
+        "source": "https://antigravity.google/docs/models/"
+      },
+      "reports": {
+        "format": "antigravity-conversation-db",
+        "version": "not recorded",
+        "model": "model id with the thinking level, in the conversation DB blobs"
+      },
+      "helper_models": [],
+      "notes": "A different harness from Gemini CLI: Google's agent app (desktop, CLI, SDK), here reached through T3 Code. Every model id carries its level (<model>-low|medium|high), so a seat's level is always in its model name; an explicit effort that disagrees with it is refused. No default level is documented."
+    },
+    {
+      "id": "script",
+      "display": "Scripted Random Player",
+      "vendor": "MTG Deck Tools Agent Benchmark",
+      "kind": "test",
+      "seated": "test",
+      "status": "tested",
+      "aliases": [
+        "scripted",
+        "random",
+        "random-agent"
+      ],
+      "cli": "node scripts/mcp-random-agent.mjs",
+      "docs": "https://github.com/grpace/mtgdecktools-agent-bench/blob/main/scripts/mcp-random-agent.mjs",
+      "model_flag": null,
+      "effort": null,
+      "effort_defaults": [],
+      "effort_detection": {
+        "where": "none: a scripted player",
+        "status": "not-reported"
+      },
+      "reports": {
+        "format": "none",
+        "version": "none",
+        "model": "none"
+      },
+      "helper_models": [],
+      "notes": "A test player for checking a setup end to end. Never an LLM, never rated."
+    }
+  ],
+  "launchers": [
+    {
+      "id": "t3-code",
+      "display": "T3 Code",
+      "vendor": "Ping Labs",
+      "aliases": [
+        "t3",
+        "t3code"
+      ],
+      "docs": "https://github.com/pingdotgg/t3code",
+      "launches": [
+        "claude-code",
+        "codex",
+        "opencode",
+        "cursor",
+        "antigravity"
+      ],
+      "logs": {
+        "where": "~/.t3/userdata/logs/provider/events.<thread>.log: the model and effort it opened each provider session with (claudeAgent query.open options.model / options.effort; cursor run.start options.model {id, params: reasoning_effort / reasoning / effort, fast}) and turn usage. Several threads can share one file: filter by the threadId in each line. The harness's own record (Claude Code session file, OpenCode DB, Cursor SDK store, Antigravity conversation DB) comes first; this log is the fallback.",
+        "status": "tested",
+        "tested_version": "T3 Code with Claude Code 2.1.306, OpenCode 2.1.2, Cursor, Antigravity (2026-10-22)",
+        "source": "https://github.com/pingdotgg/t3code/blob/main/docs/user/composer.md"
+      },
+      "notes": "An app that starts harness sessions, not a harness: it runs Claude through the Claude Agent SDK (Claude Code's harness), Codex through the Codex App Server, and the other engines through their own SDKs or CLIs (https://x.com/theo/status/2113424203345265053). A seat started in it ranks as the harness it ran (declare t3-code:<harness>, e.g. t3-code:claude-code); the launcher is recorded in the seat's details, never as a leaderboard row. T3 Code gives every session its own MCP server and adds instructions to it, which the seat details show."
+    }
+  ]
+}

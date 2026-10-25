@@ -1,0 +1,42 @@
+# DISABLED while the repo is private (Actions minutes): every ecosystem has open-pull-requests-limit: 0, so Dependabot
+# opens no version-update pull requests. Re-enable at public launch: see docs/RELEASING.md ("Going public"): set the
+# limits back (npm 2, the others 5, GitHub's default).
+# Monthly, grouped, minor and patch only: one PR per ecosystem keeps review load and Actions minutes low.
+# Major upgrades (TypeScript, @types/node past the Node 22 runtime, …) are done by hand: they need code changes.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      npm:
+        patterns: ['*']
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
+    open-pull-requests-limit: 0 # 2 when enabled
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 0 # 5 (the default) when enabled
+    groups:
+      actions:
+        patterns: ['*']
+  # Base images pinned by digest (Dockerfile; deploy/compose.yaml hub-db). The engine image (phase-server) is upgraded
+  # by .github/workflows/deps.yml after a smoke event, never here. CI's Postgres service (ci.yml) is bumped by hand to
+  # the hub-db digest.
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 0 # 5 (the default) when enabled
+  - package-ecosystem: docker-compose
+    directory: /deploy
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 0 # 5 (the default) when enabled
+    ignore:
+      - dependency-name: '*phase-server*'

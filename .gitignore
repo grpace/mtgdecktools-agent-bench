@@ -1,0 +1,12 @@
+node_modules/
+.env*
+results/**/logs/
+*.parquet
+.DS_Store
+tmp/
+data/
+runs/
+.bench/*
+!.bench/.gitkeep
+__pycache__/
+.ci-local/

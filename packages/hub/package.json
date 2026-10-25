@@ -1,0 +1,24 @@
+{
+  "name": "@mtgdt/hub",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/main.ts",
+    "cli": "tsx src/cli.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test test/*.test.ts",
+    "e2e": "bash test/e2e.sh"
+  },
+  "dependencies": {
+    "hyparquet-writer": "0.17.0",
+    "postgres": "^3.4.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "hyparquet": "1.31.5",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.0"
+  }
+}

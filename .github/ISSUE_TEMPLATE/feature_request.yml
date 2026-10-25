@@ -1,0 +1,17 @@
+name: Idea or improvement
+description: A change to the Director, protocol, methodology, metrics or tooling.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: If it touches docs/PROTOCOL.md, docs/METHODOLOGY.md or a prompt version, say how it affects comparability with earlier results.
+    validations:
+      required: true

@@ -1,0 +1,574 @@
+{
+  "card": "Fblthp, Impossibly Lost",
+  "title": "the combat-damage trigger is unparsed, so it never fires",
+  "status": "active",
+  "kind": "parser",
+  "upstream_issue": null,
+  "marks_supported": true,
+  "applies_to": {
+    "server_version": "0.116.0",
+    "build_commit": "3f79456",
+    "card_data_sha256": "c4cfb737d0c0b1b135d3a353d71a95606f6ee147727bc11c3d16b82ece33da41",
+    "entry_sha256": "50d05dd7b1ae9414c969b3397b674233db06e4a94134d2d8f1a3b88378b32a76"
+  },
+  "rules": {
+    "oracle": "When one or more of your opponents are dealt combat damage during your turn, draw two cards. If your library has no cards in it, you win the game. Fblthp's owner shuffles him into their library. (If you draw from an empty library this way, you still win the game.)",
+    "cr": [
+      "603.2",
+      "603.2c",
+      "510.2",
+      "120.2a",
+      "104.2b",
+      "704.3",
+      "704.5b",
+      "121.4",
+      "400.7"
+    ],
+    "actual": "The trigger condition isn't parsed (TriggerMode Unknown), so the ability never triggers: Fblthp is a vanilla 1/1 that never draws, never wins and never shuffles himself away.",
+    "expected": "Whenever combat damage is dealt to one or more of your opponents during your turn, the ability triggers once per combat damage step, however many creatures or opponents were dealt damage (CR 603.2c, 510.2), from any source. You draw two cards; if your library is then empty you win the game, before state-based actions would make you lose for drawing from an empty library (CR 104.2b, 704.3, and the card's ruling); then Fblthp is shuffled into his owner's library. Noncombat damage doesn't trigger it, and neither does combat damage dealt to an opponent during another player's turn.",
+    "diagnosis": "The trigger line \"When one or more of your opponents are dealt combat damage during your turn\" isn't recognized, so the trigger is emitted as mode Unknown with damage_kind Any, no valid_target, no constraint and batched false; an Unknown mode has no matcher and never fires. The effect chain (Draw 2, WinTheGame if the library is empty, Fblthp to his owner's library, shuffle) is already correct.",
+    "suggested_fix": "In the trigger parser (oracle_trigger.rs), recognize \"one or more of your opponents are dealt combat damage\" as the same shape as \"one or more opponents are dealt noncombat damage\" (Master of Barbs): mode DamageReceived, valid_target Typed{controller: Opponent}, batched: true, with damage_kind CombatOnly; and peel the trailing \"during your turn\" into constraint OnlyDuringYourTurn, as already done for other \"during your turn\" trigger tails.",
+    "override_note": "The patch replaces only the trigger header: mode DamageReceived with damage_kind CombatOnly and valid_target Typed{controller: Opponent} (the shape Mindblade Render uses for \"your opponents are dealt combat damage\"), batched: true (Master of Barbs' \"one or more opponents\": all matching damage events of one simultaneous combat damage batch fire a single trigger, CR 603.2c, 510.2), and constraint OnlyDuringYourTurn. No source restriction, as printed. The existing effect chain is unchanged: Draw 2, then WinTheGame gated on your library having 0 cards (checked during resolution, so the win happens before the CR 704.5b state-based action, CR 704.3), then Fblthp moves to his owner's library and that library is shuffled."
+  },
+  "patch": [
+    {
+      "op": "test",
+      "path": "/triggers/0/mode",
+      "value": {
+        "Unknown": "When one or more of your opponents are dealt combat damage during your turn"
+      }
+    },
+    {
+      "op": "replace",
+      "path": "/triggers/0/mode",
+      "value": "DamageReceived"
+    },
+    {
+      "op": "test",
+      "path": "/triggers/0/damage_kind",
+      "value": "Any"
+    },
+    {
+      "op": "replace",
+      "path": "/triggers/0/damage_kind",
+      "value": "CombatOnly"
+    },
+    {
+      "op": "test",
+      "path": "/triggers/0/valid_target",
+      "value": null
+    },
+    {
+      "op": "replace",
+      "path": "/triggers/0/valid_target",
+      "value": {
+        "type": "Typed",
+        "type_filters": [],
+        "controller": "Opponent",
+        "properties": []
+      }
+    },
+    {
+      "op": "test",
+      "path": "/triggers/0/constraint",
+      "value": null
+    },
+    {
+      "op": "replace",
+      "path": "/triggers/0/constraint",
+      "value": {
+        "type": "OnlyDuringYourTurn"
+      }
+    },
+    {
+      "op": "test",
+      "path": "/triggers/0/batched",
+      "value": false
+    },
+    {
+      "op": "replace",
+      "path": "/triggers/0/batched",
+      "value": true
+    },
+    {
+      "op": "test",
+      "path": "/triggers/0/execute/effect",
+      "value": {
+        "type": "Draw",
+        "count": {
+          "type": "Fixed",
+          "value": 2
+        },
+        "target": {
+          "type": "Controller"
+        }
+      }
+    },
+    {
+      "op": "test",
+      "path": "/triggers/0/execute/sub_ability/effect",
+      "value": {
+        "type": "WinTheGame",
+        "target": {
+          "type": "Controller"
+        }
+      }
+    }
+  ],
+  "tests": [
+    {
+      "name": "Fblthp and a 2/2 both connect on your turn: one trigger, draw two, Fblthp shuffled into your library (CR 603.2c, 510.2)",
+      "setup": [
+        {
+          "card": "Fblthp, Impossibly Lost",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "attack": [
+            {
+              "card": "Fblthp, Impossibly Lost",
+              "owner": 0
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 0
+            }
+          ]
+        },
+        {
+          "advance": {
+            "phase": "PostCombatMain",
+            "active": 0
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            17
+          ],
+          "hand": [
+            9,
+            null
+          ],
+          "library": [
+            32,
+            null
+          ],
+          "zones": [
+            {
+              "card": "Fblthp, Impossibly Lost",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 0
+            },
+            {
+              "card": "Fblthp, Impossibly Lost",
+              "owner": 0,
+              "zone": "Graveyard",
+              "count": 0
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1
+            }
+          ]
+        },
+        "bug": {
+          "life": [
+            20,
+            17
+          ],
+          "hand": [
+            7,
+            null
+          ],
+          "library": [
+            33,
+            null
+          ],
+          "zones": [
+            {
+              "card": "Fblthp, Impossibly Lost",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "another creature's combat damage counts too (Fblthp stays home)",
+      "setup": [
+        {
+          "card": "Fblthp, Impossibly Lost",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "attack": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 0
+            }
+          ]
+        },
+        {
+          "advance": {
+            "phase": "PostCombatMain",
+            "active": 0
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            18
+          ],
+          "hand": [
+            9,
+            null
+          ],
+          "library": [
+            32,
+            null
+          ],
+          "zones": [
+            {
+              "card": "Fblthp, Impossibly Lost",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 0
+            }
+          ]
+        },
+        "bug": {
+          "life": [
+            20,
+            18
+          ],
+          "hand": [
+            7,
+            null
+          ],
+          "library": [
+            33,
+            null
+          ],
+          "zones": [
+            {
+              "card": "Fblthp, Impossibly Lost",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "library of exactly two: draw both, you win the game while the ability resolves (CR 104.2b)",
+      "setup": [
+        {
+          "card": "Fblthp, Impossibly Lost",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "debug": "Mill",
+          "data": {
+            "player_id": 0,
+            "count": 31
+          }
+        },
+        {
+          "attack": [
+            {
+              "card": "Fblthp, Impossibly Lost",
+              "owner": 0
+            }
+          ]
+        },
+        {
+          "advance": {
+            "phase": "PostCombatMain",
+            "active": 0
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "winner": 0
+        },
+        "bug": {
+          "life": [
+            20,
+            19
+          ],
+          "hand": [
+            7,
+            null
+          ],
+          "library": [
+            2,
+            null
+          ],
+          "zones": [
+            {
+              "card": "Fblthp, Impossibly Lost",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "library of one: the second draw is from an empty library and you still win, not lose (CR 104.2b, 704.3, ruling)",
+      "setup": [
+        {
+          "card": "Fblthp, Impossibly Lost",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "debug": "Mill",
+          "data": {
+            "player_id": 0,
+            "count": 32
+          }
+        },
+        {
+          "attack": [
+            {
+              "card": "Fblthp, Impossibly Lost",
+              "owner": 0
+            }
+          ]
+        },
+        {
+          "advance": {
+            "phase": "PostCombatMain",
+            "active": 0
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "winner": 0
+        },
+        "bug": {
+          "life": [
+            20,
+            19
+          ],
+          "hand": [
+            7,
+            null
+          ],
+          "library": [
+            1,
+            null
+          ],
+          "zones": [
+            {
+              "card": "Fblthp, Impossibly Lost",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "noncombat damage to the opponent (Shock): no trigger",
+      "setup": [
+        {
+          "card": "Fblthp, Impossibly Lost",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Shock",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "cast": {
+            "card": "Shock",
+            "targets": [
+              {
+                "player": 1
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            18
+          ],
+          "hand": [
+            7,
+            null
+          ],
+          "library": [
+            33,
+            null
+          ],
+          "zones": [
+            {
+              "card": "Fblthp, Impossibly Lost",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "combat damage redirected to the opponent on their own turn (Harm's Way): no trigger, it isn't your turn",
+      "setup": [
+        {
+          "card": "Grizzly Bears",
+          "owner": 1,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Fblthp, Impossibly Lost",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Harm's Way",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 1
+      },
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "attack": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1
+            }
+          ]
+        },
+        {
+          "cast": {
+            "card": "Harm's Way",
+            "by": 0,
+            "targets": [
+              {
+                "player": 1
+              }
+            ]
+          }
+        },
+        {
+          "advance": {
+            "phase": "PostCombatMain",
+            "active": 1
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            18
+          ],
+          "hand": [
+            7,
+            null
+          ],
+          "zones": [
+            {
+              "card": "Fblthp, Impossibly Lost",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "history": [
+    {
+      "date": "2026-10-23",
+      "status": "active",
+      "note": "Written against Oracle text, the card's ruling and CR 603.2c/510.2/104.2b/704.3; tested on 0.116.0 (3f79456): upstream never triggers; with the override one trigger per combat damage step on your turn draws two, wins on an empty library, and shuffles Fblthp away."
+    }
+  ]
+}

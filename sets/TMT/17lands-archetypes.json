@@ -1,0 +1,1968 @@
+{
+ "set": "TMT",
+ "format": "PremierDraft",
+ "source": "17Lands public game data (game_data_public.<SET>.PremierDraft.csv.gz)",
+ "license_note": "Derived from 17Lands public datasets (17lands.com, CC BY 4.0 per the 17Lands public datasets page). Per-card and per-archetype aggregates computed by this project; not a 17Lands product and not endorsed by 17Lands. Credit 17Lands when you reuse it.",
+ "generated_at": "2026-10-21T23:18:52Z",
+ "generator": "analysis/draft_eval/archetypes.py",
+ "games": 180204,
+ "baseline_win_rate": 0.568,
+ "shrinkage": {
+  "gih": {
+   "overall_k": 128.5,
+   "archetype_k": 744.9
+  },
+  "gp": {
+   "overall_k": 230.3,
+   "archetype_k": 3132.0
+  },
+  "gns": {
+   "overall_k": 236.8,
+   "archetype_k": 390.1
+  }
+ },
+ "by_archetype_fields": [
+  "gih_wr",
+  "gih_games",
+  "gp_wr",
+  "gp_games",
+  "iwd",
+  "gih_wr_raw"
+ ],
+ "notes": {
+  "rates": "gih_wr/gp_wr/iwd are empirical-Bayes shrunk (see shrinkage.*.archetype_k pseudo-games); gih_wr_raw is unshrunk",
+  "cells": "a card x archetype cell is listed only if the card was in >= 50 main decks of that archetype; otherwise use the prior: overall.gih_wr - (card's mix offset) + archetypes[b].win_rate, or simply overall.gih_wr + archetypes[b].win_rate - baseline_win_rate",
+  "winners": "deck_shape_winners = decks with >= 6 recorded game wins (near-trophy in PremierDraft); decks = (draft_id, build_index), 38-45 cards",
+  "buckets": "color pairs; mono colors; 3-color combos with >= 1% of games; 3c+ = the rest. Splashes count toward the main colors"
+ },
+ "archetypes": {
+  "WU": {
+   "games": 1436,
+   "share": 0.008,
+   "win_rate": 0.5857,
+   "splash_share": 0.3948,
+   "deck_shape_all": {
+    "decks": 313,
+    "games": 1436,
+    "win_rate": 0.5857,
+    "lands_p25_p50_p75": [
+     16.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 0.66,
+    "creatures_p25_p50_p75": [
+     14.0,
+     15.0,
+     16.0
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     7.0,
+     9.0,
+     10.0
+    ],
+    "avg_mv_nonland_mean": 2.916,
+    "curve_mean": {
+     "0-1": 3.02,
+     "2": 7.03,
+     "3": 6.41,
+     "4": 3.86,
+     "5": 2.39,
+     "6+": 0.74
+    }
+   },
+   "deck_shape_winners": {
+    "decks": 43,
+    "games": 344,
+    "win_rate": 0.8169,
+    "lands_p25_p50_p75": [
+     16.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 0.58,
+    "creatures_p25_p50_p75": [
+     14.0,
+     15.0,
+     15.5
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     8.0,
+     9.0,
+     10.0
+    ],
+    "avg_mv_nonland_mean": 2.83,
+    "curve_mean": {
+     "0-1": 3.58,
+     "2": 6.91,
+     "3": 6.79,
+     "4": 3.65,
+     "5": 2.09,
+     "6+": 0.65
+    }
+   },
+   "win_rate_by_lands": {
+    "16": {
+     "games": 343,
+     "win_rate": 0.621
+    },
+    "17": {
+     "games": 972,
+     "win_rate": 0.5679
+    }
+   },
+   "win_rate_by_creatures": {
+    "12-13": {
+     "games": 253,
+     "win_rate": 0.5889
+    },
+    "14-15": {
+     "games": 641,
+     "win_rate": 0.6069
+    },
+    "16-17": {
+     "games": 367,
+     "win_rate": 0.5613
+    }
+   }
+  },
+  "WB": {
+   "games": 40782,
+   "share": 0.2263,
+   "win_rate": 0.5897,
+   "splash_share": 0.2721,
+   "deck_shape_all": {
+    "decks": 8396,
+    "games": 40768,
+    "win_rate": 0.5898,
+    "lands_p25_p50_p75": [
+     16.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 1.25,
+    "creatures_p25_p50_p75": [
+     15.0,
+     16.0,
+     17.0
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     6.0,
+     8.0,
+     9.0
+    ],
+    "avg_mv_nonland_mean": 2.86,
+    "curve_mean": {
+     "0-1": 3.22,
+     "2": 7.41,
+     "3": 6.75,
+     "4": 2.71,
+     "5": 2.15,
+     "6+": 1.14
+    }
+   },
+   "deck_shape_winners": {
+    "decks": 1412,
+    "games": 11452,
+    "win_rate": 0.7994,
+    "lands_p25_p50_p75": [
+     16.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 1.26,
+    "creatures_p25_p50_p75": [
+     15.0,
+     16.0,
+     17.0
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     6.0,
+     7.0,
+     8.0
+    ],
+    "avg_mv_nonland_mean": 2.844,
+    "curve_mean": {
+     "0-1": 3.37,
+     "2": 7.41,
+     "3": 6.64,
+     "4": 2.66,
+     "5": 2.16,
+     "6+": 1.13
+    }
+   },
+   "win_rate_by_lands": {
+    "<=15": {
+     "games": 507,
+     "win_rate": 0.6134
+    },
+    "16": {
+     "games": 11446,
+     "win_rate": 0.5943
+    },
+    "17": {
+     "games": 28653,
+     "win_rate": 0.5878
+    }
+   },
+   "win_rate_by_creatures": {
+    "<=11": {
+     "games": 362,
+     "win_rate": 0.5193
+    },
+    "12-13": {
+     "games": 2873,
+     "win_rate": 0.5667
+    },
+    "14-15": {
+     "games": 13203,
+     "win_rate": 0.5798
+    },
+    "16-17": {
+     "games": 17594,
+     "win_rate": 0.5973
+    },
+    "18+": {
+     "games": 6736,
+     "win_rate": 0.6036
+    }
+   }
+  },
+  "WR": {
+   "games": 17293,
+   "share": 0.096,
+   "win_rate": 0.5591,
+   "splash_share": 0.236,
+   "deck_shape_all": {
+    "decks": 3868,
+    "games": 17289,
+    "win_rate": 0.5593,
+    "lands_p25_p50_p75": [
+     16.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 1.25,
+    "creatures_p25_p50_p75": [
+     15.0,
+     16.0,
+     17.0
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     7.0,
+     8.0,
+     9.0
+    ],
+    "avg_mv_nonland_mean": 2.897,
+    "curve_mean": {
+     "0-1": 1.16,
+     "2": 10.23,
+     "3": 5.41,
+     "4": 3.63,
+     "5": 2.74,
+     "6+": 0.3
+    }
+   },
+   "deck_shape_winners": {
+    "decks": 455,
+    "games": 3745,
+    "win_rate": 0.7834,
+    "lands_p25_p50_p75": [
+     16.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 1.29,
+    "creatures_p25_p50_p75": [
+     15.0,
+     16.0,
+     17.0
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     7.0,
+     8.0,
+     9.0
+    ],
+    "avg_mv_nonland_mean": 2.868,
+    "curve_mean": {
+     "0-1": 1.14,
+     "2": 10.53,
+     "3": 5.27,
+     "4": 3.65,
+     "5": 2.63,
+     "6+": 0.24
+    }
+   },
+   "win_rate_by_lands": {
+    "<=15": {
+     "games": 279,
+     "win_rate": 0.5054
+    },
+    "16": {
+     "games": 6491,
+     "win_rate": 0.574
+    },
+    "17": {
+     "games": 10452,
+     "win_rate": 0.5517
+    }
+   },
+   "win_rate_by_creatures": {
+    "<=11": {
+     "games": 226,
+     "win_rate": 0.5177
+    },
+    "12-13": {
+     "games": 1660,
+     "win_rate": 0.5446
+    },
+    "14-15": {
+     "games": 5844,
+     "win_rate": 0.5573
+    },
+    "16-17": {
+     "games": 7002,
+     "win_rate": 0.5644
+    },
+    "18+": {
+     "games": 2557,
+     "win_rate": 0.5628
+    }
+   }
+  },
+  "WG": {
+   "games": 2235,
+   "share": 0.0124,
+   "win_rate": 0.5611,
+   "splash_share": 0.8452,
+   "deck_shape_all": {
+    "decks": 496,
+    "games": 2235,
+    "win_rate": 0.5611,
+    "lands_p25_p50_p75": [
+     17.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 1.16,
+    "creatures_p25_p50_p75": [
+     15.0,
+     16.0,
+     17.0
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     7.0,
+     8.0,
+     9.0
+    ],
+    "avg_mv_nonland_mean": 3.097,
+    "curve_mean": {
+     "0-1": 1.67,
+     "2": 8.74,
+     "3": 5.0,
+     "4": 3.42,
+     "5": 3.16,
+     "6+": 1.35
+    }
+   },
+   "deck_shape_winners": {
+    "decks": 56,
+    "games": 452,
+    "win_rate": 0.8053,
+    "lands_p25_p50_p75": [
+     17.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 1.39,
+    "creatures_p25_p50_p75": [
+     15.0,
+     16.0,
+     17.0
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     7.0,
+     7.5,
+     9.0
+    ],
+    "avg_mv_nonland_mean": 3.089,
+    "curve_mean": {
+     "0-1": 1.71,
+     "2": 8.88,
+     "3": 4.62,
+     "4": 3.59,
+     "5": 3.12,
+     "6+": 1.36
+    }
+   },
+   "win_rate_by_lands": {
+    "16": {
+     "games": 455,
+     "win_rate": 0.5648
+    },
+    "17": {
+     "games": 1716,
+     "win_rate": 0.5612
+    }
+   },
+   "win_rate_by_creatures": {
+    "14-15": {
+     "games": 793,
+     "win_rate": 0.5612
+    },
+    "16-17": {
+     "games": 949,
+     "win_rate": 0.5848
+    },
+    "18+": {
+     "games": 275,
+     "win_rate": 0.5018
+    }
+   }
+  },
+  "UB": {
+   "games": 1097,
+   "share": 0.0061,
+   "win_rate": 0.5132,
+   "splash_share": 0.4904,
+   "deck_shape_all": {
+    "decks": 259,
+    "games": 1097,
+    "win_rate": 0.5132,
+    "lands_p25_p50_p75": [
+     17.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 0.86,
+    "creatures_p25_p50_p75": [
+     12.0,
+     14.0,
+     16.0
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     8.0,
+     9.0,
+     11.0
+    ],
+    "avg_mv_nonland_mean": 2.987,
+    "curve_mean": {
+     "0-1": 2.96,
+     "2": 6.37,
+     "3": 6.2,
+     "4": 4.61,
+     "5": 2.03,
+     "6+": 1.08
+    }
+   },
+   "deck_shape_winners": {
+    "decks": 24,
+    "games": 199,
+    "win_rate": 0.794,
+    "lands_p25_p50_p75": [
+     17.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 0.67,
+    "creatures_p25_p50_p75": [
+     12.0,
+     13.0,
+     15.25
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     7.75,
+     10.5,
+     11.0
+    ],
+    "avg_mv_nonland_mean": 2.948,
+    "curve_mean": {
+     "0-1": 3.75,
+     "2": 5.96,
+     "3": 5.79,
+     "4": 4.71,
+     "5": 1.88,
+     "6+": 1.21
+    }
+   },
+   "win_rate_by_lands": {
+    "17": {
+     "games": 926,
+     "win_rate": 0.513
+    }
+   },
+   "win_rate_by_creatures": {
+    "12-13": {
+     "games": 339,
+     "win_rate": 0.5959
+    },
+    "14-15": {
+     "games": 328,
+     "win_rate": 0.4634
+    },
+    "16-17": {
+     "games": 227,
+     "win_rate": 0.511
+    }
+   }
+  },
+  "UR": {
+   "games": 40121,
+   "share": 0.2226,
+   "win_rate": 0.5811,
+   "splash_share": 0.3317,
+   "deck_shape_all": {
+    "decks": 8496,
+    "games": 40095,
+    "win_rate": 0.5812,
+    "lands_p25_p50_p75": [
+     17.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 1.19,
+    "creatures_p25_p50_p75": [
+     12.0,
+     13.0,
+     15.0
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     8.0,
+     10.0,
+     11.0
+    ],
+    "avg_mv_nonland_mean": 3.018,
+    "curve_mean": {
+     "0-1": 1.96,
+     "2": 8.47,
+     "3": 5.33,
+     "4": 3.54,
+     "5": 2.73,
+     "6+": 1.22
+    }
+   },
+   "deck_shape_winners": {
+    "decks": 1249,
+    "games": 10114,
+    "win_rate": 0.8056,
+    "lands_p25_p50_p75": [
+     17.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 1.24,
+    "creatures_p25_p50_p75": [
+     11.0,
+     13.0,
+     14.0
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     9.0,
+     10.0,
+     12.0
+    ],
+    "avg_mv_nonland_mean": 3.028,
+    "curve_mean": {
+     "0-1": 1.94,
+     "2": 8.73,
+     "3": 4.92,
+     "4": 3.43,
+     "5": 2.8,
+     "6+": 1.36
+    }
+   },
+   "win_rate_by_lands": {
+    "16": {
+     "games": 5840,
+     "win_rate": 0.5555
+    },
+    "17": {
+     "games": 33644,
+     "win_rate": 0.5859
+    },
+    "18+": {
+     "games": 414,
+     "win_rate": 0.5966
+    }
+   },
+   "win_rate_by_creatures": {
+    "<=11": {
+     "games": 8707,
+     "win_rate": 0.6119
+    },
+    "12-13": {
+     "games": 13004,
+     "win_rate": 0.587
+    },
+    "14-15": {
+     "games": 12306,
+     "win_rate": 0.5728
+    },
+    "16-17": {
+     "games": 5032,
+     "win_rate": 0.5481
+    },
+    "18+": {
+     "games": 1046,
+     "win_rate": 0.5115
+    }
+   }
+  },
+  "UG": {
+   "games": 15878,
+   "share": 0.0881,
+   "win_rate": 0.5316,
+   "splash_share": 0.8357,
+   "deck_shape_all": {
+    "decks": 3721,
+    "games": 15850,
+    "win_rate": 0.5314,
+    "lands_p25_p50_p75": [
+     17.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 1.8,
+    "creatures_p25_p50_p75": [
+     14.0,
+     15.0,
+     16.0
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     7.0,
+     8.0,
+     10.0
+    ],
+    "avg_mv_nonland_mean": 3.154,
+    "curve_mean": {
+     "0-1": 1.75,
+     "2": 7.52,
+     "3": 5.31,
+     "4": 4.78,
+     "5": 2.39,
+     "6+": 1.52
+    }
+   },
+   "deck_shape_winners": {
+    "decks": 340,
+    "games": 2792,
+    "win_rate": 0.7862,
+    "lands_p25_p50_p75": [
+     17.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 1.99,
+    "creatures_p25_p50_p75": [
+     14.0,
+     15.0,
+     16.0
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     7.0,
+     8.0,
+     10.0
+    ],
+    "avg_mv_nonland_mean": 3.174,
+    "curve_mean": {
+     "0-1": 1.49,
+     "2": 7.99,
+     "3": 4.86,
+     "4": 5.01,
+     "5": 2.35,
+     "6+": 1.56
+    }
+   },
+   "win_rate_by_lands": {
+    "16": {
+     "games": 2337,
+     "win_rate": 0.5289
+    },
+    "17": {
+     "games": 13123,
+     "win_rate": 0.5309
+    },
+    "18+": {
+     "games": 234,
+     "win_rate": 0.5556
+    }
+   },
+   "win_rate_by_creatures": {
+    "<=11": {
+     "games": 790,
+     "win_rate": 0.5392
+    },
+    "12-13": {
+     "games": 2957,
+     "win_rate": 0.534
+    },
+    "14-15": {
+     "games": 6203,
+     "win_rate": 0.5376
+    },
+    "16-17": {
+     "games": 4652,
+     "win_rate": 0.526
+    },
+    "18+": {
+     "games": 1248,
+     "win_rate": 0.5088
+    }
+   }
+  },
+  "BR": {
+   "games": 465,
+   "share": 0.0026,
+   "win_rate": 0.471,
+   "splash_share": 0.4495,
+   "deck_shape_all": {
+    "decks": 125,
+    "games": 465,
+    "win_rate": 0.471,
+    "lands_p25_p50_p75": [
+     16.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 0.71,
+    "creatures_p25_p50_p75": [
+     13.0,
+     14.0,
+     16.0
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     8.0,
+     9.0,
+     10.0
+    ],
+    "avg_mv_nonland_mean": 3.0,
+    "curve_mean": {
+     "0-1": 1.15,
+     "2": 9.42,
+     "3": 5.5,
+     "4": 4.18,
+     "5": 2.24,
+     "6+": 0.87
+    }
+   },
+   "deck_shape_winners": {
+    "decks": 6,
+    "games": 52,
+    "win_rate": 0.7308,
+    "lands_p25_p50_p75": [
+     17.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 0.33,
+    "creatures_p25_p50_p75": [
+     13.0,
+     13.0,
+     14.5
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     9.25,
+     10.0,
+     10.0
+    ],
+    "avg_mv_nonland_mean": 2.91,
+    "curve_mean": {
+     "0-1": 1.5,
+     "2": 10.0,
+     "3": 5.33,
+     "4": 3.33,
+     "5": 2.0,
+     "6+": 1.17
+    }
+   },
+   "win_rate_by_lands": {
+    "17": {
+     "games": 329,
+     "win_rate": 0.4529
+    }
+   },
+   "win_rate_by_creatures": {}
+  },
+  "BG": {
+   "games": 21473,
+   "share": 0.1192,
+   "win_rate": 0.5519,
+   "splash_share": 0.7552,
+   "deck_shape_all": {
+    "decks": 4677,
+    "games": 21448,
+    "win_rate": 0.5521,
+    "lands_p25_p50_p75": [
+     17.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 1.64,
+    "creatures_p25_p50_p75": [
+     14.0,
+     15.0,
+     16.0
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     7.0,
+     8.0,
+     9.0
+    ],
+    "avg_mv_nonland_mean": 3.2,
+    "curve_mean": {
+     "0-1": 1.66,
+     "2": 8.0,
+     "3": 4.93,
+     "4": 4.15,
+     "5": 2.67,
+     "6+": 1.84
+    }
+   },
+   "deck_shape_winners": {
+    "decks": 554,
+    "games": 4560,
+    "win_rate": 0.786,
+    "lands_p25_p50_p75": [
+     17.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 1.84,
+    "creatures_p25_p50_p75": [
+     14.0,
+     15.0,
+     16.0
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     7.0,
+     8.0,
+     9.0
+    ],
+    "avg_mv_nonland_mean": 3.223,
+    "curve_mean": {
+     "0-1": 1.48,
+     "2": 8.17,
+     "3": 4.74,
+     "4": 4.25,
+     "5": 2.66,
+     "6+": 1.9
+    }
+   },
+   "win_rate_by_lands": {
+    "<=15": {
+     "games": 284,
+     "win_rate": 0.5669
+    },
+    "16": {
+     "games": 3079,
+     "win_rate": 0.5567
+    },
+    "17": {
+     "games": 17693,
+     "win_rate": 0.5511
+    },
+    "18+": {
+     "games": 392,
+     "win_rate": 0.551
+    }
+   },
+   "win_rate_by_creatures": {
+    "<=11": {
+     "games": 485,
+     "win_rate": 0.6206
+    },
+    "12-13": {
+     "games": 2874,
+     "win_rate": 0.563
+    },
+    "14-15": {
+     "games": 8397,
+     "win_rate": 0.5559
+    },
+    "16-17": {
+     "games": 7648,
+     "win_rate": 0.5438
+    },
+    "18+": {
+     "games": 2044,
+     "win_rate": 0.5357
+    }
+   }
+  },
+  "RG": {
+   "games": 679,
+   "share": 0.0038,
+   "win_rate": 0.4566,
+   "splash_share": 0.8351,
+   "deck_shape_all": {
+    "decks": 180,
+    "games": 666,
+    "win_rate": 0.455,
+    "lands_p25_p50_p75": [
+     17.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 1.13,
+    "creatures_p25_p50_p75": [
+     14.0,
+     15.0,
+     16.0
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     7.0,
+     8.0,
+     9.25
+    ],
+    "avg_mv_nonland_mean": 3.208,
+    "curve_mean": {
+     "0-1": 0.82,
+     "2": 9.29,
+     "3": 4.69,
+     "4": 4.07,
+     "5": 2.56,
+     "6+": 1.85
+    }
+   },
+   "deck_shape_winners": {
+    "decks": 12,
+    "games": 101,
+    "win_rate": 0.7723,
+    "lands_p25_p50_p75": [
+     17.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 1.33,
+    "creatures_p25_p50_p75": [
+     12.0,
+     15.0,
+     16.25
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     6.75,
+     8.0,
+     11.0
+    ],
+    "avg_mv_nonland_mean": 3.309,
+    "curve_mean": {
+     "0-1": 0.83,
+     "2": 8.92,
+     "3": 4.5,
+     "4": 3.83,
+     "5": 2.75,
+     "6+": 2.33
+    }
+   },
+   "win_rate_by_lands": {
+    "17": {
+     "games": 561,
+     "win_rate": 0.467
+    }
+   },
+   "win_rate_by_creatures": {
+    "14-15": {
+     "games": 248,
+     "win_rate": 0.4274
+    },
+    "16-17": {
+     "games": 224,
+     "win_rate": 0.4598
+    }
+   }
+  },
+  "W": {
+   "games": 230,
+   "share": 0.0013,
+   "win_rate": 0.6043,
+   "splash_share": 0.5391,
+   "deck_shape_all": {
+    "decks": 54,
+    "games": 230,
+    "win_rate": 0.6043,
+    "lands_p25_p50_p75": [
+     16.0,
+     16.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 0.7,
+    "creatures_p25_p50_p75": [
+     13.25,
+     16.0,
+     17.75
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     6.0,
+     8.0,
+     10.0
+    ],
+    "avg_mv_nonland_mean": 2.859,
+    "curve_mean": {
+     "0-1": 3.09,
+     "2": 8.28,
+     "3": 5.94,
+     "4": 2.78,
+     "5": 3.02,
+     "6+": 0.72
+    }
+   },
+   "deck_shape_winners": {
+    "decks": 10,
+    "games": 79,
+    "win_rate": 0.8101,
+    "lands_p25_p50_p75": [
+     15.25,
+     16.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 0.5,
+    "creatures_p25_p50_p75": [
+     16.0,
+     17.0,
+     19.0
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     5.25,
+     6.5,
+     8.75
+    ],
+    "avg_mv_nonland_mean": 2.814,
+    "curve_mean": {
+     "0-1": 2.3,
+     "2": 9.6,
+     "3": 6.2,
+     "4": 2.8,
+     "5": 2.0,
+     "6+": 1.0
+    }
+   },
+   "win_rate_by_lands": {},
+   "win_rate_by_creatures": {}
+  },
+  "U": {
+   "games": 92,
+   "share": 0.0005,
+   "win_rate": 0.4674,
+   "splash_share": 0.7391,
+   "deck_shape_all": {
+    "decks": 26,
+    "games": 92,
+    "win_rate": 0.4674,
+    "lands_p25_p50_p75": [
+     16.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 0.92,
+    "creatures_p25_p50_p75": [
+     12.0,
+     13.0,
+     16.0
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     8.0,
+     10.5,
+     11.0
+    ],
+    "avg_mv_nonland_mean": 3.041,
+    "curve_mean": {
+     "0-1": 2.92,
+     "2": 5.69,
+     "3": 6.85,
+     "4": 4.69,
+     "5": 2.35,
+     "6+": 0.96
+    }
+   },
+   "deck_shape_winners": {
+    "decks": 2,
+    "games": 17,
+    "win_rate": 0.8235,
+    "lands_p25_p50_p75": [
+     17.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 2.0,
+    "creatures_p25_p50_p75": [
+     13.25,
+     14.5,
+     15.75
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     7.25,
+     8.5,
+     9.75
+    ],
+    "avg_mv_nonland_mean": 3.043,
+    "curve_mean": {
+     "0-1": 1.5,
+     "2": 5.0,
+     "3": 9.0,
+     "4": 6.0,
+     "5": 1.5,
+     "6+": 0.0
+    }
+   },
+   "win_rate_by_lands": {},
+   "win_rate_by_creatures": {}
+  },
+  "B": {
+   "games": 15,
+   "share": 0.0001,
+   "win_rate": 0.2,
+   "splash_share": 0.4,
+   "deck_shape_all": {
+    "decks": 7,
+    "games": 15,
+    "win_rate": 0.2,
+    "lands_p25_p50_p75": [
+     16.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 0.43,
+    "creatures_p25_p50_p75": [
+     15.0,
+     16.0,
+     19.0
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     5.0,
+     7.0,
+     8.5
+    ],
+    "avg_mv_nonland_mean": 3.076,
+    "curve_mean": {
+     "0-1": 3.14,
+     "2": 6.57,
+     "3": 5.43,
+     "4": 4.71,
+     "5": 1.86,
+     "6+": 1.86
+    }
+   },
+   "deck_shape_winners": null,
+   "win_rate_by_lands": {},
+   "win_rate_by_creatures": {}
+  },
+  "R": {
+   "games": 84,
+   "share": 0.0005,
+   "win_rate": 0.4524,
+   "splash_share": 0.3095,
+   "deck_shape_all": {
+    "decks": 22,
+    "games": 84,
+    "win_rate": 0.4524,
+    "lands_p25_p50_p75": [
+     16.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 0.14,
+    "creatures_p25_p50_p75": [
+     14.25,
+     16.0,
+     17.0
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     6.0,
+     9.0,
+     10.0
+    ],
+    "avg_mv_nonland_mean": 2.891,
+    "curve_mean": {
+     "0-1": 0.09,
+     "2": 12.32,
+     "3": 5.36,
+     "4": 2.77,
+     "5": 2.95,
+     "6+": 0.32
+    }
+   },
+   "deck_shape_winners": null,
+   "win_rate_by_lands": {},
+   "win_rate_by_creatures": {}
+  },
+  "G": {
+   "games": 271,
+   "share": 0.0015,
+   "win_rate": 0.572,
+   "splash_share": 1.0,
+   "deck_shape_all": {
+    "decks": 53,
+    "games": 271,
+    "win_rate": 0.572,
+    "lands_p25_p50_p75": [
+     16.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 1.49,
+    "creatures_p25_p50_p75": [
+     14.0,
+     16.0,
+     17.0
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     7.0,
+     8.0,
+     9.0
+    ],
+    "avg_mv_nonland_mean": 3.231,
+    "curve_mean": {
+     "0-1": 1.58,
+     "2": 8.7,
+     "3": 4.43,
+     "4": 3.7,
+     "5": 2.85,
+     "6+": 2.23
+    }
+   },
+   "deck_shape_winners": {
+    "decks": 11,
+    "games": 94,
+    "win_rate": 0.7553,
+    "lands_p25_p50_p75": [
+     17.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 1.18,
+    "creatures_p25_p50_p75": [
+     15.5,
+     16.0,
+     17.0
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     6.5,
+     7.0,
+     7.5
+    ],
+    "avg_mv_nonland_mean": 3.332,
+    "curve_mean": {
+     "0-1": 1.36,
+     "2": 8.45,
+     "3": 3.91,
+     "4": 4.27,
+     "5": 2.73,
+     "6+": 2.36
+    }
+   },
+   "win_rate_by_lands": {},
+   "win_rate_by_creatures": {}
+  },
+  "UBG": {
+   "games": 12001,
+   "share": 0.0666,
+   "win_rate": 0.5595,
+   "splash_share": 0.7174,
+   "deck_shape_all": {
+    "decks": 2697,
+    "games": 11958,
+    "win_rate": 0.5593,
+    "lands_p25_p50_p75": [
+     17.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 2.97,
+    "creatures_p25_p50_p75": [
+     13.0,
+     14.0,
+     16.0
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     8.0,
+     9.0,
+     10.0
+    ],
+    "avg_mv_nonland_mean": 3.21,
+    "curve_mean": {
+     "0-1": 1.42,
+     "2": 8.04,
+     "3": 4.75,
+     "4": 4.7,
+     "5": 2.71,
+     "6+": 1.63
+    }
+   },
+   "deck_shape_winners": {
+    "decks": 308,
+    "games": 2521,
+    "win_rate": 0.7929,
+    "lands_p25_p50_p75": [
+     17.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 3.32,
+    "creatures_p25_p50_p75": [
+     13.0,
+     14.0,
+     16.0
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     8.0,
+     9.0,
+     10.0
+    ],
+    "avg_mv_nonland_mean": 3.209,
+    "curve_mean": {
+     "0-1": 1.36,
+     "2": 8.34,
+     "3": 4.43,
+     "4": 4.79,
+     "5": 2.63,
+     "6+": 1.69
+    }
+   },
+   "win_rate_by_lands": {
+    "16": {
+     "games": 1498,
+     "win_rate": 0.5848
+    },
+    "17": {
+     "games": 9980,
+     "win_rate": 0.5551
+    },
+    "18+": {
+     "games": 365,
+     "win_rate": 0.5699
+    }
+   },
+   "win_rate_by_creatures": {
+    "<=11": {
+     "games": 920,
+     "win_rate": 0.5772
+    },
+    "12-13": {
+     "games": 3113,
+     "win_rate": 0.5859
+    },
+    "14-15": {
+     "games": 4447,
+     "win_rate": 0.5464
+    },
+    "16-17": {
+     "games": 2823,
+     "win_rate": 0.5519
+    },
+    "18+": {
+     "games": 655,
+     "win_rate": 0.5267
+    }
+   }
+  },
+  "URG": {
+   "games": 6710,
+   "share": 0.0372,
+   "win_rate": 0.5684,
+   "splash_share": 0.8027,
+   "deck_shape_all": {
+    "decks": 1560,
+    "games": 6668,
+    "win_rate": 0.569,
+    "lands_p25_p50_p75": [
+     17.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 3.07,
+    "creatures_p25_p50_p75": [
+     12.0,
+     13.0,
+     15.0
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     8.0,
+     10.0,
+     11.0
+    ],
+    "avg_mv_nonland_mean": 3.167,
+    "curve_mean": {
+     "0-1": 1.48,
+     "2": 8.51,
+     "3": 4.57,
+     "4": 4.26,
+     "5": 2.76,
+     "6+": 1.69
+    }
+   },
+   "deck_shape_winners": {
+    "decks": 200,
+    "games": 1618,
+    "win_rate": 0.8035,
+    "lands_p25_p50_p75": [
+     17.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 3.37,
+    "creatures_p25_p50_p75": [
+     12.0,
+     13.0,
+     14.0
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     9.0,
+     10.0,
+     12.0
+    ],
+    "avg_mv_nonland_mean": 3.169,
+    "curve_mean": {
+     "0-1": 1.38,
+     "2": 8.95,
+     "3": 4.26,
+     "4": 4.19,
+     "5": 2.74,
+     "6+": 1.78
+    }
+   },
+   "win_rate_by_lands": {
+    "16": {
+     "games": 940,
+     "win_rate": 0.5723
+    },
+    "17": {
+     "games": 5379,
+     "win_rate": 0.5672
+    },
+    "18+": {
+     "games": 288,
+     "win_rate": 0.6146
+    }
+   },
+   "win_rate_by_creatures": {
+    "<=11": {
+     "games": 1224,
+     "win_rate": 0.5882
+    },
+    "12-13": {
+     "games": 2284,
+     "win_rate": 0.5858
+    },
+    "14-15": {
+     "games": 2204,
+     "win_rate": 0.5585
+    },
+    "16-17": {
+     "games": 846,
+     "win_rate": 0.5355
+    }
+   }
+  },
+  "WBG": {
+   "games": 4272,
+   "share": 0.0237,
+   "win_rate": 0.5475,
+   "splash_share": 0.6243,
+   "deck_shape_all": {
+    "decks": 986,
+    "games": 4254,
+    "win_rate": 0.548,
+    "lands_p25_p50_p75": [
+     17.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 2.74,
+    "creatures_p25_p50_p75": [
+     14.0,
+     15.0,
+     16.0
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     7.0,
+     8.0,
+     10.0
+    ],
+    "avg_mv_nonland_mean": 3.118,
+    "curve_mean": {
+     "0-1": 1.81,
+     "2": 8.05,
+     "3": 5.6,
+     "4": 3.4,
+     "5": 2.86,
+     "6+": 1.57
+    }
+   },
+   "deck_shape_winners": {
+    "decks": 96,
+    "games": 786,
+    "win_rate": 0.8003,
+    "lands_p25_p50_p75": [
+     17.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 3.32,
+    "creatures_p25_p50_p75": [
+     13.0,
+     15.0,
+     16.0
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     7.0,
+     8.0,
+     10.0
+    ],
+    "avg_mv_nonland_mean": 3.133,
+    "curve_mean": {
+     "0-1": 1.74,
+     "2": 8.49,
+     "3": 5.06,
+     "4": 3.28,
+     "5": 2.9,
+     "6+": 1.72
+    }
+   },
+   "win_rate_by_lands": {
+    "16": {
+     "games": 541,
+     "win_rate": 0.5028
+    },
+    "17": {
+     "games": 3587,
+     "win_rate": 0.5553
+    }
+   },
+   "win_rate_by_creatures": {
+    "12-13": {
+     "games": 760,
+     "win_rate": 0.5711
+    },
+    "14-15": {
+     "games": 1662,
+     "win_rate": 0.5542
+    },
+    "16-17": {
+     "games": 1331,
+     "win_rate": 0.5349
+    },
+    "18+": {
+     "games": 356,
+     "win_rate": 0.5084
+    }
+   }
+  },
+  "WUR": {
+   "games": 3431,
+   "share": 0.019,
+   "win_rate": 0.5471,
+   "splash_share": 0.4477,
+   "deck_shape_all": {
+    "decks": 806,
+    "games": 3427,
+    "win_rate": 0.5474,
+    "lands_p25_p50_p75": [
+     17.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 2.47,
+    "creatures_p25_p50_p75": [
+     12.0,
+     14.0,
+     15.0
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     8.0,
+     9.0,
+     11.0
+    ],
+    "avg_mv_nonland_mean": 3.049,
+    "curve_mean": {
+     "0-1": 1.41,
+     "2": 9.18,
+     "3": 4.92,
+     "4": 3.55,
+     "5": 3.2,
+     "6+": 1.01
+    }
+   },
+   "deck_shape_winners": {
+    "decks": 70,
+    "games": 568,
+    "win_rate": 0.7993,
+    "lands_p25_p50_p75": [
+     17.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 3.06,
+    "creatures_p25_p50_p75": [
+     12.0,
+     14.0,
+     15.0
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     8.0,
+     9.0,
+     12.0
+    ],
+    "avg_mv_nonland_mean": 3.034,
+    "curve_mean": {
+     "0-1": 1.37,
+     "2": 9.7,
+     "3": 4.56,
+     "4": 3.17,
+     "5": 3.31,
+     "6+": 1.1
+    }
+   },
+   "win_rate_by_lands": {
+    "16": {
+     "games": 483,
+     "win_rate": 0.5238
+    },
+    "17": {
+     "games": 2845,
+     "win_rate": 0.5504
+    }
+   },
+   "win_rate_by_creatures": {
+    "<=11": {
+     "games": 547,
+     "win_rate": 0.6106
+    },
+    "12-13": {
+     "games": 949,
+     "win_rate": 0.549
+    },
+    "14-15": {
+     "games": 1300,
+     "win_rate": 0.5292
+    },
+    "16-17": {
+     "games": 528,
+     "win_rate": 0.5227
+    }
+   }
+  },
+  "3c+": {
+   "games": 11639,
+   "share": 0.0646,
+   "win_rate": 0.5774,
+   "splash_share": 0.6742,
+   "deck_shape_all": {
+    "decks": 2673,
+    "games": 11582,
+    "win_rate": 0.5774,
+    "lands_p25_p50_p75": [
+     17.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 3.41,
+    "creatures_p25_p50_p75": [
+     12.0,
+     13.0,
+     15.0
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     8.0,
+     10.0,
+     11.0
+    ],
+    "avg_mv_nonland_mean": 3.106,
+    "curve_mean": {
+     "0-1": 1.46,
+     "2": 8.84,
+     "3": 4.97,
+     "4": 3.86,
+     "5": 2.8,
+     "6+": 1.42
+    }
+   },
+   "deck_shape_winners": {
+    "decks": 339,
+    "games": 2720,
+    "win_rate": 0.8099,
+    "lands_p25_p50_p75": [
+     17.0,
+     17.0,
+     17.0
+    ],
+    "nonbasic_lands_mean": 3.94,
+    "creatures_p25_p50_p75": [
+     11.0,
+     13.0,
+     14.0
+    ],
+    "noncreature_spells_p25_p50_p75": [
+     9.0,
+     11.0,
+     12.0
+    ],
+    "avg_mv_nonland_mean": 3.14,
+    "curve_mean": {
+     "0-1": 1.32,
+     "2": 9.08,
+     "3": 4.46,
+     "4": 4.02,
+     "5": 2.89,
+     "6+": 1.55
+    }
+   },
+   "win_rate_by_lands": {
+    "<=15": {
+     "games": 267,
+     "win_rate": 0.6404
+    },
+    "16": {
+     "games": 2005,
+     "win_rate": 0.5766
+    },
+    "17": {
+     "games": 8844,
+     "win_rate": 0.5759
+    },
+    "18+": {
+     "games": 466,
+     "win_rate": 0.573
+    }
+   },
+   "win_rate_by_creatures": {
+    "<=11": {
+     "games": 2318,
+     "win_rate": 0.6152
+    },
+    "12-13": {
+     "games": 3626,
+     "win_rate": 0.5885
+    },
+    "14-15": {
+     "games": 3484,
+     "win_rate": 0.5663
+    },
+    "16-17": {
+     "games": 1559,
+     "win_rate": 0.542
+    },
+    "18+": {
+     "games": 595,
+     "win_rate": 0.5193
+    }
+   }
+  }
+ },
+ "cards": {
+ "Action News Crew": {"colors":"W","mv":2.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.548,"gih_games":16064,"gp_wr":0.572,"gp_games":33969,"iwd":-0.0455},"splash":null,"by_archetype":{"WU":[0.5696,365,0.5858,681,-0.0481,0.6],"WB":[0.5568,9799,0.5824,20801,-0.0483,0.5567],"WR":[0.5285,4287,0.554,9096,-0.0491,0.5286],"WG":[0.5273,440,0.5514,917,-0.0396,0.5227],"W":[0.5738,111,0.5983,193,-0.052,0.5766],"WBG":[0.526,382,0.5445,795,-0.0421,0.5445],"WUR":[0.5209,162,0.5418,371,-0.0418,0.5432],"3c+":[0.5361,518,0.5592,1113,-0.0202,0.5212]}},
+ "Agent Bishop, Man in Black": {"colors":"W","mv":3.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.6465,"gih_games":5004,"gp_wr":0.5951,"gp_games":11300,"iwd":0.0923},"splash":{"gp_games":2015,"gp_wr_raw":0.5747,"gih_games":959,"gih_wr_raw":0.6142},"by_archetype":{"WU":[0.6659,67,0.6096,153,0.1002,0.7313],"WB":[0.6701,1951,0.6197,4445,0.0849,0.6725],"WR":[0.6349,1000,0.579,2444,0.1001,0.636],"WG":[0.6461,195,0.5861,404,0.1091,0.6872],"UR":[0.6488,319,0.6022,678,0.0874,0.6332],"UG":[0.6116,163,0.5542,358,0.1088,0.638],"BG":[0.6093,257,0.5692,510,0.0851,0.5603],"W":[0.6819,36,0.6275,87,0.0979,0.75],"UBG":[0.638,86,0.5817,170,0.1105,0.6744],"URG":[0.6397,77,0.5939,171,0.0663,0.6104],"WBG":[0.63,238,0.57,507,0.1165,0.6555],"WUR":[0.6081,207,0.5684,460,0.0681,0.5604],"3c+":[0.6495,389,0.5953,872,0.1099,0.6452]}},
+ "All Will Be One": {"colors":"R","mv":5.0,"type":"spell","rarity":"mythic","overall":{"gih_wr":0.5825,"gih_games":38,"gp_wr":0.5832,"gp_games":102,"iwd":0.0057},"splash":null,"by_archetype":{}},
+ "Anchovy & Banana Pizza": {"colors":"B","mv":4.0,"type":"spell","rarity":"common","overall":{"gih_wr":0.5755,"gih_games":25792,"gp_wr":0.5679,"gp_games":50057,"iwd":0.0157},"splash":{"gp_games":1095,"gp_wr_raw":0.5571,"gih_games":527,"gih_wr_raw":0.5579},"by_archetype":{"WB":[0.5742,9666,0.5831,19860,-0.0168,0.5724],"UB":[0.528,492,0.5134,825,0.0336,0.5386],"UR":[0.5874,48,0.5807,96,0.0121,0.5625],"UG":[0.539,251,0.532,515,0.0105,0.5378],"BR":[0.484,182,0.4725,327,0.0187,0.5055],"BG":[0.5702,8171,0.554,15227,0.0345,0.5712],"G":[0.5793,30,0.5714,56,0.0159,0.5667],"UBG":[0.5883,3511,0.5649,6573,0.0479,0.5927],"URG":[0.5821,142,0.571,298,0.0125,0.6127],"WBG":[0.5529,1007,0.5483,2121,0.0065,0.5511],"3c+":[0.6029,2247,0.5776,4063,0.0578,0.6088]}},
+ "April O'Neil, Hacktivist": {"colors":"U","mv":4.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.6453,"gih_games":6335,"gp_wr":0.5869,"gp_games":13781,"iwd":0.1078},"splash":{"gp_games":1151,"gp_wr_raw":0.5752,"gih_games":489,"gih_wr_raw":0.6237},"by_archetype":{"WU":[0.6681,104,0.6084,249,0.1061,0.6827],"WB":[0.6579,96,0.6067,242,0.1051,0.5625],"WR":[0.6394,58,0.5796,141,0.1165,0.6379],"WG":[0.6432,40,0.5843,96,0.1026,0.675],"UB":[0.5998,89,0.5362,203,0.1168,0.6517],"UR":[0.6523,2620,0.6013,5688,0.0944,0.6496],"UG":[0.6107,1110,0.5533,2392,0.1068,0.6099],"BG":[0.6306,224,0.5749,513,0.0967,0.625],"UBG":[0.6513,750,0.5841,1573,0.1258,0.6627],"URG":[0.663,432,0.5946,921,0.1227,0.6875],"WBG":[0.6315,29,0.5718,73,0.0997,0.7241],"WUR":[0.6392,196,0.5667,449,0.1483,0.6837],"3c+":[0.6536,557,0.5983,1182,0.1044,0.6481]}},
+ "April O'Neil, Kunoichi Trainee": {"colors":"W","mv":2.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.586,"gih_games":24475,"gp_wr":0.5811,"gp_games":48643,"iwd":0.0099},"splash":{"gp_games":50,"gp_wr_raw":0.6,"gih_games":21,"gih_wr_raw":0.5238},"by_archetype":{"WU":[0.6031,509,0.5898,982,0.0265,0.6189],"WB":[0.5987,15380,0.5938,29745,0.01,0.5988],"WR":[0.5619,5502,0.564,11670,-0.005,0.5614],"WG":[0.5669,659,0.5621,1311,0.0122,0.566],"W":[0.6106,102,0.6071,195,0.0043,0.6078],"WBG":[0.5633,778,0.5474,1585,0.0389,0.572],"WUR":[0.5601,479,0.55,980,0.0208,0.5699],"3c+":[0.5586,1047,0.5621,2128,0.0153,0.5406]}},
+ "April, Reporter of the Weird": {"colors":"U","mv":3.0,"type":"creature","rarity":"uncommon","overall":{"gih_wr":0.5037,"gih_games":2206,"gp_wr":0.5026,"gp_games":4730,"iwd":-0.0012},"splash":null,"by_archetype":{"WU":[0.5364,115,0.5319,266,-0.0056,0.5739],"UB":[0.4592,92,0.459,168,-0.0161,0.4674],"UR":[0.5149,863,0.5142,1925,0.0135,0.5052],"UG":[0.4718,709,0.4744,1493,-0.0075,0.4669],"UBG":[0.5186,190,0.5087,386,0.0005,0.5737],"URG":[0.5186,87,0.5121,169,0.01,0.5632],"WUR":[0.4844,51,0.4877,117,-0.004,0.3725],"3c+":[0.52,88,0.5194,184,0.0004,0.5]}},
+ "Arcbound Ravager": {"colors":"","mv":2.0,"type":"creature","rarity":"mythic","overall":{"gih_wr":0.5824,"gih_games":275,"gp_wr":0.558,"gp_games":617,"iwd":0.039},"splash":null,"by_archetype":{"UR":[0.5923,181,0.5695,405,0.0351,0.5856],"UG":[0.5472,29,0.5212,57,0.0357,0.6207]}},
+ "Armaggon, Future Shark": {"colors":"B","mv":8.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.6446,"gih_games":4853,"gp_wr":0.5864,"gp_games":10669,"iwd":0.1065},"splash":{"gp_games":840,"gp_wr_raw":0.5988,"gih_games":387,"gih_wr_raw":0.646},"by_archetype":{"WB":[0.6219,1074,0.5956,2618,0.0554,0.5875],"UB":[0.6001,62,0.5371,130,0.1136,0.6613],"UR":[0.6569,51,0.6036,110,0.0928,0.5686],"UG":[0.6247,201,0.5603,419,0.1034,0.6667],"BR":[0.551,26,0.4929,55,0.1087,0.5],"BG":[0.6583,1663,0.5839,3597,0.1325,0.6693],"UBG":[0.6596,880,0.5831,1795,0.1509,0.675],"URG":[0.6498,102,0.5936,217,0.0908,0.6471],"WBG":[0.6269,223,0.5723,491,0.0902,0.6188],"3c+":[0.6613,539,0.599,1157,0.1188,0.6642]}},
+ "Ashcoat of the Shadow Swarm": {"colors":"B","mv":4.0,"type":"creature","rarity":"mythic","overall":{"gih_wr":0.5558,"gih_games":64,"gp_wr":0.5343,"gp_games":153,"iwd":0.0202},"splash":null,"by_archetype":{"WB":[0.5733,37,0.5453,102,0.0406,0.5946]}},
+ "Baxter Stockman": {"colors":"UR","mv":5.0,"type":"creature","rarity":"uncommon","overall":{"gih_wr":0.6068,"gih_games":14280,"gp_wr":0.5808,"gp_games":27878,"iwd":0.0532},"splash":{"gp_games":1072,"gp_wr_raw":0.5382,"gih_games":499,"gih_wr_raw":0.5972},"by_archetype":{"WR":[0.5881,86,0.561,192,0.0636,0.5814],"UR":[0.6087,11303,0.5857,21804,0.0474,0.6085],"UG":[0.5626,265,0.5322,542,0.0732,0.566],"UBG":[0.5904,85,0.566,174,0.0386,0.6],"URG":[0.6012,1174,0.569,2355,0.0704,0.6031],"WUR":[0.5756,641,0.5479,1349,0.0606,0.5741],"3c+":[0.621,679,0.589,1352,0.0526,0.6362]}},
+ "Bebop & Rocksteady": {"colors":"BG","mv":3.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.5749,"gih_games":2178,"gp_wr":0.5509,"gp_games":4948,"iwd":0.0416},"splash":null,"by_archetype":{"WB":[0.6014,327,0.581,780,0.0415,0.5841],"WG":[0.5825,28,0.5564,80,0.0445,0.6429],"UG":[0.5547,285,0.5275,640,0.0469,0.5649],"BG":[0.5751,899,0.551,1992,0.0375,0.5784],"UBG":[0.581,331,0.5499,742,0.0701,0.5861],"URG":[0.5829,30,0.5613,75,0.0435,0.4667],"WBG":[0.5736,127,0.5481,290,0.0248,0.6142],"3c+":[0.5915,101,0.5714,235,0.034,0.5545]}},
+ "Bebop, Warthog Warrior": {"colors":"B","mv":5.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.5347,"gih_games":6543,"gp_wr":0.5364,"gp_games":14464,"iwd":-0.0037},"splash":{"gp_games":415,"gp_wr_raw":0.5422,"gih_games":193,"gih_wr_raw":0.5803},"by_archetype":{"WB":[0.5269,1982,0.5516,4726,-0.0406,0.5146],"UB":[0.4772,72,0.4837,164,-0.0152,0.4167],"UG":[0.5138,95,0.5067,220,0.0021,0.6105],"BR":[0.4389,42,0.4418,109,-0.0072,0.4048],"BG":[0.5341,2602,0.5301,5515,0.0039,0.5377],"UBG":[0.534,795,0.5267,1702,0.0218,0.5384],"URG":[0.5369,28,0.5394,57,-0.0069,0.5],"WBG":[0.5304,340,0.5216,740,0.013,0.5588],"3c+":[0.5604,525,0.5482,1106,0.0286,0.579]}},
+ "Bespoke B?": {"colors":"","mv":0.0,"type":"spell","rarity":"common","overall":{"gih_wr":0.561,"gih_games":10650,"gp_wr":0.5547,"gp_games":22057,"iwd":0.012},"splash":null,"by_archetype":{"WU":[0.5778,178,0.5707,340,0.02,0.573],"UB":[0.5153,220,0.5033,408,0.016,0.5455],"UR":[0.5758,6297,0.571,13182,0.0082,0.576],"UG":[0.5182,1870,0.514,3808,0.0114,0.5155],"UBG":[0.5577,655,0.5434,1301,0.0368,0.5634],"URG":[0.5593,595,0.5504,1202,0.0275,0.5563],"WUR":[0.548,276,0.5395,612,0.0014,0.5688],"3c+":[0.5657,512,0.5617,1094,0.0115,0.5586]}},
+ "Bot Bashing Time": {"colors":"R","mv":4.0,"type":"spell","rarity":"common","overall":{"gih_wr":0.5407,"gih_games":12481,"gp_wr":0.5449,"gp_games":25959,"iwd":-0.0084},"splash":{"gp_games":315,"gp_wr_raw":0.5397,"gih_games":156,"gih_wr_raw":0.5385},"by_archetype":{"WR":[0.5129,2925,0.5399,6752,-0.0529,0.5087],"UR":[0.5604,7457,0.5567,14892,0.0077,0.5614],"UG":[0.5023,49,0.5062,88,-0.0066,0.5102],"BR":[0.441,125,0.4453,233,-0.0061,0.44],"BG":[0.5264,30,0.5277,57,-0.0041,0.6333],"RG":[0.4272,163,0.4312,363,-0.0067,0.4294],"R":[0.4218,44,0.4275,66,-0.0137,0.4091],"UBG":[0.5329,35,0.5346,85,-0.0017,0.6],"URG":[0.5255,538,0.5366,1075,-0.0103,0.5074],"WUR":[0.5127,428,0.5152,930,0.0112,0.5047],"3c+":[0.5503,665,0.549,1379,0.0103,0.5534]}},
+ "Brainstorm": {"colors":"U","mv":1.0,"type":"spell","rarity":"mythic","overall":{"gih_wr":0.5865,"gih_games":146,"gp_wr":0.5687,"gp_games":311,"iwd":0.0302},"splash":null,"by_archetype":{"UR":[0.6022,59,0.5809,126,0.0428,0.6271],"UBG":[0.576,26,0.5596,54,0.0276,0.5]}},
+ "Brilliance Unleashed": {"colors":"UR","mv":6.0,"type":"spell","rarity":"uncommon","overall":{"gih_wr":0.6261,"gih_games":17495,"gp_wr":0.5898,"gp_games":33615,"iwd":0.0755},"splash":{"gp_games":3202,"gp_wr_raw":0.5609,"gih_games":1573,"gih_wr_raw":0.5995},"by_archetype":{"WR":[0.6068,105,0.5722,246,0.0762,0.581],"UB":[0.5665,31,0.528,73,0.0831,0.6129],"UR":[0.6314,11652,0.5948,22304,0.0769,0.6313],"UG":[0.5789,608,0.5456,1226,0.069,0.574],"BG":[0.6103,98,0.5727,197,0.0562,0.6633],"UBG":[0.6184,515,0.5768,979,0.0845,0.6291],"URG":[0.6115,1858,0.5825,3501,0.0614,0.6082],"WUR":[0.5965,881,0.5635,1690,0.066,0.5948],"3c+":[0.6448,1678,0.5983,3245,0.0925,0.652]}},
+ "Broadcast Takeover": {"colors":"R","mv":5.0,"type":"spell","rarity":"mythic","overall":{"gih_wr":0.5358,"gih_games":32,"gp_wr":0.5339,"gp_games":84,"iwd":-0.0131},"splash":null,"by_archetype":{}},
+ "Buzz Bots": {"colors":"U","mv":2.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.5898,"gih_games":27942,"gp_wr":0.5696,"gp_games":48249,"iwd":0.0479},"splash":{"gp_games":31,"gp_wr_raw":0.3871,"gih_games":10,"gih_wr_raw":0.3},"by_archetype":{"WU":[0.6143,682,0.5877,1121,0.0632,0.6232],"UB":[0.5366,475,0.5141,783,0.0543,0.5411],"UR":[0.6009,16927,0.5835,28879,0.0416,0.6008],"UG":[0.5488,4121,0.5288,7314,0.0476,0.5482],"U":[0.4817,49,0.4664,70,0.042,0.3878],"UBG":[0.5819,1419,0.553,2582,0.0753,0.5828],"URG":[0.5877,1916,0.567,3269,0.0517,0.5872],"WUR":[0.5592,900,0.5455,1528,0.0358,0.5522],"3c+":[0.6154,1446,0.5837,2677,0.0648,0.6245]}},
+ "Casey Jones, Jury-Rig Justiciar": {"colors":"R","mv":2.0,"type":"creature","rarity":"uncommon","overall":{"gih_wr":0.6253,"gih_games":13482,"gp_wr":0.5927,"gp_games":26697,"iwd":0.0658},"splash":{"gp_games":61,"gp_wr_raw":0.7213,"gih_games":29,"gih_wr_raw":0.8621},"by_archetype":{"WR":[0.5904,1409,0.5738,3338,0.0301,0.5806],"UR":[0.6362,10348,0.6004,19869,0.0744,0.6365],"BR":[0.5156,62,0.4893,118,0.0472,0.4516],"RG":[0.4974,80,0.4727,164,0.0517,0.4125],"URG":[0.6237,510,0.5867,1010,0.0755,0.6314],"WUR":[0.583,553,0.5651,1125,0.0305,0.5642],"3c+":[0.6349,473,0.5931,976,0.0914,0.6469]}},
+ "Casey Jones, Vigilante": {"colors":"R","mv":3.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.5274,"gih_games":1195,"gp_wr":0.5259,"gp_games":2939,"iwd":-0.0004},"splash":null,"by_archetype":{"WR":[0.5213,506,0.5245,1321,-0.0147,0.5217],"UR":[0.5466,533,0.5375,1237,0.027,0.5516],"BR":[0.4295,29,0.4323,77,-0.0122,0.3448],"WUR":[0.5071,50,0.5084,111,-0.0076,0.48],"3c+":[0.5341,52,0.536,121,0.0026,0.4615]}},
+ "Chrome Dome": {"colors":"","mv":2.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.6058,"gih_games":5030,"gp_wr":0.581,"gp_games":11105,"iwd":0.0453},"splash":null,"by_archetype":{"WU":[0.6147,47,0.5938,98,0.0465,0.5106],"WB":[0.6127,213,0.5999,545,0.0169,0.5681],"WR":[0.582,257,0.5667,598,0.0303,0.5447],"UB":[0.5517,47,0.5246,101,0.0487,0.5957],"UR":[0.6284,2720,0.5991,5921,0.0507,0.6316],"UG":[0.5541,310,0.5372,700,0.0394,0.5226],"BG":[0.6011,356,0.5629,765,0.0774,0.6292],"UBG":[0.5959,229,0.5686,521,0.0558,0.5983],"URG":[0.6073,220,0.5776,514,0.0607,0.6182],"WBG":[0.5835,51,0.5595,120,0.0373,0.5882],"WUR":[0.5754,185,0.5581,380,0.0258,0.5459],"3c+":[0.6107,327,0.5828,681,0.0686,0.6055]}},
+ "Conqueror's Flail": {"colors":"","mv":2.0,"type":"spell","rarity":"mythic","overall":{"gih_wr":0.5276,"gih_games":152,"gp_wr":0.5227,"gp_games":349,"iwd":-0.0061},"splash":null,"by_archetype":{"WB":[0.5403,24,0.5442,65,-0.0223,0.2917],"UR":[0.5357,41,0.5364,80,-0.017,0.4634]}},
+ "Cool but Rude": {"colors":"R","mv":2.0,"type":"spell","rarity":"rare","overall":{"gih_wr":0.5129,"gih_games":1406,"gp_wr":0.5145,"gp_games":3192,"iwd":-0.0065},"splash":{"gp_games":61,"gp_wr_raw":0.4426,"gih_games":29,"gih_wr_raw":0.4828},"by_archetype":{"WR":[0.5183,534,0.5144,1237,-0.0057,0.5375],"UR":[0.5155,662,0.5219,1462,-0.0024,0.503],"RG":[0.4048,22,0.4057,63,-0.0099,0.5],"WUR":[0.4935,37,0.4953,88,-0.0078,0.5135],"3c+":[0.5121,82,0.5212,192,-0.0097,0.4146]}},
+ "Courier of Comestibles": {"colors":"G","mv":2.0,"type":"creature","rarity":"uncommon","overall":{"gih_wr":0.6271,"gih_games":15933,"gp_wr":0.5811,"gp_games":30181,"iwd":0.0972},"splash":{"gp_games":214,"gp_wr_raw":0.6168,"gih_games":114,"gih_wr_raw":0.6404},"by_archetype":{"WG":[0.6177,287,0.5855,596,0.0675,0.5749],"UR":[0.657,70,0.6107,123,0.0894,0.6857],"UG":[0.5956,2787,0.558,5337,0.0785,0.5931],"BG":[0.6204,5309,0.5747,10118,0.0979,0.6197],"RG":[0.5361,131,0.4832,271,0.1156,0.5725],"G":[0.6448,81,0.5989,154,0.0987,0.642],"UBG":[0.6297,3016,0.5857,5501,0.0975,0.629],"URG":[0.6372,1416,0.5952,2708,0.0881,0.6349],"WBG":[0.6265,772,0.5784,1537,0.0929,0.6321],"3c+":[0.6833,2038,0.6159,3775,0.1384,0.6953]}},
+ "Cowabunga!": {"colors":"G","mv":1.0,"type":"spell","rarity":"common","overall":{"gih_wr":0.537,"gih_games":4892,"gp_wr":0.5304,"gp_games":9776,"iwd":0.012},"splash":null,"by_archetype":{"WG":[0.5551,203,0.5426,443,0.0232,0.5813],"UG":[0.5161,1228,0.5097,2341,0.016,0.5147],"BG":[0.5303,1564,0.5274,3247,0.0095,0.5262],"RG":[0.4422,70,0.4379,169,0.0018,0.4286],"G":[0.5571,40,0.5521,67,0.0095,0.525],"UBG":[0.5676,788,0.5486,1544,0.027,0.5876],"URG":[0.5452,210,0.5463,423,0.0013,0.5095],"WBG":[0.5289,314,0.5287,610,-0.0058,0.5159],"3c+":[0.5632,472,0.5567,926,0.0152,0.5614]}},
+ "Crustacean Commando": {"colors":"U","mv":2.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.5136,"gih_games":6818,"gp_wr":0.5132,"gp_games":12709,"iwd":-0.0002},"splash":null,"by_archetype":{"WU":[0.5461,173,0.5449,322,-0.0014,0.5491],"UB":[0.4654,244,0.4718,421,-0.0193,0.4426],"UR":[0.5125,1840,0.5277,3614,-0.0227,0.5011],"UG":[0.5062,2789,0.4957,5043,0.0198,0.5102],"U":[0.4277,34,0.4263,55,-0.0004,0.4412],"UBG":[0.5115,758,0.5152,1401,-0.0043,0.504],"URG":[0.5261,442,0.526,830,0.0012,0.5226],"WUR":[0.4995,109,0.5018,238,0.0061,0.4495],"3c+":[0.5726,420,0.5475,768,0.0322,0.6357]}},
+ "Cytoplast Manipulator": {"colors":"U","mv":4.0,"type":"creature","rarity":"mythic","overall":{"gih_wr":0.5452,"gih_games":209,"gp_wr":0.5261,"gp_games":484,"iwd":0.0205},"splash":null,"by_archetype":{"UR":[0.5611,89,0.5462,191,0.0227,0.5281],"UG":[0.5204,64,0.4999,168,0.0233,0.5781]}},
+ "Dark Leo & Shredder": {"colors":"WB","mv":2.0,"type":"creature","rarity":"mythic","overall":{"gih_wr":0.6244,"gih_games":2477,"gp_wr":0.5898,"gp_games":5756,"iwd":0.0611},"splash":{"gp_games":322,"gp_wr_raw":0.5373,"gih_games":152,"gih_wr_raw":0.5658},"by_archetype":{"WB":[0.6376,2084,0.598,4871,0.0674,0.6406],"WR":[0.5972,25,0.5631,72,0.0609,0.56],"BG":[0.5863,66,0.554,127,0.0662,0.5303],"WBG":[0.5861,117,0.5515,258,0.0629,0.5812],"3c+":[0.6048,132,0.5768,325,0.0603,0.5379]}},
+ "Death in the Family": {"colors":"B","mv":2.0,"type":"spell","rarity":"uncommon","overall":{"gih_wr":0.5885,"gih_games":11437,"gp_wr":0.5731,"gp_games":24720,"iwd":0.0287},"splash":{"gp_games":388,"gp_wr_raw":0.5644,"gih_games":174,"gih_wr_raw":0.6724},"by_archetype":{"WB":[0.5932,5367,0.5947,12214,-0.0046,0.5912],"UB":[0.5327,176,0.5141,360,0.0391,0.5398],"UG":[0.5581,94,0.5351,201,0.0401,0.6277],"BR":[0.4863,82,0.4726,173,0.023,0.4634],"BG":[0.5729,3197,0.5545,6561,0.0355,0.5737],"UBG":[0.5983,1189,0.5572,2402,0.0915,0.6114],"WBG":[0.5717,478,0.5472,1003,0.054,0.5816],"3c+":[0.6044,791,0.572,1655,0.0778,0.6131]}},
+ "Dimension X": {"colors":"","mv":0.0,"type":"land","rarity":"common","overall":{"gih_wr":0.5807,"gih_games":11844,"gp_wr":0.5718,"gp_games":24629,"iwd":0.0171},"splash":null,"by_archetype":{"WU":[0.6091,44,0.5946,110,0.0273,0.7273],"WB":[0.5625,337,0.578,727,0.0088,0.4659],"WR":[0.5553,4663,0.5667,10391,-0.022,0.552],"WG":[0.5784,49,0.57,127,0.0107,0.5918],"UR":[0.5997,1203,0.5853,2415,0.0345,0.601],"UG":[0.5478,192,0.5384,377,0.0222,0.5469],"BG":[0.5691,152,0.5632,339,-0.0031,0.5724],"RG":[0.4762,35,0.4655,78,0.0167,0.5429],"UBG":[0.6017,540,0.5762,1069,0.0379,0.637],"URG":[0.6052,697,0.5858,1406,0.0242,0.627],"WBG":[0.5763,208,0.5581,382,0.033,0.6202],"WUR":[0.5765,1213,0.5532,2339,0.0533,0.5845],"3c+":[0.6082,2465,0.5856,4770,0.0479,0.6126]}},
+ "Dimensional Exile": {"colors":"W","mv":2.0,"type":"spell","rarity":"uncommon","overall":{"gih_wr":0.5914,"gih_games":11615,"gp_wr":0.5842,"gp_games":25391,"iwd":0.0133},"splash":{"gp_games":814,"gp_wr_raw":0.5688,"gih_games":380,"gih_wr_raw":0.5816},"by_archetype":{"WU":[0.5979,291,0.5919,574,0.0155,0.5911],"WB":[0.5989,6013,0.596,13345,0.0055,0.5982],"WR":[0.5834,2753,0.5745,6176,0.0123,0.5859],"WG":[0.5773,395,0.5675,818,0.0233,0.5797],"UR":[0.5902,38,0.5846,93,0.0278,0.4737],"UG":[0.5467,82,0.539,150,0.0164,0.5488],"BG":[0.5579,107,0.5611,245,-0.0195,0.4953],"W":[0.62,75,0.6118,137,0.0176,0.6267],"UBG":[0.579,65,0.5683,142,0.0184,0.6308],"URG":[0.5874,46,0.5771,92,0.0179,0.6522],"WBG":[0.5631,452,0.5556,970,0.0134,0.5642],"WUR":[0.5622,384,0.55,802,0.0375,0.5625],"3c+":[0.6009,908,0.5833,1830,0.0401,0.6079]}},
+ "Does Machines": {"colors":"U","mv":2.0,"type":"spell","rarity":"rare","overall":{"gih_wr":0.6122,"gih_games":5146,"gp_wr":0.5802,"gp_games":10860,"iwd":0.0606},"splash":{"gp_games":145,"gp_wr_raw":0.5724,"gih_games":68,"gih_wr_raw":0.5882},"by_archetype":{"WU":[0.6251,43,0.5939,91,0.0638,0.5814],"UB":[0.5606,73,0.5233,138,0.0736,0.6164],"UR":[0.6216,3155,0.5918,6766,0.055,0.6212],"UG":[0.5762,571,0.5418,1170,0.0658,0.5797],"BG":[0.5924,39,0.5614,70,0.0587,0.5641],"UBG":[0.594,341,0.5633,671,0.0751,0.5777],"URG":[0.6217,366,0.5786,778,0.0854,0.6448],"WUR":[0.5885,208,0.5564,438,0.0614,0.5865],"3c+":[0.6211,315,0.5892,655,0.0545,0.6254]}},
+ "Don & Leo, Problem Solvers": {"colors":"WU","mv":5.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.6324,"gih_games":5656,"gp_wr":0.5814,"gp_games":12671,"iwd":0.0919},"splash":null,"by_archetype":{"WU":[0.645,149,0.5948,310,0.1021,0.6242],"WB":[0.6411,911,0.5973,2274,0.0776,0.6312],"WR":[0.6092,384,0.5714,964,0.059,0.5833],"WG":[0.6293,96,0.577,205,0.0812,0.6667],"UB":[0.5894,45,0.5275,111,0.1116,0.8],"UR":[0.6455,1717,0.5972,3726,0.0855,0.6459],"UG":[0.6037,647,0.5477,1392,0.0979,0.6136],"BG":[0.6108,112,0.5613,244,0.0994,0.5804],"UBG":[0.6318,455,0.5735,951,0.1082,0.6462],"URG":[0.6312,194,0.5788,426,0.1017,0.6289],"WBG":[0.6208,109,0.5612,232,0.1096,0.6881],"WUR":[0.6047,290,0.5576,646,0.0872,0.5897],"3c+":[0.6486,523,0.5876,1135,0.1198,0.6597]}},
+ "Don & Raph, Hard Science": {"colors":"UR","mv":3.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.525,"gih_games":2338,"gp_wr":0.5306,"gp_games":5265,"iwd":-0.0115},"splash":null,"by_archetype":{"WU":[0.5442,22,0.5465,55,-0.0146,0.7273],"WR":[0.5095,106,0.5181,274,-0.021,0.4906],"UR":[0.5284,1670,0.5368,3742,-0.0137,0.5257],"UG":[0.4876,174,0.4895,356,-0.0007,0.5],"UBG":[0.5146,36,0.5184,72,-0.0093,0.5556],"URG":[0.516,103,0.5272,223,-0.0285,0.4757],"WUR":[0.5078,105,0.5066,267,0.0018,0.5619],"3c+":[0.5253,74,0.5331,184,-0.007,0.473]}},
+ "Donatello's Technique": {"colors":"U","mv":3.0,"type":"spell","rarity":"uncommon","overall":{"gih_wr":0.5314,"gih_games":4136,"gp_wr":0.5243,"gp_games":8909,"iwd":0.012},"splash":{"gp_games":81,"gp_wr_raw":0.4815,"gih_games":39,"gih_wr_raw":0.4615},"by_archetype":{"WU":[0.5604,72,0.5468,215,0.0227,0.6389],"UB":[0.4967,191,0.4755,378,0.0403,0.5602],"UR":[0.5412,2096,0.542,4572,-0.0036,0.5386],"UG":[0.4925,840,0.4853,1782,0.0221,0.4869],"UBG":[0.5427,341,0.5202,744,0.0466,0.5777],"URG":[0.5233,180,0.5245,378,0.0031,0.4722],"WUR":[0.5043,98,0.5045,220,0.0013,0.4286],"3c+":[0.5549,269,0.5419,522,0.0131,0.5836]}},
+ "Donatello, Gadget Master": {"colors":"U","mv":3.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.5806,"gih_games":4002,"gp_wr":0.5556,"gp_games":8950,"iwd":0.0445},"splash":{"gp_games":154,"gp_wr_raw":0.5779,"gih_games":65,"gih_wr_raw":0.5692},"by_archetype":{"WU":[0.6016,103,0.5741,206,0.045,0.6311],"UB":[0.5209,79,0.4956,168,0.0633,0.481],"UR":[0.5934,2359,0.5698,5394,0.0405,0.5935],"UG":[0.5502,616,0.5193,1320,0.0572,0.5584],"BG":[0.5662,41,0.54,95,0.0408,0.6098],"UBG":[0.5741,263,0.5447,550,0.0612,0.5817],"URG":[0.5836,162,0.5534,387,0.0621,0.5988],"WUR":[0.5432,110,0.5308,239,0.0222,0.4364],"3c+":[0.5876,237,0.5629,512,0.0474,0.5823]}},
+ "Donatello, Mutant Mechanic": {"colors":"U","mv":4.0,"type":"creature","rarity":"mythic","overall":{"gih_wr":0.5948,"gih_games":2543,"gp_wr":0.5729,"gp_games":5639,"iwd":0.0396},"splash":{"gp_games":158,"gp_wr_raw":0.5759,"gih_games":83,"gih_wr_raw":0.5542},"by_archetype":{"WU":[0.6132,36,0.5907,80,0.0448,0.6111],"UB":[0.5449,44,0.5194,103,0.0473,0.6136],"UR":[0.6061,1330,0.5875,3009,0.0319,0.6045],"UG":[0.5648,407,0.5368,901,0.055,0.5749],"BG":[0.5804,61,0.5591,112,0.0327,0.5902],"UBG":[0.5925,233,0.5638,510,0.061,0.6094],"URG":[0.5853,159,0.571,315,0.0322,0.5346],"WUR":[0.5725,85,0.5522,188,0.0377,0.5529],"3c+":[0.6154,171,0.5874,377,0.0408,0.6608]}},
+ "Donatello, Turtle Techie": {"colors":"U","mv":4.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.5862,"gih_games":28141,"gp_wr":0.5722,"gp_games":54114,"iwd":0.0292},"splash":{"gp_games":296,"gp_wr_raw":0.5405,"gih_games":144,"gih_wr_raw":0.5833},"by_archetype":{"WU":[0.5911,418,0.5844,829,0.023,0.5694],"UB":[0.5248,363,0.5152,694,0.0231,0.5124],"UR":[0.5932,16310,0.5849,30989,0.0173,0.5929],"UG":[0.5478,4405,0.536,8603,0.0238,0.5476],"BG":[0.5785,113,0.5578,216,0.0392,0.6372],"U":[0.4892,53,0.471,92,0.0419,0.5472],"UBG":[0.5869,1676,0.5626,3258,0.0526,0.5913],"URG":[0.5999,2015,0.5679,3940,0.0719,0.605],"WUR":[0.5509,970,0.5465,1917,0.0131,0.5402],"3c+":[0.6273,1790,0.5924,3510,0.0639,0.6408]}},
+ "Donatello, Way with Machines": {"colors":"U","mv":3.0,"type":"creature","rarity":"uncommon","overall":{"gih_wr":0.5724,"gih_games":10703,"gp_wr":0.5603,"gp_games":22574,"iwd":0.0229},"splash":{"gp_games":26,"gp_wr_raw":0.5,"gih_games":12,"gih_wr_raw":0.5},"by_archetype":{"WU":[0.5822,168,0.5749,424,0.0147,0.5536],"UB":[0.5135,150,0.503,286,0.0224,0.5],"UR":[0.5883,6964,0.5751,14686,0.0243,0.5887],"UG":[0.5442,1681,0.5236,3573,0.0392,0.5485],"UBG":[0.5413,480,0.5434,982,0.005,0.5083],"URG":[0.5586,529,0.553,1107,0.0206,0.5406],"WUR":[0.546,348,0.5348,709,0.0287,0.5374],"3c+":[0.5834,356,0.571,749,0.016,0.5899]}},
+ "Doubling Season": {"colors":"G","mv":5.0,"type":"spell","rarity":"mythic","overall":{"gih_wr":0.4965,"gih_games":89,"gp_wr":0.5259,"gp_games":182,"iwd":-0.066},"splash":null,"by_archetype":{"UG":[0.4736,35,0.5079,70,-0.0776,0.3429]}},
+ "Dream Beavers": {"colors":"B","mv":1.0,"type":"creature","rarity":"uncommon","overall":{"gih_wr":0.6441,"gih_games":13394,"gp_wr":0.5943,"gp_games":27268,"iwd":0.0978},"splash":{"gp_games":69,"gp_wr_raw":0.5797,"gih_games":41,"gih_wr_raw":0.561},"by_archetype":{"WB":[0.6695,8920,0.6128,18191,0.1103,0.6705],"UB":[0.5885,236,0.5332,404,0.1098,0.6144],"BR":[0.5335,87,0.4878,193,0.0866,0.4943],"BG":[0.5964,2456,0.5598,5104,0.0753,0.5896],"UBG":[0.6111,577,0.5719,1116,0.0856,0.591],"WBG":[0.6062,525,0.5657,1045,0.0749,0.5943],"3c+":[0.6372,553,0.5875,1141,0.1115,0.6275]}},
+ "EPF Point Squad": {"colors":"WR","mv":3.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.5324,"gih_games":9590,"gp_wr":0.5496,"gp_games":19135,"iwd":-0.0346},"splash":null,"by_archetype":{"WU":[0.5506,67,0.5697,130,-0.0459,0.5373],"WB":[0.531,1724,0.5656,3785,-0.0613,0.5203],"WR":[0.5427,5769,0.5532,11093,-0.0253,0.545],"WG":[0.5368,160,0.5455,335,-0.0183,0.5813],"UR":[0.5157,738,0.5509,1533,-0.0527,0.4837],"BR":[0.4403,40,0.4542,63,-0.0282,0.5],"RG":[0.4201,38,0.4366,77,-0.0202,0.3684],"W":[0.5756,75,0.5896,143,-0.0368,0.6267],"R":[0.4191,30,0.4351,60,-0.0315,0.4333],"WBG":[0.5133,59,0.5304,133,-0.0349,0.5085],"WUR":[0.5147,367,0.5277,752,-0.0184,0.5177],"3c+":[0.5255,509,0.5471,998,-0.0161,0.499]}},
+ "East Wind Avatar": {"colors":"W","mv":4.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.5424,"gih_games":7428,"gp_wr":0.5518,"gp_games":16660,"iwd":-0.017},"splash":null,"by_archetype":{"WU":[0.5574,113,0.5619,240,-0.007,0.5929],"WB":[0.5458,3856,0.5607,8789,-0.0254,0.5438],"WR":[0.539,2757,0.5428,6097,-0.0107,0.5426],"WG":[0.5344,198,0.5351,411,0.01,0.5606],"W":[0.5699,66,0.5807,125,-0.025,0.5606],"WBG":[0.5125,127,0.5255,317,-0.034,0.5039],"WUR":[0.5113,95,0.5211,205,-0.0122,0.4947],"3c+":[0.5329,216,0.5456,475,-0.0027,0.4954]}},
+ "Escape Tunnel": {"colors":"","mv":0.0,"type":"land","rarity":"common","overall":{"gih_wr":0.578,"gih_games":25764,"gp_wr":0.5732,"gp_games":54829,"iwd":0.0091},"splash":null,"by_archetype":{"WU":[0.6044,170,0.5955,377,0.0121,0.6294],"WB":[0.5694,4139,0.5946,9833,-0.0448,0.5634],"WR":[0.5529,1426,0.5657,3632,-0.0235,0.5428],"WG":[0.5759,279,0.5695,665,0.0102,0.5806],"UB":[0.5264,146,0.52,294,0.0165,0.5274],"UR":[0.5825,4020,0.5822,8566,0.0029,0.5803],"UG":[0.55,2500,0.5373,5160,0.0269,0.5516],"BR":[0.4852,58,0.4794,150,0.0083,0.5],"BG":[0.5712,3509,0.563,7357,0.0145,0.5725],"RG":[0.4758,131,0.4682,256,0.0016,0.5115],"G":[0.5888,36,0.5765,80,0.0444,0.6667],"UBG":[0.5911,3027,0.5685,5799,0.0479,0.5956],"URG":[0.5964,1623,0.5794,3246,0.0326,0.6032],"WBG":[0.561,985,0.5552,2072,0.0115,0.5614],"WUR":[0.5515,648,0.5564,1382,-0.0157,0.5417],"3c+":[0.6169,3032,0.5908,5887,0.0522,0.6234]}},
+ "Everything Pizza": {"colors":"","mv":2.0,"type":"spell","rarity":"uncommon","overall":{"gih_wr":0.6336,"gih_games":14795,"gp_wr":0.594,"gp_games":27234,"iwd":0.0866},"splash":null,"by_archetype":{"WB":[0.6289,143,0.6092,328,0.0688,0.4755],"WR":[0.6166,75,0.5881,156,0.0601,0.5067],"WG":[0.6277,82,0.5922,181,0.0697,0.6098],"UB":[0.5829,26,0.543,54,0.0896,0.6154],"UR":[0.629,1244,0.6016,2456,0.0667,0.6166],"UG":[0.6145,1081,0.5674,2329,0.0862,0.6244],"BG":[0.6264,1104,0.5873,2431,0.0689,0.6304],"RG":[0.5284,20,0.4883,60,0.0793,0.65],"UBG":[0.6409,2839,0.5926,5440,0.1005,0.6442],"URG":[0.6383,1905,0.5973,3591,0.0893,0.6388],"WBG":[0.6094,622,0.5801,1249,0.0532,0.6013],"WUR":[0.6111,580,0.58,1018,0.0611,0.6052],"3c+":[0.6488,5048,0.6081,7885,0.1098,0.6492]}},
+ "Featherbrained Filcher": {"colors":"W","mv":1.0,"type":"creature","rarity":"uncommon","overall":{"gih_wr":0.5838,"gih_games":8736,"gp_wr":0.5827,"gp_games":19747,"iwd":0.0022},"splash":null,"by_archetype":{"WU":[0.5899,77,0.5846,160,0.0118,0.6364],"WB":[0.5973,7012,0.5935,15767,0.0057,0.5981],"WR":[0.5458,851,0.553,2028,-0.0088,0.5347],"WG":[0.5483,95,0.5582,240,-0.0215,0.4526],"W":[0.5995,42,0.6025,81,-0.0082,0.5238],"WBG":[0.5423,294,0.5408,642,0.0172,0.5306],"WUR":[0.5453,53,0.5438,113,0.0111,0.5283],"3c+":[0.5532,312,0.564,716,0.0038,0.4968]}},
+ "Foot Elite": {"colors":"WB","mv":3.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.5485,"gih_games":9935,"gp_wr":0.5616,"gp_games":22139,"iwd":-0.0238},"splash":null,"by_archetype":{"WU":[0.546,59,0.565,130,-0.0298,0.4407],"WB":[0.5613,6900,0.5762,15324,-0.0283,0.5616],"WR":[0.5113,955,0.541,2369,-0.0547,0.4984],"WG":[0.5393,111,0.5451,229,-0.0135,0.6036],"UB":[0.4839,63,0.4938,133,-0.0099,0.5079],"BR":[0.4431,28,0.453,51,-0.0162,0.5357],"BG":[0.5219,755,0.5272,1649,0.003,0.5232],"W":[0.5724,27,0.5863,69,-0.0265,0.5556],"UBG":[0.5248,83,0.5404,177,-0.0274,0.494],"WBG":[0.5264,449,0.53,907,-0.0037,0.5434],"WUR":[0.5118,35,0.527,77,-0.0214,0.4286],"3c+":[0.5379,463,0.5472,1006,0.0104,0.5248]}},
+ "Foot Headquarters": {"colors":"","mv":0.0,"type":"land","rarity":"common","overall":{"gih_wr":0.5794,"gih_games":17440,"gp_wr":0.5821,"gp_games":36939,"iwd":-0.0048},"splash":null,"by_archetype":{"WU":[0.5896,61,0.5892,130,0.0064,0.6066],"WB":[0.5712,9667,0.5908,21333,-0.0359,0.5696],"WR":[0.5578,543,0.562,1306,-0.0054,0.5525],"WG":[0.5607,184,0.5658,387,-0.0128,0.5489],"UR":[0.5818,97,0.5872,209,-0.0197,0.567],"UG":[0.547,200,0.538,419,0.0173,0.595],"BG":[0.5772,1421,0.5565,2596,0.0496,0.589],"UBG":[0.6022,1053,0.5777,2051,0.037,0.6306],"URG":[0.5781,278,0.5726,574,0.0155,0.5971],"WBG":[0.5622,1414,0.5536,2767,0.0179,0.5686],"WUR":[0.5578,154,0.5546,303,-0.0018,0.5974],"3c+":[0.5985,2306,0.5808,4730,0.0379,0.6045]}},
+ "Foot Mystic": {"colors":"B","mv":4.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.5229,"gih_games":3918,"gp_wr":0.5306,"gp_games":8704,"iwd":-0.0149},"splash":null,"by_archetype":{"WB":[0.5313,2292,0.5477,5277,-0.0314,0.5288],"UB":[0.4637,37,0.4669,85,0.0082,0.4865],"BR":[0.4235,37,0.4293,86,-0.0208,0.4865],"BG":[0.5086,1051,0.5091,2194,-0.0006,0.5138],"UBG":[0.5074,148,0.5123,327,0.0038,0.5],"WBG":[0.4947,161,0.5012,346,-0.0043,0.4845],"3c+":[0.5298,177,0.5301,369,0.0151,0.5424]}},
+ "Foot Ninjas": {"colors":"WB","mv":6.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.5683,"gih_games":17838,"gp_wr":0.576,"gp_games":36380,"iwd":-0.0151},"splash":null,"by_archetype":{"WU":[0.5799,163,0.5811,339,0.0012,0.6135],"WB":[0.5786,13315,0.5888,26593,-0.021,0.5787],"WR":[0.5221,1239,0.5478,2894,-0.0428,0.5077],"WG":[0.5495,118,0.555,293,-0.0044,0.5593],"UB":[0.5177,135,0.5104,252,0.0181,0.6148],"BR":[0.4584,47,0.4663,138,-0.0152,0.4681],"BG":[0.5394,1067,0.5413,2269,0.0052,0.5398],"W":[0.5908,53,0.6003,107,-0.0237,0.5849],"UBG":[0.553,181,0.5569,379,-0.0122,0.5801],"WBG":[0.526,721,0.536,1453,-0.0085,0.5173],"WUR":[0.5373,66,0.5426,154,-0.0097,0.5758],"3c+":[0.5607,711,0.5647,1474,0.0071,0.557]}},
+ "Forest": {"colors":"","mv":0.0,"type":"land","rarity":"common","overall":{"gih_wr":0.5622,"gih_games":71004,"gp_wr":0.5563,"gp_games":77348,"iwd":0.0698},"splash":null,"by_archetype":{"WB":[0.5728,921,0.5836,1876,0.0066,0.5516],"WR":[0.5685,42,0.5603,89,0.0843,0.5714],"WG":[0.5679,2190,0.5623,2235,0.105,0.5671],"UB":[0.5239,38,0.5159,74,0.0786,0.5526],"UR":[0.5934,1041,0.5838,2106,0.0379,0.5956],"UG":[0.5378,15531,0.5319,15878,0.1743,0.5376],"BG":[0.5569,21051,0.5522,21473,0.1655,0.5567],"RG":[0.4635,664,0.4583,679,0.0866,0.4608],"G":[0.5799,269,0.5739,271,0.0859,0.5762],"UBG":[0.5709,11300,0.5602,11972,0.1587,0.5711],"URG":[0.5798,6136,0.5691,6692,0.1175,0.58],"WBG":[0.552,3751,0.5479,4233,0.0576,0.5511],"WUR":[0.5658,235,0.5576,586,0.0301,0.5957],"3c+":[0.6057,7786,0.5911,9098,0.0888,0.6075]}},
+ "Frog Butler": {"colors":"G","mv":2.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.6102,"gih_games":30701,"gp_wr":0.5662,"gp_games":51125,"iwd":0.1096},"splash":{"gp_games":126,"gp_wr_raw":0.4921,"gih_games":63,"gih_wr_raw":0.5556},"by_archetype":{"WG":[0.6045,775,0.5745,1455,0.0665,0.591],"UR":[0.6353,26,0.5927,62,0.113,0.5385],"UG":[0.5892,7045,0.5443,11678,0.1136,0.5892],"BG":[0.5932,8897,0.5633,15240,0.0725,0.5919],"RG":[0.5091,237,0.4707,418,0.0907,0.4937],"G":[0.6284,170,0.5849,250,0.1158,0.6235],"UBG":[0.6301,5493,0.5731,8747,0.1529,0.6319],"URG":[0.6247,2985,0.5817,4723,0.1156,0.6245],"WBG":[0.6017,1420,0.5588,2535,0.1031,0.6],"3c+":[0.6629,3622,0.601,5960,0.1512,0.6687]}},
+ "Fugitive Droid": {"colors":"U","mv":1.0,"type":"creature","rarity":"uncommon","overall":{"gih_wr":0.5632,"gih_games":8112,"gp_wr":0.552,"gp_games":16430,"iwd":0.0218},"splash":null,"by_archetype":{"WU":[0.5826,193,0.5694,390,0.0131,0.6062],"UB":[0.5136,177,0.4975,362,0.0178,0.5537],"UR":[0.5753,5932,0.5647,11993,0.0196,0.5757],"UG":[0.5137,799,0.5031,1626,0.0337,0.5056],"UBG":[0.5364,217,0.533,424,0.022,0.4885],"URG":[0.5575,284,0.5448,609,0.0336,0.5528],"WUR":[0.529,245,0.5203,507,0.0348,0.502],"3c+":[0.57,238,0.5568,480,0.0272,0.5756]}},
+ "General Traag, Heart of Stone": {"colors":"R","mv":5.0,"type":"creature","rarity":"uncommon","overall":{"gih_wr":0.5822,"gih_games":10204,"gp_wr":0.5707,"gp_games":21706,"iwd":0.0217},"splash":{"gp_games":22,"gp_wr_raw":0.5,"gih_games":11,"gih_wr_raw":0.4545},"by_archetype":{"WR":[0.543,1119,0.5514,2826,-0.0139,0.5273],"UR":[0.5939,7787,0.5803,16154,0.0259,0.5945],"BR":[0.4795,86,0.4675,173,0.0235,0.4884],"RG":[0.4656,62,0.4522,152,0.0304,0.4839],"URG":[0.5907,369,0.5685,756,0.0392,0.6206],"WUR":[0.5473,443,0.5408,928,0.0168,0.535],"3c+":[0.5762,308,0.5671,656,0.0342,0.5552]}},
+ "Genghis Frog": {"colors":"UG","mv":2.0,"type":"creature","rarity":"uncommon","overall":{"gih_wr":0.586,"gih_games":9974,"gp_wr":0.5502,"gp_games":18702,"iwd":0.0759},"splash":{"gp_games":1038,"gp_wr_raw":0.5501,"gih_games":486,"gih_wr_raw":0.5844},"by_archetype":{"WG":[0.6014,19,0.5619,60,0.0891,0.6842],"UR":[0.6167,34,0.5821,69,0.0764,0.5588],"UG":[0.5717,4946,0.5365,9067,0.0757,0.572],"BG":[0.5893,371,0.5552,787,0.0642,0.5876],"UBG":[0.5979,2567,0.5588,4779,0.0867,0.598],"URG":[0.593,1081,0.5646,2085,0.066,0.5837],"3c+":[0.626,903,0.5822,1750,0.0883,0.6346]}},
+ "Go Ninja Go": {"colors":"WR","mv":2.0,"type":"spell","rarity":"uncommon","overall":{"gih_wr":0.5425,"gih_games":5326,"gp_wr":0.5508,"gp_games":11207,"iwd":-0.0161},"splash":{"gp_games":387,"gp_wr_raw":0.5297,"gih_games":202,"gih_wr_raw":0.5693},"by_archetype":{"WB":[0.5654,56,0.5757,115,-0.0029,0.4821],"WR":[0.5433,4383,0.5537,9216,-0.0217,0.5437],"UR":[0.5635,58,0.5688,105,0.0033,0.569],"URG":[0.5564,35,0.5596,60,-0.007,0.6857],"WUR":[0.5349,334,0.5371,656,-0.001,0.5479],"3c+":[0.5408,425,0.556,986,-0.0064,0.5082]}},
+ "Groundchuck & Dirtbag": {"colors":"G","mv":6.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.5877,"gih_games":3712,"gp_wr":0.5563,"gp_games":8193,"iwd":0.0566},"splash":null,"by_archetype":{"WG":[0.5945,122,0.5666,316,0.0492,0.5656],"UG":[0.5711,998,0.5413,2124,0.0507,0.5721],"BG":[0.595,1271,0.5589,2867,0.0654,0.598],"RG":[0.4875,54,0.4632,120,0.0365,0.3889],"UBG":[0.6047,600,0.5675,1289,0.0682,0.6133],"URG":[0.6058,260,0.5722,534,0.0722,0.6038],"WBG":[0.5848,119,0.5529,274,0.0616,0.5798],"3c+":[0.618,264,0.5836,620,0.0633,0.625]}},
+ "Grounded for Life": {"colors":"W","mv":5.0,"type":"spell","rarity":"common","overall":{"gih_wr":0.5662,"gih_games":14713,"gp_wr":0.5708,"gp_games":31779,"iwd":-0.0085},"splash":{"gp_games":627,"gp_wr_raw":0.6077,"gih_games":309,"gih_wr_raw":0.6731},"by_archetype":{"WU":[0.5879,395,0.5819,747,0.0105,0.6127],"WB":[0.5737,8002,0.583,17473,-0.0173,0.5732],"WR":[0.5372,3288,0.5479,7256,-0.0181,0.5347],"WG":[0.5567,469,0.5566,1049,-0.0018,0.5672],"UG":[0.5301,47,0.5265,94,0.0077,0.6809],"BG":[0.5443,80,0.548,177,-0.0168,0.575],"W":[0.593,78,0.598,160,-0.0101,0.5897],"UBG":[0.5679,82,0.5568,146,0.0191,0.7439],"URG":[0.5614,34,0.5627,74,-0.0029,0.6471],"WBG":[0.5347,689,0.5397,1425,-0.0075,0.5327],"WUR":[0.5446,420,0.5419,830,0.0054,0.5595],"3c+":[0.5825,1109,0.5729,2291,0.0194,0.5933]}},
+ "Guac & Marshmallow Pizza": {"colors":"G","mv":1.0,"type":"spell","rarity":"common","overall":{"gih_wr":0.5453,"gih_games":8641,"gp_wr":0.5384,"gp_games":18726,"iwd":0.0124},"splash":null,"by_archetype":{"WG":[0.5534,400,0.5556,931,-0.0175,0.545],"UG":[0.5337,2365,0.5243,5082,0.016,0.5353],"BG":[0.5372,3501,0.5392,7650,-0.0033,0.5347],"RG":[0.4582,108,0.4495,270,0.0069,0.4907],"G":[0.5673,62,0.5628,133,0.003,0.5484],"UBG":[0.5688,1044,0.5475,2151,0.0476,0.5776],"URG":[0.5683,399,0.5556,886,0.0327,0.5739],"WBG":[0.5423,368,0.5376,780,0.0079,0.538],"3c+":[0.5833,388,0.567,830,0.0361,0.6005]}},
+ "Hamato Guardian Stance": {"colors":"W","mv":1.0,"type":"spell","rarity":"common","overall":{"gih_wr":0.5656,"gih_games":5050,"gp_wr":0.5723,"gp_games":12082,"iwd":-0.0115},"splash":null,"by_archetype":{"WU":[0.5684,89,0.5756,201,-0.0105,0.5618],"WB":[0.5799,3608,0.5835,8595,-0.0071,0.5812],"WR":[0.53,1018,0.5459,2498,-0.0253,0.5206],"WG":[0.5408,83,0.5507,201,-0.0163,0.506],"W":[0.5863,43,0.5954,83,-0.0204,0.5581],"WBG":[0.5355,63,0.5411,145,-0.0212,0.5873],"WUR":[0.534,29,0.5399,94,-0.0188,0.6207],"3c+":[0.5522,106,0.5596,250,0.0178,0.4906]}},
+ "Hard-Won Jitte": {"colors":"R","mv":2.0,"type":"spell","rarity":"uncommon","overall":{"gih_wr":0.4896,"gih_games":1532,"gp_wr":0.5074,"gp_games":3640,"iwd":-0.0339},"splash":{"gp_games":45,"gp_wr_raw":0.4889,"gih_games":24,"gih_wr_raw":0.4167},"by_archetype":{"WR":[0.4796,507,0.5054,1311,-0.0539,0.4753],"UR":[0.4982,782,0.5178,1780,-0.0281,0.4923],"BR":[0.3997,30,0.4168,70,-0.0483,0.5333],"RG":[0.3875,37,0.3998,96,-0.0223,0.5405],"URG":[0.4954,55,0.5092,104,-0.0163,0.5455],"WUR":[0.4667,38,0.4877,83,-0.0351,0.3947],"3c+":[0.4937,53,0.5153,126,-0.0249,0.3962]}},
+ "Henchbots": {"colors":"","mv":4.0,"type":"creature","rarity":"uncommon","overall":{"gih_wr":0.5071,"gih_games":5105,"gp_wr":0.5258,"gp_games":11211,"iwd":-0.035},"splash":null,"by_archetype":{"WU":[0.528,44,0.5449,91,-0.0396,0.5909],"WB":[0.4983,635,0.5379,1586,-0.0615,0.463],"WR":[0.4812,354,0.51,833,-0.042,0.4463],"WG":[0.5058,70,0.519,169,-0.0226,0.5714],"UB":[0.4561,72,0.4711,131,-0.0289,0.5],"UR":[0.5229,2124,0.543,4516,-0.0415,0.524],"UG":[0.4712,410,0.4848,846,-0.0141,0.4732],"BR":[0.4048,31,0.4271,66,-0.0406,0.2903],"BG":[0.493,479,0.5126,1116,-0.0424,0.4969],"RG":[0.394,20,0.4129,59,-0.0318,0.35],"UBG":[0.5113,235,0.5181,480,-0.0097,0.5532],"URG":[0.5087,141,0.5265,302,-0.0363,0.5177],"WBG":[0.485,76,0.5043,163,-0.0352,0.4737],"WUR":[0.4839,102,0.5034,206,-0.0343,0.4706],"3c+":[0.5335,283,0.537,572,-0.0052,0.5795]}},
+ "High-Flying Ace": {"colors":"W","mv":3.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.5543,"gih_games":11442,"gp_wr":0.5642,"gp_games":25292,"iwd":-0.0181},"splash":{"gp_games":26,"gp_wr_raw":0.4231,"gih_games":13,"gih_wr_raw":0.4615},"by_archetype":{"WU":[0.5709,150,0.5723,312,0.0002,0.62],"WB":[0.5633,7025,0.5741,15366,-0.0196,0.5631],"WR":[0.534,3089,0.5515,7072,-0.0349,0.5338],"WG":[0.5451,368,0.5455,791,0.007,0.5625],"W":[0.5832,71,0.5906,127,-0.014,0.6197],"WBG":[0.5339,262,0.5361,557,-0.008,0.5649],"WUR":[0.522,85,0.5336,199,-0.0256,0.5176],"3c+":[0.5381,379,0.5479,842,0.0178,0.5092]}},
+ "Ice Cream Kitty": {"colors":"BG","mv":2.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.5539,"gih_games":18551,"gp_wr":0.548,"gp_games":37363,"iwd":0.0117},"splash":null,"by_archetype":{"WB":[0.5512,2048,0.5671,4665,-0.0223,0.5381],"WG":[0.5507,203,0.5511,454,-0.0002,0.5222],"UB":[0.4989,196,0.5015,378,-0.0002,0.4541],"UG":[0.536,2442,0.5236,5098,0.0239,0.5381],"BR":[0.464,61,0.4614,119,0.0064,0.4098],"BG":[0.5498,6673,0.5476,13097,0.003,0.5498],"RG":[0.4489,82,0.4488,214,-0.0078,0.4024],"G":[0.5728,48,0.5651,112,0.008,0.625],"UBG":[0.5698,3579,0.552,6754,0.0381,0.5725],"URG":[0.5751,654,0.5643,1373,0.0142,0.5856],"WBG":[0.5405,896,0.5397,1885,-0.0011,0.5368],"3c+":[0.5898,1636,0.5691,3145,0.045,0.5966]}},
+ "Illegitimate Business": {"colors":"","mv":0.0,"type":"land","rarity":"common","overall":{"gih_wr":0.5873,"gih_games":19046,"gp_wr":0.5679,"gp_games":36879,"iwd":0.04},"splash":null,"by_archetype":{"WB":[0.5956,881,0.5945,1976,0.0057,0.5755],"WG":[0.5873,173,0.5713,398,0.0298,0.5723],"UB":[0.5432,31,0.5238,62,0.0391,0.5484],"UR":[0.6136,70,0.5935,155,0.0332,0.6429],"UG":[0.5636,1837,0.5438,3617,0.0385,0.5645],"BG":[0.5725,6379,0.5605,12673,0.0244,0.5714],"RG":[0.4843,32,0.4683,83,0.0237,0.4375],"G":[0.6038,57,0.5823,129,0.0451,0.6316],"UBG":[0.5876,4386,0.5649,7917,0.0535,0.5873],"URG":[0.6056,914,0.579,1752,0.0569,0.6116],"WBG":[0.5741,1434,0.558,2781,0.0326,0.5725],"WUR":[0.5916,54,0.5631,95,0.0408,0.7963],"3c+":[0.6324,2766,0.5961,5168,0.0736,0.6392]}},
+ "Improvised Arsenal": {"colors":"R","mv":2.0,"type":"spell","rarity":"rare","overall":{"gih_wr":0.5794,"gih_games":3907,"gp_wr":0.5653,"gp_games":8545,"iwd":0.0256},"splash":{"gp_games":71,"gp_wr_raw":0.4507,"gih_games":35,"gih_wr_raw":0.4857},"by_archetype":{"WR":[0.5426,416,0.5452,1014,-0.0019,0.5048],"UR":[0.5998,2917,0.5776,6325,0.0391,0.6034],"BR":[0.4715,34,0.4604,72,0.0238,0.3824],"URG":[0.5706,210,0.5583,426,0.025,0.5619],"WUR":[0.546,125,0.5368,280,0.017,0.512],"3c+":[0.5669,145,0.5629,303,0.0193,0.4897]}},
+ "Insectoid Exterminator": {"colors":"B","mv":3.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.5257,"gih_games":5344,"gp_wr":0.53,"gp_games":11294,"iwd":-0.0089},"splash":null,"by_archetype":{"WB":[0.5337,2472,0.5445,5434,-0.0176,0.5299],"UB":[0.473,71,0.4737,141,-0.0013,0.507],"BR":[0.4314,49,0.4306,94,0.0068,0.4898],"BG":[0.5149,2036,0.5183,4147,-0.0118,0.5172],"UBG":[0.5216,364,0.5171,729,0.0193,0.533],"WBG":[0.5083,161,0.5095,346,-0.0074,0.528],"3c+":[0.5357,186,0.5365,386,0.0032,0.543]}},
+ "Island": {"colors":"","mv":0.0,"type":"land","rarity":"common","overall":{"gih_wr":0.5733,"gih_games":86108,"gp_wr":0.5677,"gp_games":97732,"iwd":0.0466},"splash":null,"by_archetype":{"WU":[0.59,1416,0.5874,1436,0.0467,0.5883],"WB":[0.5831,394,0.5786,824,0.057,0.5558],"WR":[0.548,314,0.5577,666,0.0016,0.5032],"WG":[0.5705,166,0.5652,425,0.0248,0.5783],"UB":[0.5195,1084,0.5151,1097,0.0541,0.5185],"UR":[0.5854,39619,0.5813,40112,0.2082,0.5853],"UG":[0.5363,15287,0.532,15878,0.0912,0.5362],"BG":[0.5825,2594,0.5648,5087,0.0349,0.5891],"RG":[0.461,53,0.4602,112,0.0213,0.4151],"U":[0.4743,92,0.4699,92,0.0418,0.4674],"G":[0.5795,71,0.5747,105,0.0383,0.5775],"UBG":[0.5681,8995,0.5607,11646,0.0359,0.5682],"URG":[0.5774,5894,0.5699,6655,0.0621,0.5775],"WBG":[0.5617,328,0.5603,853,-0.0076,0.5762],"WUR":[0.5529,3034,0.547,3344,0.0604,0.5524],"3c+":[0.6041,6735,0.5907,9352,0.0433,0.6062]}},
+ "Jennika's Technique": {"colors":"R","mv":3.0,"type":"spell","rarity":"uncommon","overall":{"gih_wr":0.5807,"gih_games":1535,"gp_wr":0.5492,"gp_games":3227,"iwd":0.0573},"splash":{"gp_games":189,"gp_wr_raw":0.5291,"gih_games":87,"gih_wr_raw":0.5402},"by_archetype":{"WR":[0.5641,138,0.5317,356,0.0827,0.5362],"UR":[0.591,760,0.566,1540,0.0378,0.5908],"UG":[0.5396,27,0.5123,56,0.0434,0.4815],"RG":[0.465,35,0.4355,95,0.0569,0.4286],"URG":[0.5771,144,0.5475,312,0.0569,0.5694],"WUR":[0.5535,61,0.5257,126,0.0547,0.5082],"3c+":[0.6033,312,0.5612,608,0.0774,0.641]}},
+ "Jennika, Bad Apple Big Sister": {"colors":"W","mv":5.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.568,"gih_games":17113,"gp_wr":0.5765,"gp_games":37886,"iwd":-0.0153},"splash":{"gp_games":646,"gp_wr_raw":0.5402,"gih_games":325,"gih_wr_raw":0.5569},"by_archetype":{"WU":[0.581,272,0.586,546,-0.0081,0.5919],"WB":[0.5765,9262,0.5896,20257,-0.0243,0.5761],"WR":[0.5502,4399,0.56,10230,-0.0175,0.5501],"WG":[0.5469,523,0.56,1195,-0.0233,0.5392],"UR":[0.5737,42,0.5817,100,-0.0165,0.5952],"UG":[0.5214,50,0.5307,99,-0.014,0.5],"BG":[0.5418,109,0.5506,209,-0.0112,0.5321],"W":[0.5961,85,0.6042,173,-0.0136,0.6],"UBG":[0.5523,56,0.5593,114,-0.0101,0.5714],"URG":[0.5618,31,0.5679,61,-0.0058,0.6129],"WBG":[0.5486,703,0.548,1495,0.0036,0.559],"WUR":[0.5509,435,0.5523,964,-0.0107,0.5724],"3c+":[0.5782,1138,0.5738,2431,0.0153,0.5844]}},
+ "Karai's Technique": {"colors":"WB","mv":3.0,"type":"spell","rarity":"uncommon","overall":{"gih_wr":0.5786,"gih_games":10337,"gp_wr":0.5804,"gp_games":21631,"iwd":-0.0033},"splash":{"gp_games":515,"gp_wr_raw":0.5243,"gih_games":246,"gih_wr_raw":0.5203},"by_archetype":{"WB":[0.5851,9084,0.5861,19014,-0.0024,0.5853],"WR":[0.5496,48,0.5517,105,0.003,0.5208],"BG":[0.5408,125,0.5435,254,0.0041,0.52],"WBG":[0.5418,564,0.5413,1166,0.0027,0.5443],"3c+":[0.5503,466,0.5645,983,-0.0169,0.5193]}},
+ "Karai, Future of the Foot": {"colors":"WB","mv":3.0,"type":"creature","rarity":"uncommon","overall":{"gih_wr":0.5886,"gih_games":10574,"gp_wr":0.5856,"gp_games":22616,"iwd":0.0058},"splash":{"gp_games":1173,"gp_wr_raw":0.5405,"gih_games":556,"gih_wr_raw":0.5468},"by_archetype":{"WB":[0.5981,8837,0.5963,18857,0.0022,0.5985],"WR":[0.5619,103,0.5589,237,0.0098,0.5534],"WG":[0.5674,25,0.5623,55,0.0101,0.64],"BG":[0.5548,297,0.5519,625,0.0081,0.5522],"UBG":[0.5606,43,0.5596,85,0.004,0.5116],"WBG":[0.5523,685,0.542,1443,0.0333,0.5533],"3c+":[0.5505,523,0.5598,1195,0.0134,0.5067]}},
+ "Kitsune's Technique": {"colors":"U","mv":6.0,"type":"spell","rarity":"rare","overall":{"gih_wr":0.4366,"gih_games":183,"gp_wr":0.4741,"gp_games":400,"iwd":-0.0912},"splash":null,"by_archetype":{"UR":[0.4409,92,0.4887,201,-0.1014,0.3261],"UG":[0.4024,38,0.441,80,-0.0867,0.3421]}},
+ "Kitsune, Dragon's Daughter": {"colors":"U","mv":6.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.6262,"gih_games":5616,"gp_wr":0.581,"gp_games":11905,"iwd":0.0852},"splash":{"gp_games":219,"gp_wr_raw":0.5845,"gih_games":107,"gih_wr_raw":0.6262},"by_archetype":{"WU":[0.645,109,0.603,222,0.0708,0.633],"UB":[0.5758,71,0.5286,157,0.0914,0.5915],"UR":[0.6453,2555,0.5984,5605,0.0857,0.6462],"UG":[0.5879,1144,0.5414,2367,0.0971,0.5848],"BG":[0.6116,64,0.5677,125,0.0823,0.5938],"UBG":[0.6147,575,0.5712,1141,0.0931,0.607],"URG":[0.6341,400,0.5889,810,0.0752,0.6425],"WUR":[0.6073,179,0.5644,404,0.0727,0.6034],"3c+":[0.6477,465,0.5956,962,0.0968,0.6624]}},
+ "Koya, Death from Above": {"colors":"W","mv":3.0,"type":"creature","rarity":"uncommon","overall":{"gih_wr":0.5924,"gih_games":13182,"gp_wr":0.5875,"gp_games":28443,"iwd":0.0093},"splash":{"gp_games":889,"gp_wr_raw":0.5804,"gih_games":408,"gih_wr_raw":0.6152},"by_archetype":{"WU":[0.5999,170,0.5959,365,0.0014,0.6059],"WB":[0.6042,8345,0.6014,17638,0.0046,0.6043],"WR":[0.568,2072,0.5694,4982,-0.004,0.5666],"WG":[0.571,228,0.5659,538,0.0202,0.5614],"UG":[0.5484,22,0.5393,58,0.0248,0.6818],"BG":[0.5735,184,0.5653,415,0.0019,0.6087],"W":[0.6176,32,0.6128,54,0.0097,0.625],"UBG":[0.5694,90,0.5657,181,0.0165,0.5444],"URG":[0.5884,42,0.5785,83,0.0167,0.7143],"WBG":[0.5591,737,0.5565,1501,0.0034,0.5577],"WUR":[0.5504,211,0.5554,442,-0.015,0.5166],"3c+":[0.5904,1038,0.5706,2164,0.0625,0.5906]}},
+ "Krang & Shredder": {"colors":"UB","mv":6.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.5788,"gih_games":4616,"gp_wr":0.5617,"gp_games":10259,"iwd":0.0307},"splash":null,"by_archetype":{"WU":[0.6014,24,0.5807,55,0.0388,0.7083],"WB":[0.5789,942,0.5792,2211,0.0011,0.5605],"UB":[0.519,100,0.5058,195,0.0291,0.47],"UR":[0.577,1004,0.5748,2300,0.001,0.5647],"UG":[0.5644,462,0.5335,1028,0.0468,0.5974],"BG":[0.5749,696,0.5502,1488,0.0421,0.5862],"UBG":[0.5804,680,0.5511,1444,0.0642,0.5897],"URG":[0.583,160,0.5595,335,0.0607,0.5938],"WBG":[0.5725,97,0.5472,242,0.0324,0.6701],"WUR":[0.5524,71,0.5419,145,0.0119,0.4789],"3c+":[0.6023,358,0.5724,760,0.0611,0.6285]}},
+ "Krang, Master Mind": {"colors":"U","mv":8.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.5992,"gih_games":4711,"gp_wr":0.5795,"gp_games":10402,"iwd":0.036},"splash":{"gp_games":48,"gp_wr_raw":0.6042,"gih_games":21,"gih_wr_raw":0.5714},"by_archetype":{"WU":[0.6123,95,0.5945,220,0.0291,0.6],"UB":[0.5425,63,0.5214,126,0.0412,0.5556],"UR":[0.6105,3124,0.5941,6854,0.0276,0.6108],"UG":[0.5566,572,0.536,1242,0.046,0.5524],"UBG":[0.5729,185,0.5616,399,0.0363,0.5135],"URG":[0.609,282,0.5808,662,0.0446,0.6418],"WUR":[0.5881,164,0.5559,379,0.0653,0.6463],"3c+":[0.5993,203,0.5809,460,0.0474,0.5764]}},
+ "Krang, Utrom Warlord": {"colors":"","mv":9.0,"type":"creature","rarity":"mythic","overall":{"gih_wr":0.5473,"gih_games":1505,"gp_wr":0.534,"gp_games":3365,"iwd":0.0217},"splash":null,"by_archetype":{"WB":[0.5668,77,0.5594,185,0.0134,0.4935],"WR":[0.535,44,0.5284,136,0.0128,0.3864],"UR":[0.5532,478,0.5469,1016,0.0195,0.5335],"UG":[0.5214,217,0.5047,469,0.0262,0.5392],"BG":[0.5424,228,0.5239,520,0.0338,0.5614],"UBG":[0.5597,158,0.5335,347,0.047,0.6329],"URG":[0.5525,93,0.5406,188,0.0158,0.5484],"WBG":[0.5362,28,0.521,59,0.0192,0.6429],"WUR":[0.5284,33,0.5189,65,0.0096,0.4545],"3c+":[0.5594,75,0.5482,195,0.0186,0.5333]}},
+ "Leader's Talent": {"colors":"W","mv":2.0,"type":"spell","rarity":"rare","overall":{"gih_wr":0.5629,"gih_games":2982,"gp_wr":0.5552,"gp_games":7259,"iwd":0.0127},"splash":{"gp_games":623,"gp_wr_raw":0.488,"gih_games":274,"gih_wr_raw":0.5073},"by_archetype":{"WU":[0.5778,75,0.5674,149,0.0173,0.6133],"WB":[0.5834,1418,0.5751,3493,0.0103,0.586],"WR":[0.5505,681,0.5426,1705,0.0097,0.5536],"WG":[0.5614,134,0.5441,267,0.0308,0.6269],"UR":[0.5618,71,0.5563,142,0.0318,0.4789],"UG":[0.5125,50,0.5129,134,-0.0106,0.4],"BG":[0.5414,93,0.5298,201,0.0355,0.5484],"W":[0.5871,21,0.5847,56,0.0003,0.381],"UBG":[0.5491,35,0.541,82,0.0116,0.5714],"WBG":[0.5278,131,0.528,355,-0.0051,0.4809],"WUR":[0.5313,119,0.5283,286,-0.0002,0.5042],"3c+":[0.5622,133,0.5518,332,0.0412,0.5414]}},
+ "Leatherhead, Swamp Stalker": {"colors":"G","mv":4.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.6125,"gih_games":4123,"gp_wr":0.5671,"gp_games":8849,"iwd":0.0843},"splash":{"gp_games":50,"gp_wr_raw":0.64,"gih_games":24,"gih_wr_raw":0.75},"by_archetype":{"WG":[0.6285,147,0.5787,352,0.0917,0.6531],"UG":[0.5867,1182,0.5468,2478,0.0767,0.5821],"BG":[0.6178,1116,0.5681,2592,0.0906,0.6201],"RG":[0.519,56,0.4736,115,0.0855,0.5179],"G":[0.6321,25,0.5897,50,0.0739,0.56],"UBG":[0.624,727,0.5794,1453,0.082,0.6259],"URG":[0.6236,299,0.5804,631,0.0942,0.6054],"WBG":[0.6117,186,0.5661,404,0.0803,0.6183],"3c+":[0.6508,361,0.5984,724,0.0947,0.6731]}},
+ "Leonardo's Technique": {"colors":"W","mv":4.0,"type":"spell","rarity":"rare","overall":{"gih_wr":0.5374,"gih_games":1723,"gp_wr":0.5503,"gp_games":4229,"iwd":-0.0224},"splash":{"gp_games":38,"gp_wr_raw":0.3947,"gih_games":20,"gih_wr_raw":0.35},"by_archetype":{"WU":[0.5434,26,0.5568,62,-0.0184,0.5],"WB":[0.5494,1037,0.5648,2523,-0.03,0.5497],"WR":[0.5265,431,0.5323,1084,-0.0085,0.5406],"WG":[0.5127,50,0.5325,121,-0.0377,0.4],"WBG":[0.5062,66,0.5181,155,-0.0125,0.5],"WUR":[0.5029,25,0.5191,63,-0.0305,0.4],"3c+":[0.5367,65,0.5477,177,-0.0093,0.5385]}},
+ "Leonardo, Big Brother": {"colors":"W","mv":3.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.5718,"gih_games":20468,"gp_wr":0.5765,"gp_games":44164,"iwd":-0.0087},"splash":{"gp_games":43,"gp_wr_raw":0.4884,"gih_games":15,"gih_wr_raw":0.4667},"by_archetype":{"WU":[0.5834,322,0.585,690,-0.0063,0.5963],"WB":[0.5831,13078,0.5887,27786,-0.0108,0.5831],"WR":[0.554,5161,0.5599,11635,-0.0118,0.5543],"WG":[0.5275,427,0.5508,909,-0.035,0.4824],"W":[0.5916,106,0.6026,209,-0.0297,0.5566],"WBG":[0.5397,428,0.5386,920,0.0191,0.5397],"WUR":[0.5532,256,0.5491,554,-0.0005,0.5938],"3c+":[0.5594,675,0.5588,1418,0.0309,0.5481]}},
+ "Leonardo, Cutting Edge": {"colors":"W","mv":2.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.5642,"gih_games":3092,"gp_wr":0.5691,"gp_games":7279,"iwd":-0.0085},"splash":{"gp_games":100,"gp_wr_raw":0.56,"gih_games":47,"gih_wr_raw":0.5106},"by_archetype":{"WU":[0.5675,65,0.5773,172,-0.0246,0.5231],"WB":[0.5897,1805,0.5844,4243,0.0081,0.5956],"WR":[0.5257,693,0.5454,1720,-0.0318,0.5051],"WG":[0.5508,98,0.5509,225,0.0079,0.5816],"BG":[0.5346,23,0.5427,54,-0.0168,0.4348],"W":[0.585,32,0.5946,55,-0.0192,0.4688],"WBG":[0.5267,108,0.5369,243,-0.0169,0.4815],"WUR":[0.5274,55,0.5381,123,-0.0255,0.4545],"3c+":[0.569,189,0.5676,398,0.0097,0.5926]}},
+ "Leonardo, Leader in Blue": {"colors":"W","mv":1.0,"type":"creature","rarity":"uncommon","overall":{"gih_wr":0.5934,"gih_games":11384,"gp_wr":0.5857,"gp_games":25936,"iwd":0.014},"splash":{"gp_games":37,"gp_wr_raw":0.4865,"gih_games":15,"gih_wr_raw":0.5333},"by_archetype":{"WU":[0.601,228,0.5927,455,0.0149,0.6053],"WB":[0.606,7167,0.6001,16107,0.0097,0.6063],"WR":[0.5723,2823,0.5666,6685,0.0094,0.5721],"WG":[0.5756,293,0.5626,659,0.0398,0.5768],"W":[0.6199,74,0.6112,146,0.0161,0.6351],"WBG":[0.5574,280,0.5519,625,0.0149,0.5464],"WUR":[0.5553,150,0.5541,351,-0.0041,0.5267],"3c+":[0.5875,354,0.5713,871,0.06,0.5791]}},
+ "Leonardo, Sewer Samurai": {"colors":"W","mv":4.0,"type":"creature","rarity":"mythic","overall":{"gih_wr":0.6239,"gih_games":2170,"gp_wr":0.5892,"gp_games":5194,"iwd":0.0602},"splash":{"gp_games":248,"gp_wr_raw":0.5524,"gih_games":119,"gih_wr_raw":0.5714},"by_archetype":{"WU":[0.6326,23,0.5978,97,0.0607,0.6087],"WB":[0.6485,1167,0.6052,2798,0.0735,0.6555],"WR":[0.598,481,0.5717,1203,0.0418,0.5842],"WG":[0.6093,65,0.5738,143,0.0628,0.6154],"UR":[0.6282,31,0.5932,61,0.0649,0.6129],"BG":[0.5946,40,0.5636,84,0.0549,0.5],"WBG":[0.6028,115,0.5623,243,0.0691,0.6522],"WUR":[0.5992,68,0.5587,153,0.0806,0.6471],"3c+":[0.6154,132,0.5889,312,0.0432,0.5606]}},
+ "Lessons from Life": {"colors":"UG","mv":4.0,"type":"spell","rarity":"uncommon","overall":{"gih_wr":0.6038,"gih_games":12764,"gp_wr":0.5634,"gp_games":25103,"iwd":0.0817},"splash":{"gp_games":3884,"gp_wr_raw":0.5695,"gih_games":1864,"gih_wr_raw":0.6046},"by_archetype":{"WG":[0.6074,72,0.5694,154,0.0807,0.5694],"UR":[0.6219,389,0.5882,780,0.072,0.6041],"UG":[0.5688,4215,0.5348,8343,0.0712,0.5665],"BG":[0.6046,1176,0.5659,2449,0.07,0.6063],"UBG":[0.6098,3204,0.5662,6113,0.0936,0.6099],"URG":[0.6289,1751,0.5845,3426,0.0853,0.6334],"WBG":[0.6018,121,0.5603,251,0.0723,0.6281],"WUR":[0.5995,27,0.5583,62,0.0768,0.6667],"3c+":[0.6463,1767,0.595,3431,0.0995,0.6542]}},
+ "Lita, Little Orphan Amphibian": {"colors":"W","mv":2.0,"type":"creature","rarity":"uncommon","overall":{"gih_wr":0.5974,"gih_games":10873,"gp_wr":0.5815,"gp_games":24659,"iwd":0.0284},"splash":{"gp_games":138,"gp_wr_raw":0.5362,"gih_games":52,"gih_wr_raw":0.6154},"by_archetype":{"WU":[0.6162,214,0.591,458,0.0482,0.6542],"WB":[0.607,6227,0.5955,14049,0.0201,0.6067],"WR":[0.5783,2788,0.567,6447,0.0175,0.5782],"WG":[0.5946,351,0.567,788,0.051,0.6239],"W":[0.6236,63,0.6071,125,0.0364,0.619],"WBG":[0.5609,388,0.5467,858,0.0362,0.549],"WUR":[0.5636,249,0.5527,584,0.0118,0.5542],"3c+":[0.6024,551,0.5687,1230,0.0918,0.6098]}},
+ "Lord Dregg, Insect Invader": {"colors":"B","mv":4.0,"type":"creature","rarity":"uncommon","overall":{"gih_wr":0.5786,"gih_games":9500,"gp_wr":0.5623,"gp_games":20827,"iwd":0.0299},"splash":{"gp_games":364,"gp_wr_raw":0.5082,"gih_games":172,"gih_wr_raw":0.5349},"by_archetype":{"WB":[0.5903,3351,0.5858,7795,0.0065,0.5876],"UB":[0.5239,98,0.5099,212,0.0183,0.5102],"UG":[0.5456,106,0.5255,216,0.0456,0.5566],"BR":[0.474,57,0.465,134,0.015,0.3509],"BG":[0.5828,3633,0.5503,7715,0.0613,0.5866],"UBG":[0.5774,1209,0.5545,2491,0.0457,0.5806],"URG":[0.5765,23,0.562,51,0.0326,0.4348],"WBG":[0.5496,500,0.5434,1100,0.0059,0.534],"3c+":[0.577,481,0.5666,1023,0.03,0.5572]}},
+ "Madame Null, Power Broker": {"colors":"B","mv":3.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.58,"gih_games":3758,"gp_wr":0.5527,"gp_games":8386,"iwd":0.0486},"splash":{"gp_games":329,"gp_wr_raw":0.5258,"gih_games":157,"gih_wr_raw":0.5478},"by_archetype":{"WB":[0.5949,1564,0.5768,3689,0.0267,0.5921],"WR":[0.5637,21,0.5416,56,0.0366,0.3333],"UB":[0.5267,44,0.4962,102,0.0577,0.5682],"UG":[0.5485,65,0.5164,135,0.0544,0.6154],"BR":[0.4854,36,0.455,89,0.0529,0.5556],"BG":[0.5745,1099,0.5366,2354,0.0711,0.5823],"UBG":[0.5686,386,0.5381,809,0.069,0.5648],"WBG":[0.5484,178,0.529,386,0.0342,0.5056],"3c+":[0.5919,298,0.5571,639,0.0774,0.6007]}},
+ "Make Your Move": {"colors":"W","mv":3.0,"type":"spell","rarity":"common","overall":{"gih_wr":0.548,"gih_games":11007,"gp_wr":0.5609,"gp_games":25330,"iwd":-0.0228},"splash":{"gp_games":299,"gp_wr_raw":0.5719,"gih_games":134,"gih_wr_raw":0.6343},"by_archetype":{"WU":[0.5573,239,0.5693,514,-0.0226,0.5607],"WB":[0.5565,6099,0.5741,14367,-0.0311,0.556],"WR":[0.5262,2671,0.5436,6180,-0.0317,0.5253],"WG":[0.5354,402,0.5436,841,-0.0111,0.5423],"UG":[0.5118,27,0.517,54,-0.0123,0.7778],"BG":[0.5297,41,0.5375,102,-0.0191,0.6585],"W":[0.5759,70,0.5873,129,-0.0186,0.5857],"UBG":[0.5337,25,0.5423,54,-0.0091,0.64],"WBG":[0.5304,505,0.5293,1070,0.0113,0.5485],"WUR":[0.5208,201,0.5273,450,0.0019,0.5323],"3c+":[0.5466,699,0.555,1507,-0.0047,0.5451]}},
+ "Manhole Missile": {"colors":"R","mv":2.0,"type":"spell","rarity":"common","overall":{"gih_wr":0.5994,"gih_games":28808,"gp_wr":0.5784,"gp_games":51195,"iwd":0.0479},"splash":{"gp_games":754,"gp_wr_raw":0.5517,"gih_games":408,"gih_wr_raw":0.5858},"by_archetype":{"WR":[0.5675,6079,0.5674,11786,-0.0009,0.5651],"UR":[0.615,17036,0.5898,29266,0.0602,0.6153],"UG":[0.5565,182,0.5363,351,0.054,0.544],"BR":[0.5018,213,0.4794,358,0.049,0.5117],"BG":[0.5804,51,0.5611,97,0.035,0.5882],"RG":[0.4815,283,0.4617,509,0.0519,0.4735],"R":[0.4777,46,0.4594,76,0.042,0.4348],"UBG":[0.6006,102,0.5693,173,0.0674,0.6961],"URG":[0.6039,1759,0.5751,3031,0.0701,0.6072],"WUR":[0.5744,1143,0.5535,2007,0.0497,0.5739],"3c+":[0.6096,1888,0.579,3489,0.0743,0.6112]}},
+ "Mechanized Ninja Cavalry": {"colors":"WR","mv":2.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.5929,"gih_games":29943,"gp_wr":0.5803,"gp_games":57391,"iwd":0.0262},"splash":null,"by_archetype":{"WU":[0.6141,299,0.5931,587,0.0381,0.6421],"WB":[0.6079,8603,0.5977,17437,0.0193,0.6079],"WR":[0.5766,6423,0.5672,12021,0.0187,0.5767],"WG":[0.5658,255,0.5644,588,0.0002,0.5294],"UR":[0.5977,10584,0.5822,19888,0.0338,0.5976],"BR":[0.4927,121,0.4773,200,0.0262,0.5207],"RG":[0.4779,69,0.4581,145,0.0568,0.5217],"W":[0.6309,73,0.6102,136,0.0419,0.726],"R":[0.4685,38,0.4564,65,0.0259,0.4474],"URG":[0.5861,344,0.5692,699,0.0454,0.5872],"WBG":[0.565,251,0.5507,527,0.0325,0.5657],"WUR":[0.565,1493,0.5533,2474,0.0249,0.5653],"3c+":[0.5875,1381,0.5707,2601,0.05,0.5836]}},
+ "Metalhead": {"colors":"U","mv":5.0,"type":"creature","rarity":"uncommon","overall":{"gih_wr":0.6239,"gih_games":18588,"gp_wr":0.5892,"gp_games":36330,"iwd":0.0711},"splash":{"gp_games":654,"gp_wr_raw":0.5581,"gih_games":295,"gih_wr_raw":0.5932},"by_archetype":{"WU":[0.6287,171,0.6028,365,0.0564,0.5789],"WR":[0.6064,50,0.5771,117,0.0652,0.5],"UB":[0.5689,197,0.5348,408,0.0631,0.5736],"UR":[0.6288,10101,0.5985,19707,0.0627,0.6284],"UG":[0.5922,2299,0.5571,4710,0.0652,0.5942],"BG":[0.613,160,0.5742,354,0.0718,0.6438],"UBG":[0.6117,1232,0.573,2523,0.0852,0.6104],"URG":[0.6301,1915,0.5853,3415,0.1049,0.6329],"WUR":[0.6033,689,0.5689,1409,0.0653,0.6052],"3c+":[0.6554,1699,0.6113,3171,0.0807,0.6657]}},
+ "Metallic Mimic": {"colors":"","mv":2.0,"type":"creature","rarity":"mythic","overall":{"gih_wr":0.5505,"gih_games":342,"gp_wr":0.5476,"gp_games":761,"iwd":0.0007},"splash":null,"by_archetype":{"WB":[0.5655,82,0.5666,213,-0.0061,0.5122],"WR":[0.5397,44,0.5358,101,0.0076,0.5227],"UR":[0.5624,84,0.5582,183,0.0073,0.5595],"UG":[0.5108,25,0.5094,60,-0.0048,0.44],"BG":[0.5304,29,0.5291,60,-0.0019,0.4483]}},
+ "Michelangelo's Technique": {"colors":"G","mv":5.0,"type":"spell","rarity":"rare","overall":{"gih_wr":0.5586,"gih_games":1592,"gp_wr":0.5306,"gp_games":3578,"iwd":0.0473},"splash":{"gp_games":40,"gp_wr_raw":0.5,"gih_games":17,"gih_wr_raw":0.3529},"by_archetype":{"WG":[0.5773,86,0.5457,216,0.0509,0.6279],"UG":[0.5455,415,0.5128,960,0.0629,0.5518],"BG":[0.5529,588,0.5323,1349,0.0375,0.5408],"RG":[0.4623,27,0.4378,72,0.0462,0.3333],"UBG":[0.5908,248,0.5503,488,0.0587,0.6532],"URG":[0.5706,58,0.5488,122,0.0428,0.4655],"WBG":[0.5527,103,0.5288,205,0.0456,0.5146],"3c+":[0.5872,45,0.5595,117,0.0501,0.5778]}},
+ "Michelangelo, Game Master": {"colors":"G","mv":3.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.55,"gih_games":17087,"gp_wr":0.5383,"gp_games":34610,"iwd":0.0227},"splash":{"gp_games":48,"gp_wr_raw":0.4792,"gih_games":21,"gih_wr_raw":0.5238},"by_archetype":{"WG":[0.5558,580,0.5478,1285,0.0177,0.5483],"UG":[0.5346,4454,0.5246,8907,0.0183,0.535],"BG":[0.5502,6603,0.5408,13351,0.0184,0.5499],"RG":[0.453,190,0.4454,434,0.0123,0.4368],"G":[0.5752,113,0.5611,188,0.0302,0.5929],"UBG":[0.5583,2725,0.5489,5298,0.0188,0.5578],"URG":[0.5753,755,0.5526,1565,0.0552,0.5815],"WBG":[0.5428,617,0.5308,1307,0.0337,0.5365],"3c+":[0.5876,1031,0.5669,2232,0.0404,0.5946]}},
+ "Michelangelo, Improviser": {"colors":"G","mv":4.0,"type":"creature","rarity":"mythic","overall":{"gih_wr":0.5751,"gih_games":1513,"gp_wr":0.538,"gp_games":3533,"iwd":0.0622},"splash":{"gp_games":34,"gp_wr_raw":0.4706,"gih_games":11,"gih_wr_raw":0.6364},"by_archetype":{"WG":[0.5884,72,0.5501,176,0.0615,0.6111],"UG":[0.5594,379,0.5171,833,0.0833,0.5646],"BG":[0.5795,544,0.5411,1300,0.064,0.5827],"RG":[0.4796,22,0.4425,62,0.0714,0.4091],"UBG":[0.5797,179,0.548,404,0.0484,0.5587],"URG":[0.5982,133,0.5599,284,0.0545,0.6241],"WBG":[0.5686,74,0.5351,184,0.0545,0.527],"3c+":[0.6008,92,0.5623,236,0.0771,0.587]}},
+ "Michelangelo, Mutant BFF": {"colors":"G","mv":4.0,"type":"creature","rarity":"uncommon","overall":{"gih_wr":0.5878,"gih_games":10115,"gp_wr":0.5533,"gp_games":21624,"iwd":0.0644},"splash":null,"by_archetype":{"WG":[0.5962,392,0.5669,843,0.0483,0.5893],"UG":[0.5754,2906,0.534,6139,0.0802,0.5767],"BG":[0.5919,3497,0.5604,7442,0.0572,0.5922],"RG":[0.4866,118,0.4595,263,0.0493,0.4322],"G":[0.615,50,0.5761,139,0.0743,0.68],"UBG":[0.5996,1596,0.5668,3393,0.0586,0.6003],"URG":[0.5889,592,0.562,1253,0.0678,0.5659],"WBG":[0.581,320,0.5449,744,0.0829,0.5688],"3c+":[0.6258,642,0.5856,1401,0.0696,0.6371]}},
+ "Michelangelo, Weirdness to 11": {"colors":"G","mv":2.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.6095,"gih_games":4075,"gp_wr":0.5586,"gp_games":8892,"iwd":0.0929},"splash":{"gp_games":94,"gp_wr_raw":0.5638,"gih_games":39,"gih_wr_raw":0.5128},"by_archetype":{"WG":[0.6186,158,0.567,356,0.105,0.6076],"UR":[0.634,24,0.5886,51,0.0853,0.4167],"UG":[0.6089,1281,0.5464,2767,0.1124,0.619],"BG":[0.6054,1113,0.5567,2588,0.0904,0.6011],"RG":[0.506,47,0.4623,96,0.0886,0.3404],"UBG":[0.6226,597,0.5692,1258,0.0998,0.6265],"URG":[0.6284,358,0.5784,718,0.0926,0.6285],"WBG":[0.602,138,0.5565,308,0.0793,0.5725],"3c+":[0.639,325,0.589,664,0.0871,0.6431]}},
+ "Mighty Mutanimals": {"colors":"W","mv":4.0,"type":"creature","rarity":"uncommon","overall":{"gih_wr":0.6513,"gih_games":14722,"gp_wr":0.5989,"gp_games":30871,"iwd":0.1001},"splash":{"gp_games":785,"gp_wr_raw":0.5656,"gih_games":392,"gih_wr_raw":0.6122},"by_archetype":{"WU":[0.662,372,0.6067,681,0.1201,0.664],"WB":[0.6695,7526,0.6153,15833,0.1028,0.6699],"WR":[0.6362,3816,0.5842,8161,0.0969,0.6365],"WG":[0.6264,494,0.5791,1060,0.098,0.6113],"UR":[0.6494,79,0.6021,142,0.0974,0.5823],"UG":[0.6011,92,0.5545,186,0.0852,0.5543],"BG":[0.6275,89,0.5734,211,0.1086,0.6292],"W":[0.6802,70,0.6268,140,0.1061,0.6857],"UBG":[0.6306,32,0.5808,70,0.1012,0.5312],"URG":[0.6553,54,0.5948,100,0.1093,0.8148],"WBG":[0.6314,598,0.574,1279,0.104,0.6421],"WUR":[0.6292,526,0.5727,1023,0.1086,0.6388],"3c+":[0.6299,962,0.5903,1968,0.088,0.6123]}},
+ "Mikey & Don, Party Planners": {"colors":"UG","mv":4.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.6254,"gih_games":4924,"gp_wr":0.5717,"gp_games":10695,"iwd":0.099},"splash":null,"by_archetype":{"WU":[0.6519,48,0.6002,112,0.0917,0.625],"WG":[0.6169,86,0.5722,206,0.086,0.5116],"UR":[0.6268,982,0.5874,2193,0.0781,0.61],"UG":[0.6104,1150,0.5448,2544,0.1237,0.6174],"BG":[0.6318,817,0.5731,1726,0.1012,0.6426],"UBG":[0.6469,803,0.5778,1681,0.1295,0.665],"URG":[0.6314,416,0.5825,883,0.0893,0.6226],"WBG":[0.616,134,0.5619,293,0.0997,0.6194],"WUR":[0.6159,59,0.5624,136,0.0928,0.6271],"3c+":[0.6416,369,0.5919,772,0.0904,0.6341]}},
+ "Mikey & Leo, Chaos & Order": {"colors":"WG","mv":2.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.5722,"gih_games":3040,"gp_wr":0.5543,"gp_games":7143,"iwd":0.0306},"splash":null,"by_archetype":{"WU":[0.6014,44,0.5812,100,0.041,0.6136],"WB":[0.595,414,0.5907,1068,-0.008,0.5773],"WR":[0.561,267,0.5515,687,0.0208,0.5243],"WG":[0.5865,200,0.5632,473,0.0264,0.625],"UG":[0.5589,667,0.5325,1510,0.0424,0.5727],"BG":[0.5724,538,0.5491,1269,0.0409,0.5799],"RG":[0.4687,26,0.4526,54,0.0271,0.3846],"UBG":[0.5739,304,0.5537,705,0.042,0.5724],"URG":[0.5845,79,0.5601,191,0.0662,0.5949],"WBG":[0.5648,167,0.5428,359,0.0458,0.5749],"3c+":[0.5878,290,0.5719,628,0.0319,0.5759]}},
+ "Mind Transfer Protocol": {"colors":"U","mv":3.0,"type":"spell","rarity":"common","overall":{"gih_wr":0.5749,"gih_games":12650,"gp_wr":0.5635,"gp_games":24952,"iwd":0.0231},"splash":{"gp_games":45,"gp_wr_raw":0.6667,"gih_games":24,"gih_wr_raw":0.7083},"by_archetype":{"WU":[0.6077,425,0.5843,710,0.0428,0.6376],"UB":[0.5287,216,0.5066,397,0.0522,0.5648],"UR":[0.5814,8116,0.5739,16178,0.0151,0.581],"UG":[0.541,1794,0.5248,3572,0.0336,0.5429],"U":[0.4761,32,0.4628,52,0.0196,0.5625],"UBG":[0.5676,551,0.5493,1124,0.0462,0.5717],"URG":[0.5683,582,0.5627,1133,0.0077,0.5619],"WUR":[0.5502,426,0.5364,818,0.0396,0.5469],"3c+":[0.5823,486,0.5738,930,0.0091,0.5823]}},
+ "Mona Lisa, Science Geek": {"colors":"G","mv":3.0,"type":"creature","rarity":"uncommon","overall":{"gih_wr":0.5647,"gih_games":10336,"gp_wr":0.5479,"gp_games":21423,"iwd":0.0322},"splash":{"gp_games":26,"gp_wr_raw":0.3846,"gih_games":6,"gih_wr_raw":0.5},"by_archetype":{"WG":[0.5607,261,0.5563,567,0.0028,0.5249],"UG":[0.5412,2413,0.526,5063,0.0298,0.5404],"BG":[0.5594,2963,0.5475,6354,0.0221,0.5582],"RG":[0.4681,95,0.452,199,0.0318,0.4632],"G":[0.5908,78,0.5688,124,0.0437,0.6538],"UBG":[0.5731,2017,0.5548,4056,0.0368,0.5736],"URG":[0.5801,878,0.5599,1799,0.0468,0.5797],"WBG":[0.5499,386,0.5416,831,0.0158,0.5311],"3c+":[0.6105,1239,0.5804,2409,0.0553,0.6231]}},
+ "Mondo Gecko": {"colors":"U","mv":3.0,"type":"creature","rarity":"mythic","overall":{"gih_wr":0.5492,"gih_games":1887,"gp_wr":0.54,"gp_games":4075,"iwd":0.0156},"splash":{"gp_games":24,"gp_wr_raw":0.4583,"gih_games":10,"gih_wr_raw":0.4},"by_archetype":{"WU":[0.5718,82,0.5643,177,0.0066,0.561],"UB":[0.4962,73,0.4899,137,0.0119,0.4521],"UR":[0.559,830,0.556,1865,0.0072,0.5506],"UG":[0.5352,491,0.5132,1069,0.0373,0.5601],"UBG":[0.5418,149,0.5349,292,0.0185,0.5168],"URG":[0.5609,125,0.5475,226,0.0236,0.592],"WUR":[0.5293,43,0.5233,93,0.0133,0.4419],"3c+":[0.5651,79,0.5547,177,0.0203,0.5696]}},
+ "Mountain": {"colors":"","mv":0.0,"type":"land","rarity":"common","overall":{"gih_wr":0.5782,"gih_games":75375,"gp_wr":0.572,"gp_games":88915,"iwd":0.0407},"splash":null,"by_archetype":{"WU":[0.5986,46,0.5892,107,0.0402,0.6739],"WB":[0.5677,378,0.5739,714,0.0464,0.5079],"WR":[0.5631,16910,0.5597,17292,0.0987,0.5629],"WG":[0.5711,66,0.5671,168,0.0137,0.5909],"UB":[0.5149,62,0.5153,139,0.019,0.4355],"UR":[0.587,39402,0.5813,40096,0.2281,0.587],"UG":[0.5654,1797,0.5479,3785,0.0281,0.576],"BR":[0.4777,461,0.4738,465,0.0357,0.4751],"BG":[0.5904,636,0.574,1563,0.0105,0.6258],"RG":[0.4639,657,0.4592,679,0.0403,0.4627],"R":[0.4598,84,0.4555,84,0.0319,0.4524],"UBG":[0.6049,1568,0.5806,3929,0.0343,0.6224],"URG":[0.584,4470,0.5704,6398,0.0482,0.5852],"WBG":[0.5672,239,0.5568,623,0.0168,0.6025],"WUR":[0.5509,2858,0.5471,3274,0.0374,0.5497],"3c+":[0.5844,5678,0.578,9522,0.019,0.5842]}},
+ "Mouser Attack!": {"colors":"R","mv":2.0,"type":"spell","rarity":"common","overall":{"gih_wr":0.4967,"gih_games":2078,"gp_wr":0.5164,"gp_games":4767,"iwd":-0.037},"splash":null,"by_archetype":{"WR":[0.4947,1061,0.517,2529,-0.0458,0.4967],"UR":[0.5018,825,0.5289,1818,-0.0454,0.4909],"BR":[0.4063,32,0.423,66,-0.0272,0.4688],"RG":[0.3879,31,0.4089,69,-0.0402,0.3548],"WUR":[0.4747,48,0.4971,95,-0.0345,0.3958],"3c+":[0.5133,46,0.5273,111,-0.0105,0.5652]}},
+ "Mouser Foundry": {"colors":"R","mv":2.0,"type":"spell","rarity":"common","overall":{"gih_wr":0.5977,"gih_games":28859,"gp_wr":0.5786,"gp_games":47948,"iwd":0.0477},"splash":{"gp_games":158,"gp_wr_raw":0.5443,"gih_games":84,"gih_wr_raw":0.5714},"by_archetype":{"WR":[0.551,4262,0.5592,8382,-0.0156,0.5455],"UR":[0.612,20387,0.5904,32166,0.058,0.6123],"UG":[0.5586,58,0.5372,93,0.0535,0.6034],"BR":[0.4866,158,0.4741,286,0.0367,0.4494],"RG":[0.4881,125,0.4633,238,0.0559,0.536],"R":[0.4774,48,0.4581,71,0.0469,0.5],"URG":[0.5966,1449,0.5694,2486,0.0731,0.599],"WUR":[0.5691,1209,0.551,2127,0.0449,0.5682],"3c+":[0.5996,1139,0.5735,2038,0.0763,0.5988]}},
+ "Mouser Mark III": {"colors":"UR","mv":2.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.5595,"gih_games":15810,"gp_wr":0.5602,"gp_games":28453,"iwd":-0.0017},"splash":null,"by_archetype":{"WU":[0.554,164,0.5687,307,-0.0315,0.4817],"WR":[0.5318,364,0.5439,789,-0.0273,0.5082],"UB":[0.5104,183,0.5008,294,0.0177,0.5628],"UR":[0.5671,12134,0.5695,21628,-0.0063,0.5672],"UG":[0.4978,505,0.5104,920,-0.0164,0.4713],"BR":[0.4532,21,0.4543,52,0.0058,0.381],"UBG":[0.5423,155,0.5391,290,0.0302,0.5355],"URG":[0.5619,851,0.5505,1578,0.0334,0.5699],"WUR":[0.525,628,0.5313,1217,-0.0133,0.5175],"3c+":[0.5685,735,0.5583,1261,0.0359,0.5755]}},
+ "Mutagen Man, Living Ooze": {"colors":"G","mv":2.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.5909,"gih_games":4060,"gp_wr":0.5541,"gp_games":8768,"iwd":0.0676},"splash":{"gp_games":28,"gp_wr_raw":0.3571,"gih_games":11,"gih_wr_raw":0.4545},"by_archetype":{"WG":[0.6055,147,0.5649,355,0.0763,0.6259],"UG":[0.578,1174,0.5419,2500,0.06,0.5818],"BG":[0.5859,1128,0.5538,2524,0.0596,0.5816],"RG":[0.5004,37,0.4602,104,0.0765,0.5676],"G":[0.6112,44,0.5752,96,0.0689,0.5909],"UBG":[0.5974,693,0.5603,1440,0.0759,0.5945],"URG":[0.6075,372,0.5728,752,0.0643,0.6048],"WBG":[0.5849,139,0.5481,306,0.0801,0.5683],"3c+":[0.6257,315,0.5833,663,0.0772,0.6444]}},
+ "Mutant Chain Reaction": {"colors":"G","mv":3.0,"type":"spell","rarity":"common","overall":{"gih_wr":0.5202,"gih_games":3449,"gp_wr":0.5068,"gp_games":7644,"iwd":0.0223},"splash":null,"by_archetype":{"WG":[0.5272,89,0.5191,247,0.0075,0.4831],"UG":[0.4871,981,0.483,2053,0.0129,0.475],"BG":[0.5231,1281,0.51,2928,0.0228,0.523],"RG":[0.429,40,0.4152,102,0.0197,0.45],"G":[0.5463,49,0.5305,112,0.0252,0.5918],"UBG":[0.54,543,0.5179,1128,0.0434,0.5525],"URG":[0.5475,121,0.5281,261,0.0311,0.595],"WBG":[0.5209,118,0.5038,287,0.037,0.5339],"3c+":[0.5508,226,0.5363,517,0.0219,0.5575]}},
+ "Mutant Town": {"colors":"","mv":0.0,"type":"land","rarity":"common","overall":{"gih_wr":0.5931,"gih_games":19789,"gp_wr":0.5649,"gp_games":36836,"iwd":0.0607},"splash":null,"by_archetype":{"WB":[0.6201,33,0.5973,73,0.0545,0.4545],"WG":[0.5953,169,0.5741,339,0.0292,0.5799],"UB":[0.5522,40,0.5228,62,0.0658,0.575],"UR":[0.6168,813,0.5871,1582,0.0691,0.615],"UG":[0.5621,5425,0.5387,10214,0.0507,0.5611],"BG":[0.5846,2191,0.5624,4256,0.0447,0.5828],"RG":[0.492,38,0.4646,80,0.0654,0.4474],"G":[0.6135,41,0.5834,83,0.0573,0.6829],"UBG":[0.5956,4750,0.5673,8598,0.0639,0.5954],"URG":[0.6006,2599,0.5722,4772,0.0669,0.5991],"WBG":[0.5893,324,0.5588,648,0.0603,0.5988],"WUR":[0.593,165,0.5607,331,0.056,0.6303],"3c+":[0.6367,3168,0.5974,5723,0.0817,0.6417]}},
+ "Mutant Town Musicians": {"colors":"R","mv":3.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.5425,"gih_games":3925,"gp_wr":0.545,"gp_games":8426,"iwd":-0.0053},"splash":null,"by_archetype":{"WR":[0.5497,2865,0.5515,6190,-0.0074,0.5518],"UR":[0.5468,681,0.5558,1396,-0.0016,0.5286],"BR":[0.4587,52,0.4565,94,0.0051,0.5385],"RG":[0.4378,45,0.4403,115,0.0001,0.4222],"URG":[0.5475,28,0.5505,58,0.0071,0.4643],"WUR":[0.5374,106,0.5351,245,-0.0045,0.5943],"3c+":[0.5424,125,0.5542,280,0.0003,0.44]}},
+ "Negate": {"colors":"U","mv":2.0,"type":"spell","rarity":"common","overall":{"gih_wr":0.4998,"gih_games":1052,"gp_wr":0.4858,"gp_games":2262,"iwd":0.0177},"splash":null,"by_archetype":{"WU":[0.5218,44,0.5092,88,0.0133,0.4773],"UB":[0.455,39,0.4384,77,0.0171,0.5128],"UR":[0.5164,491,0.5034,1124,0.0219,0.5112],"UG":[0.4618,280,0.4541,577,0.0083,0.4393],"UBG":[0.4996,48,0.4818,97,0.0338,0.5208],"URG":[0.5073,55,0.4903,112,0.0331,0.5091],"WUR":[0.4813,34,0.4683,60,0.0254,0.3824],"3c+":[0.521,41,0.5002,90,0.0393,0.6098]}},
+ "New Generation's Technique": {"colors":"G","mv":4.0,"type":"spell","rarity":"uncommon","overall":{"gih_wr":0.5434,"gih_games":2941,"gp_wr":0.5262,"gp_games":6484,"iwd":0.0298},"splash":null,"by_archetype":{"WG":[0.5501,45,0.534,108,0.0224,0.5556],"UG":[0.5144,477,0.5017,1065,0.0241,0.5052],"BG":[0.5389,843,0.5247,1937,0.0231,0.5374],"RG":[0.4397,39,0.4269,95,0.0242,0.3333],"UBG":[0.5368,558,0.5292,1137,0.0141,0.5215],"URG":[0.55,237,0.5346,480,0.0445,0.5274],"WBG":[0.5356,197,0.5141,454,0.0567,0.533],"3c+":[0.5937,528,0.5599,1178,0.0471,0.6326]}},
+ "Ninja Teen": {"colors":"B","mv":3.0,"type":"spell","rarity":"rare","overall":{"gih_wr":0.6012,"gih_games":3521,"gp_wr":0.5705,"gp_games":8263,"iwd":0.0532},"splash":{"gp_games":259,"gp_wr_raw":0.4942,"gih_games":115,"gih_wr_raw":0.4783},"by_archetype":{"WB":[0.6347,1968,0.5961,4783,0.0605,0.6413],"UB":[0.5479,58,0.5106,128,0.066,0.6379],"UG":[0.5558,46,0.527,109,0.0507,0.5],"BR":[0.4967,27,0.4678,58,0.045,0.4444],"BG":[0.5661,772,0.5423,1751,0.0484,0.5531],"UBG":[0.5906,248,0.5553,505,0.0686,0.6008],"WBG":[0.571,135,0.5432,305,0.0478,0.5481],"3c+":[0.5892,205,0.5631,488,0.0726,0.5317]}},
+ "Nobody": {"colors":"UR","mv":3.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.5858,"gih_games":28765,"gp_wr":0.5776,"gp_games":47889,"iwd":0.0204},"splash":null,"by_archetype":{"WU":[0.5924,183,0.5875,370,0.0179,0.5738],"WR":[0.5405,1146,0.5585,2432,-0.0336,0.5209],"UB":[0.5303,190,0.5196,354,0.0172,0.5526],"UR":[0.592,19989,0.5854,32225,0.0174,0.592],"UG":[0.5357,839,0.5322,1599,0.0127,0.5292],"BR":[0.4773,100,0.4752,168,0.0018,0.44],"RG":[0.4662,37,0.4601,67,0.0159,0.4324],"UBG":[0.5786,379,0.56,751,0.0532,0.5937],"URG":[0.575,2274,0.5703,3854,0.0132,0.5734],"WUR":[0.5679,1444,0.5517,2417,0.04,0.5727],"3c+":[0.6128,2138,0.5878,3551,0.0569,0.6211]}},
+ "North Wind Avatar": {"colors":"UR","mv":5.0,"type":"creature","rarity":"mythic","overall":{"gih_wr":0.6203,"gih_games":3589,"gp_wr":0.5796,"gp_games":7917,"iwd":0.0743},"splash":{"gp_games":1215,"gp_wr_raw":0.5704,"gih_games":593,"gih_wr_raw":0.6256},"by_archetype":{"UR":[0.6205,2250,0.585,5082,0.0655,0.6173],"UG":[0.5938,423,0.5449,867,0.0829,0.617],"UBG":[0.6232,127,0.5711,263,0.0909,0.7087],"URG":[0.6194,377,0.5759,781,0.0836,0.6233],"WUR":[0.6048,148,0.5545,343,0.0986,0.6486],"3c+":[0.6276,236,0.586,521,0.0736,0.6314]}},
+ "Northampton Farm": {"colors":"","mv":0.0,"type":"land","rarity":"rare","overall":{"gih_wr":0.5614,"gih_games":2073,"gp_wr":0.5555,"gp_games":4835,"iwd":0.0097},"splash":null,"by_archetype":{"WB":[0.564,509,0.5765,1258,-0.0289,0.5363],"WR":[0.5514,197,0.5471,489,0.0025,0.5482],"WG":[0.5561,28,0.5507,70,-0.0044,0.6071],"UR":[0.5868,526,0.5669,1158,0.0438,0.6046],"UG":[0.5342,187,0.5188,416,0.0324,0.5722],"BG":[0.5556,353,0.5425,786,0.0179,0.5779],"UBG":[0.5486,93,0.5459,232,0.0032,0.5161],"WBG":[0.535,34,0.5328,92,0.0063,0.4118],"3c+":[0.5671,68,0.5637,154,0.0051,0.5294]}},
+ "Novel Nunchaku": {"colors":"G","mv":3.0,"type":"spell","rarity":"uncommon","overall":{"gih_wr":0.5885,"gih_games":11793,"gp_wr":0.5578,"gp_games":24288,"iwd":0.0594},"splash":{"gp_games":213,"gp_wr_raw":0.5681,"gih_games":102,"gih_wr_raw":0.549},"by_archetype":{"WG":[0.5869,423,0.5689,927,0.0271,0.565],"UR":[0.617,71,0.5886,142,0.0524,0.5915],"UG":[0.5748,3344,0.5398,6535,0.0714,0.576],"BG":[0.5793,3572,0.5525,7717,0.0527,0.577],"RG":[0.4955,110,0.4671,240,0.0403,0.5],"G":[0.615,82,0.5798,149,0.0708,0.6585],"UBG":[0.5998,1808,0.5677,3702,0.0622,0.6007],"URG":[0.6181,965,0.5748,1908,0.0912,0.6269],"WBG":[0.5794,462,0.5582,1008,0.0291,0.5693],"3c+":[0.6331,927,0.5918,1899,0.0731,0.6472]}},
+ "Null Group Biological Assets": {"colors":"R","mv":3.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.533,"gih_games":4134,"gp_wr":0.5469,"gp_games":9088,"iwd":-0.0258},"splash":null,"by_archetype":{"WR":[0.5421,2382,0.5531,5365,-0.0242,0.5453],"UR":[0.5385,1137,0.5574,2462,-0.0246,0.5286],"BR":[0.4498,112,0.4611,214,-0.0357,0.4911],"RG":[0.4294,95,0.4443,207,-0.0352,0.4316],"URG":[0.5438,90,0.5515,179,0.0033,0.5667],"WUR":[0.5183,110,0.5325,254,-0.0239,0.5091],"3c+":[0.5371,178,0.5584,355,-0.0279,0.4831]}},
+ "Old Hob, Alleycat Blues": {"colors":"R","mv":5.0,"type":"creature","rarity":"uncommon","overall":{"gih_wr":0.5319,"gih_games":4376,"gp_wr":0.5311,"gp_games":10317,"iwd":0.0003},"splash":{"gp_games":212,"gp_wr_raw":0.5142,"gih_games":90,"gih_wr_raw":0.4889},"by_archetype":{"WB":[0.5567,39,0.5586,88,0.0034,0.4615],"WR":[0.5479,2961,0.5439,7130,0.0011,0.5522],"UR":[0.525,560,0.5366,1264,0.0025,0.4875],"BR":[0.4318,84,0.4421,177,-0.029,0.3333],"RG":[0.4322,47,0.427,113,0.0155,0.4894],"URG":[0.5348,47,0.5349,117,0.0173,0.4468],"WUR":[0.5105,224,0.5125,515,0.0108,0.4821],"3c+":[0.5477,362,0.54,798,0.0367,0.5442]}},
+ "Omni-Cheese Pizza": {"colors":"","mv":2.0,"type":"spell","rarity":"common","overall":{"gih_wr":0.5865,"gih_games":23733,"gp_wr":0.5717,"gp_games":46264,"iwd":0.0303},"splash":null,"by_archetype":{"WU":[0.5969,106,0.5876,228,0.0375,0.5189],"WB":[0.563,1049,0.5737,2348,0.0029,0.5281],"WR":[0.5505,416,0.5595,961,-0.0099,0.4952],"WG":[0.5756,189,0.5673,415,0.0175,0.545],"UB":[0.5315,158,0.5211,300,0.0181,0.5127],"UR":[0.5945,6543,0.5868,12631,0.0163,0.5935],"UG":[0.5662,2536,0.5442,4977,0.0422,0.5698],"BR":[0.4949,44,0.4773,84,0.0445,0.5227],"BG":[0.5785,3101,0.5658,6188,0.0216,0.5795],"RG":[0.4823,90,0.4649,204,0.0338,0.5111],"G":[0.5893,47,0.5785,108,0.0238,0.5106],"UBG":[0.598,2871,0.5696,5413,0.0601,0.6022],"URG":[0.6006,1964,0.5793,3703,0.0432,0.6044],"WBG":[0.5678,723,0.5625,1518,-0.0048,0.5657],"WUR":[0.5736,887,0.5599,1689,0.0197,0.5772],"3c+":[0.617,2976,0.5873,5437,0.0652,0.6213]}},
+ "Ooze Spill": {"colors":"U","mv":3.0,"type":"spell","rarity":"uncommon","overall":{"gih_wr":0.6125,"gih_games":12403,"gp_wr":0.5845,"gp_games":24170,"iwd":0.0576},"splash":null,"by_archetype":{"WU":[0.6244,226,0.6022,461,0.0469,0.5973],"UB":[0.5751,198,0.5338,384,0.0844,0.6313],"UR":[0.6188,6391,0.5986,12781,0.0403,0.6177],"UG":[0.5769,2654,0.5483,5021,0.0616,0.5765],"UBG":[0.6217,810,0.5785,1511,0.095,0.6358],"URG":[0.6385,1027,0.5884,1914,0.1098,0.6553],"WUR":[0.589,356,0.565,712,0.0477,0.5787],"3c+":[0.6303,710,0.5998,1326,0.0571,0.6366]}},
+ "Oroku Saki, Shredder Rising": {"colors":"B","mv":3.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.5825,"gih_games":23408,"gp_wr":0.5772,"gp_games":44985,"iwd":0.011},"splash":{"gp_games":87,"gp_wr_raw":0.6092,"gih_games":44,"gih_wr_raw":0.6364},"by_archetype":{"WB":[0.597,16208,0.5929,30595,0.0083,0.5971],"UB":[0.5394,341,0.5179,629,0.0381,0.5865],"BR":[0.4812,145,0.4714,274,0.02,0.5103],"BG":[0.5493,4202,0.5486,8333,0.0026,0.5481],"UBG":[0.5663,783,0.5578,1590,0.02,0.5683],"WBG":[0.548,854,0.5385,1706,0.0342,0.5445],"3c+":[0.5576,827,0.5637,1771,0.0052,0.5357]}},
+ "Pain 101": {"colors":"B","mv":2.0,"type":"spell","rarity":"common","overall":{"gih_wr":0.5308,"gih_games":5371,"gp_wr":0.5499,"gp_games":12366,"iwd":-0.034},"splash":null,"by_archetype":{"WB":[0.5506,3630,0.5689,8492,-0.0345,0.5521],"UB":[0.4615,89,0.4823,175,-0.0261,0.4157],"BR":[0.4231,36,0.4438,87,-0.0409,0.3889],"BG":[0.5004,1143,0.5185,2535,-0.0261,0.4969],"UBG":[0.5085,182,0.5314,391,-0.0427,0.489],"WBG":[0.4982,145,0.5187,343,-0.0332,0.4828],"3c+":[0.5189,139,0.5411,324,-0.0118,0.4532]}},
+ "Paramecia Coloniex": {"colors":"B","mv":2.0,"type":"creature","rarity":"uncommon","overall":{"gih_wr":0.5462,"gih_games":4904,"gp_wr":0.5542,"gp_games":10845,"iwd":-0.0147},"splash":null,"by_archetype":{"WB":[0.5537,2372,0.5748,5467,-0.04,0.5497],"UB":[0.489,89,0.4981,184,-0.0246,0.4831],"BR":[0.4499,36,0.4547,67,-0.0077,0.5],"BG":[0.544,1773,0.5343,3720,0.0223,0.5505],"UBG":[0.5408,293,0.5411,629,0.0089,0.5529],"WBG":[0.5128,182,0.5302,414,-0.0362,0.467],"3c+":[0.5547,152,0.5593,347,-0.001,0.5592]}},
+ "Party Dude": {"colors":"G","mv":1.0,"type":"spell","rarity":"rare","overall":{"gih_wr":0.5153,"gih_games":1488,"gp_wr":0.5058,"gp_games":3225,"iwd":0.013},"splash":{"gp_games":51,"gp_wr_raw":0.5294,"gih_games":20,"gih_wr_raw":0.5},"by_archetype":{"WG":[0.5268,41,0.5175,85,0.0118,0.5366],"UG":[0.4828,384,0.4859,841,-0.0095,0.4557],"BG":[0.5272,534,0.51,1198,0.0291,0.5412],"UBG":[0.5259,236,0.5172,461,0.009,0.5297],"URG":[0.5244,74,0.5194,154,0.0237,0.4324],"WBG":[0.506,79,0.5012,187,0.0116,0.443],"3c+":[0.553,89,0.5346,179,0.0345,0.6404]}},
+ "Path to Exile": {"colors":"W","mv":1.0,"type":"spell","rarity":"mythic","overall":{"gih_wr":0.5641,"gih_games":265,"gp_wr":0.5707,"gp_games":607,"iwd":-0.0103},"splash":null,"by_archetype":{"WB":[0.5748,162,0.5814,379,-0.0131,0.5741],"WR":[0.55,45,0.5506,105,0.0036,0.6444]}},
+ "Pizza Face, Gastromancer": {"colors":"BG","mv":5.0,"type":"creature","rarity":"uncommon","overall":{"gih_wr":0.5778,"gih_games":10766,"gp_wr":0.5581,"gp_games":22853,"iwd":0.0369},"splash":{"gp_games":3329,"gp_wr_raw":0.5467,"gih_games":1425,"gih_wr_raw":0.5754},"by_archetype":{"WB":[0.6042,225,0.5877,523,0.0425,0.5778],"WG":[0.5834,43,0.5642,112,0.0338,0.5814],"UG":[0.5607,783,0.5329,1809,0.0545,0.567],"BG":[0.5721,5137,0.5559,10753,0.0303,0.5717],"RG":[0.4769,18,0.4594,59,0.0302,0.3889],"G":[0.5961,23,0.5767,68,0.0271,0.6522],"UBG":[0.5787,2541,0.562,5125,0.0327,0.5777],"URG":[0.59,235,0.5697,539,0.0422,0.5872],"WBG":[0.5652,714,0.5508,1590,0.0241,0.5602],"3c+":[0.6166,1016,0.5818,2214,0.0665,0.6289]}},
+ "Plague of Vermin": {"colors":"B","mv":7.0,"type":"spell","rarity":"mythic","overall":{"gih_wr":0.5636,"gih_games":1,"gp_wr":0.5573,"gp_games":8,"iwd":0.0037},"splash":null,"by_archetype":{}},
+ "Plains": {"colors":"","mv":0.0,"type":"land","rarity":"common","overall":{"gih_wr":0.5808,"gih_games":80418,"gp_wr":0.5773,"gp_games":94531,"iwd":0.0234},"splash":null,"by_archetype":{"WU":[0.5908,1422,0.5881,1436,0.0287,0.5907],"WB":[0.5938,40200,0.59,40781,0.175,0.5938],"WR":[0.5631,17018,0.5597,17293,0.1063,0.563],"WG":[0.565,2179,0.5632,2235,0.0257,0.5645],"UB":[0.5165,30,0.5163,71,0.0088,0.4667],"UR":[0.582,1485,0.5767,2862,0.0227,0.5798],"UG":[0.5572,1127,0.5509,2329,-0.0044,0.5705],"BG":[0.5658,1885,0.5581,3743,0.0156,0.5692],"RG":[0.4663,38,0.4619,77,0.01,0.5526],"W":[0.6086,228,0.6077,230,0.0107,0.6053],"G":[0.5708,47,0.5739,56,0.005,0.4681],"UBG":[0.581,1554,0.5785,3732,-0.0061,0.5888],"URG":[0.5963,1050,0.5896,2617,-0.0037,0.6124],"WBG":[0.552,3523,0.549,4229,0.0207,0.5518],"WUR":[0.5513,2514,0.5494,3154,0.0124,0.5509],"3c+":[0.5777,6099,0.5806,9645,-0.0068,0.5771]}},
+ "Prehistoric Pet": {"colors":"W","mv":1.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.5834,"gih_games":3233,"gp_wr":0.5763,"gp_games":7821,"iwd":0.0123},"splash":{"gp_games":39,"gp_wr_raw":0.4359,"gih_games":20,"gih_wr_raw":0.35},"by_archetype":{"WU":[0.5841,67,0.5806,158,0.0118,0.5224],"WB":[0.5958,2020,0.59,4851,0.0078,0.5965],"WR":[0.5663,718,0.5565,1833,0.0169,0.5696],"WG":[0.5678,81,0.5593,185,0.0117,0.5926],"WBG":[0.5555,126,0.5451,289,0.0195,0.5794],"WUR":[0.552,35,0.5431,78,0.0225,0.5714],"3c+":[0.5744,150,0.5707,345,0.0171,0.54]}},
+ "Primordial Pachyderm": {"colors":"G","mv":4.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.5817,"gih_games":22131,"gp_wr":0.5576,"gp_games":39876,"iwd":0.0538},"splash":{"gp_games":111,"gp_wr_raw":0.5946,"gih_games":51,"gih_wr_raw":0.549},"by_archetype":{"WB":[0.6162,17,0.5958,50,0.0403,0.4706],"WG":[0.5947,683,0.5686,1328,0.0522,0.5988],"UG":[0.5608,4751,0.5364,8673,0.0546,0.5607],"BG":[0.58,7625,0.5569,13542,0.053,0.5798],"RG":[0.4944,263,0.4634,441,0.0706,0.5171],"G":[0.6021,159,0.5775,250,0.0581,0.6038],"UBG":[0.5867,3695,0.5605,6614,0.0624,0.5862],"URG":[0.5978,1705,0.577,3080,0.043,0.5977],"WBG":[0.5516,923,0.5451,1751,0.0236,0.5309],"3c+":[0.6288,2285,0.5939,4104,0.0703,0.6359]}},
+ "Punk Frogs": {"colors":"UG","mv":5.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.5166,"gih_games":2177,"gp_wr":0.5195,"gp_games":4643,"iwd":-0.0079},"splash":null,"by_archetype":{"WG":[0.5319,27,0.5331,60,-0.012,0.6296],"UR":[0.5405,183,0.5459,410,0.0042,0.5082],"UG":[0.4955,903,0.5019,1877,-0.0144,0.4928],"BG":[0.5198,328,0.5256,730,-0.0224,0.5213],"UBG":[0.5383,402,0.533,819,0.0049,0.5597],"URG":[0.5362,100,0.5392,226,-0.0101,0.54],"WBG":[0.507,37,0.5153,80,-0.012,0.3514],"3c+":[0.5406,135,0.5437,290,0.0059,0.5185]}},
+ "Purple Dragon Punks": {"colors":"R","mv":2.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.5501,"gih_games":7681,"gp_wr":0.5537,"gp_games":15344,"iwd":-0.0073},"splash":null,"by_archetype":{"WR":[0.5336,744,0.5438,1687,-0.03,0.5336],"UR":[0.5553,6224,0.5574,12187,-0.0035,0.5553],"BR":[0.4441,54,0.448,112,-0.0022,0.4259],"RG":[0.4401,39,0.4375,87,-0.0012,0.6154],"R":[0.428,26,0.4308,53,-0.0053,0.4615],"URG":[0.5334,135,0.5451,263,-0.0224,0.4815],"WUR":[0.5159,258,0.5271,539,-0.0304,0.5],"3c+":[0.56,198,0.5556,408,0.0143,0.5909]}},
+ "Putrid Pals": {"colors":"BG","mv":4.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.4901,"gih_games":4211,"gp_wr":0.5027,"gp_games":9013,"iwd":-0.0252},"splash":null,"by_archetype":{"WB":[0.5071,529,0.5294,1265,-0.0303,0.482],"WG":[0.4997,73,0.513,191,-0.0454,0.5342],"UB":[0.4485,20,0.4604,52,-0.0237,0.45],"UG":[0.4593,380,0.4727,806,-0.0118,0.4447],"BR":[0.4093,26,0.4185,50,-0.0176,0.5],"BG":[0.4946,2253,0.5059,4665,-0.0265,0.4971],"RG":[0.3901,34,0.4029,78,-0.0227,0.3529],"UBG":[0.4947,560,0.504,1138,-0.0118,0.4946],"WBG":[0.4721,201,0.4916,457,-0.0319,0.4328],"3c+":[0.5186,109,0.526,250,-0.0168,0.5596]}},
+ "Quintessential Katana": {"colors":"W","mv":1.0,"type":"spell","rarity":"uncommon","overall":{"gih_wr":0.5752,"gih_games":8320,"gp_wr":0.5797,"gp_games":19439,"iwd":-0.0076},"splash":null,"by_archetype":{"WU":[0.5958,213,0.587,435,0.0172,0.6526],"WB":[0.5849,5692,0.591,13257,-0.0114,0.585],"WR":[0.5477,1636,0.5563,3987,-0.0144,0.5452],"WG":[0.558,177,0.5593,411,0.0011,0.5706],"W":[0.5984,55,0.6028,115,-0.0069,0.6],"WBG":[0.5436,170,0.5466,379,-0.006,0.5529],"WUR":[0.5351,98,0.5449,208,-0.0191,0.4898],"3c+":[0.564,272,0.5664,630,0.0228,0.5441]}},
+ "Ragamuffin Raptor": {"colors":"G","mv":5.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.5698,"gih_games":23273,"gp_wr":0.5569,"gp_games":42996,"iwd":0.028},"splash":{"gp_games":324,"gp_wr_raw":0.5617,"gih_games":163,"gih_wr_raw":0.5583},"by_archetype":{"WB":[0.6014,40,0.5921,83,0.0267,0.5],"WG":[0.5692,711,0.5654,1427,0.0053,0.5598],"UR":[0.5982,82,0.5857,164,0.0251,0.5976],"UG":[0.54,4464,0.5305,8395,0.0225,0.5385],"BG":[0.567,8272,0.5557,14914,0.0255,0.5669],"RG":[0.4751,223,0.464,444,0.0121,0.4798],"G":[0.585,142,0.5761,242,0.0178,0.5634],"UBG":[0.5835,4135,0.5641,7492,0.0436,0.5848],"URG":[0.5861,1581,0.5707,2923,0.0361,0.5863],"WBG":[0.5609,1071,0.551,2143,0.021,0.5584],"3c+":[0.6121,2519,0.5914,4706,0.0378,0.6173]}},
+ "Raph & Leo, Sibling Rivals": {"colors":"WR","mv":3.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.5544,"gih_games":2337,"gp_wr":0.5498,"gp_games":5768,"iwd":0.0071},"splash":null,"by_archetype":{"WU":[0.5735,38,0.5633,86,0.0236,0.6842],"WB":[0.5648,691,0.57,1745,-0.0151,0.5572],"WR":[0.5528,795,0.5403,2017,0.019,0.5635],"WG":[0.5511,42,0.5408,109,0.0144,0.6905],"UR":[0.5573,446,0.5537,1047,0.0163,0.5471],"WBG":[0.5268,25,0.5245,62,0.0046,0.44],"WUR":[0.5329,85,0.526,210,0.009,0.5647],"3c+":[0.5479,151,0.551,334,0.0022,0.4901]}},
+ "Raph & Mikey, Troublemakers": {"colors":"RG","mv":7.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.6136,"gih_games":4720,"gp_wr":0.5711,"gp_games":10286,"iwd":0.0781},"splash":null,"by_archetype":{"WR":[0.6039,359,0.5684,853,0.0667,0.5822],"WG":[0.6234,107,0.5762,237,0.0799,0.6729],"UR":[0.6278,1004,0.5936,2203,0.0605,0.6215],"UG":[0.5881,648,0.546,1334,0.0759,0.5895],"BG":[0.6086,897,0.5643,1974,0.0816,0.6098],"RG":[0.5156,105,0.4699,221,0.0831,0.5429],"UBG":[0.6136,347,0.5667,717,0.1043,0.611],"URG":[0.6291,472,0.5806,993,0.094,0.6377],"WBG":[0.5996,139,0.5611,316,0.0628,0.5827],"WUR":[0.6057,85,0.5596,167,0.0883,0.6353],"3c+":[0.6447,501,0.5926,1139,0.0922,0.6627]}},
+ "Raphael's Technique": {"colors":"R","mv":6.0,"type":"spell","rarity":"rare","overall":{"gih_wr":0.4762,"gih_games":176,"gp_wr":0.504,"gp_games":444,"iwd":-0.0617},"splash":null,"by_archetype":{"WR":[0.4633,83,0.4983,226,-0.0627,0.3976],"UR":[0.4882,60,0.5214,127,-0.0652,0.4333],"3c+":[0.4878,22,0.5197,57,-0.0708,0.4545]}},
+ "Raphael, Most Attitude": {"colors":"R","mv":4.0,"type":"creature","rarity":"uncommon","overall":{"gih_wr":0.5242,"gih_games":4093,"gp_wr":0.5384,"gp_games":9732,"iwd":-0.0251},"splash":{"gp_games":60,"gp_wr_raw":0.45,"gih_games":27,"gih_wr_raw":0.5185},"by_archetype":{"WR":[0.5306,1988,0.5428,5040,-0.0246,0.5342],"UR":[0.5315,1410,0.5491,3149,-0.0249,0.5255],"BR":[0.4348,70,0.4479,156,-0.0265,0.4571],"RG":[0.4209,126,0.4357,280,-0.0386,0.4365],"URG":[0.5225,97,0.5405,198,-0.0205,0.4639],"WUR":[0.5148,137,0.5249,313,-0.021,0.5474],"3c+":[0.5274,227,0.5464,523,-0.0165,0.489]}},
+ "Raphael, Ninja Destroyer": {"colors":"R","mv":4.0,"type":"creature","rarity":"mythic","overall":{"gih_wr":0.518,"gih_games":910,"gp_wr":0.5231,"gp_games":2119,"iwd":-0.0128},"splash":null,"by_archetype":{"WR":[0.5046,353,0.5188,890,-0.0326,0.4873],"UR":[0.5456,405,0.5395,897,0.0155,0.5654],"RG":[0.4098,30,0.4158,63,-0.018,0.4],"URG":[0.5199,30,0.5252,57,-0.0043,0.4667],"3c+":[0.5306,44,0.5352,106,-0.0073,0.5227]}},
+ "Raphael, Tough Turtle": {"colors":"R","mv":2.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.552,"gih_games":12428,"gp_wr":0.5493,"gp_games":25994,"iwd":0.005},"splash":{"gp_games":84,"gp_wr_raw":0.5119,"gih_games":35,"gih_wr_raw":0.5143},"by_archetype":{"WR":[0.5536,6560,0.5552,13707,-0.0065,0.5544],"UR":[0.5644,4376,0.5577,9140,0.0159,0.5638],"BR":[0.4497,118,0.4526,265,-0.0003,0.3983],"RG":[0.4364,138,0.4361,295,0.0159,0.3986],"R":[0.4365,39,0.4368,76,-0.0047,0.3846],"URG":[0.5541,173,0.5503,346,0.0166,0.5491],"WUR":[0.5332,453,0.5295,940,0.0118,0.532],"3c+":[0.5493,541,0.546,1152,0.0376,0.5287]}},
+ "Raphael, the Nightwatcher": {"colors":"R","mv":4.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.5934,"gih_games":3444,"gp_wr":0.5603,"gp_games":8093,"iwd":0.0571},"splash":{"gp_games":73,"gp_wr_raw":0.6301,"gih_games":38,"gih_wr_raw":0.5789},"by_archetype":{"WR":[0.5985,1201,0.5524,3039,0.0792,0.607],"UR":[0.6016,1752,0.5747,3967,0.0462,0.5993],"BR":[0.4994,44,0.4658,92,0.0505,0.5455],"RG":[0.4792,61,0.4496,139,0.0476,0.4426],"URG":[0.5988,96,0.5583,210,0.0896,0.6354],"WUR":[0.5665,130,0.542,296,0.0282,0.5308],"3c+":[0.5934,120,0.565,268,0.0653,0.5333]}},
+ "Rat King, Verminister": {"colors":"B","mv":2.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.6088,"gih_games":4349,"gp_wr":0.573,"gp_games":9691,"iwd":0.0647},"splash":{"gp_games":330,"gp_wr_raw":0.5,"gih_games":161,"gih_wr_raw":0.5466},"by_archetype":{"WB":[0.6184,1898,0.5892,4505,0.0514,0.6143],"UB":[0.5531,53,0.5151,102,0.0716,0.566],"UR":[0.617,28,0.5812,52,0.0739,0.5357],"UG":[0.5684,66,0.5327,135,0.0684,0.5455],"BR":[0.5082,30,0.4734,65,0.0591,0.4667],"BG":[0.6029,1234,0.5575,2644,0.0827,0.6102],"UBG":[0.6002,456,0.5668,940,0.0494,0.6031],"URG":[0.6035,23,0.5684,50,0.0714,0.4783],"WBG":[0.5947,183,0.5529,392,0.0693,0.6284],"3c+":[0.6206,338,0.5749,724,0.1008,0.6302]}},
+ "Ravenous Robots": {"colors":"R","mv":2.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.6243,"gih_games":4392,"gp_wr":0.5886,"gp_games":9582,"iwd":0.0658},"splash":{"gp_games":35,"gp_wr_raw":0.5714,"gih_games":22,"gih_wr_raw":0.5909},"by_archetype":{"WR":[0.5838,479,0.5726,1125,0.0116,0.5449],"UR":[0.6418,3267,0.5993,7037,0.078,0.6443],"BR":[0.52,26,0.4843,53,0.0704,0.5],"RG":[0.5041,27,0.4705,55,0.0619,0.4444],"URG":[0.6206,192,0.5809,417,0.0816,0.6302],"WUR":[0.5968,176,0.5586,414,0.079,0.5966],"3c+":[0.6189,186,0.587,411,0.071,0.586]}},
+ "Ray Fillet, Man Ray": {"colors":"U","mv":4.0,"type":"creature","rarity":"uncommon","overall":{"gih_wr":0.574,"gih_games":10123,"gp_wr":0.554,"gp_games":21147,"iwd":0.0379},"splash":{"gp_games":243,"gp_wr_raw":0.5267,"gih_games":114,"gih_wr_raw":0.5439},"by_archetype":{"WU":[0.6017,175,0.5774,404,0.0489,0.6171],"UB":[0.5284,191,0.5056,380,0.045,0.5393],"UR":[0.5776,4238,0.5686,8925,0.0181,0.5748],"UG":[0.5607,2794,0.5277,5648,0.0641,0.5651],"BG":[0.5637,95,0.5435,193,0.0411,0.5579],"UBG":[0.5749,1099,0.5516,2303,0.0454,0.5769],"URG":[0.5812,693,0.5639,1453,0.026,0.5815],"WUR":[0.5567,223,0.5331,529,0.0622,0.5471],"3c+":[0.5996,575,0.5761,1221,0.033,0.6122]}},
+ "Renet, Temporal Apprentice": {"colors":"U","mv":5.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.5262,"gih_games":2205,"gp_wr":0.5294,"gp_games":4820,"iwd":-0.0076},"splash":{"gp_games":20,"gp_wr_raw":0.45,"gih_games":6,"gih_wr_raw":0.6667},"by_archetype":{"WU":[0.5478,56,0.5513,110,-0.0061,0.5357],"UB":[0.4738,63,0.4792,154,-0.012,0.4444],"UR":[0.5374,1057,0.5457,2318,-0.0151,0.5326],"UG":[0.5112,553,0.5063,1154,-0.0053,0.5335],"UBG":[0.5183,201,0.5255,456,-0.0161,0.5025],"URG":[0.5244,92,0.527,210,0.024,0.4674],"WUR":[0.5027,35,0.5084,95,0.0074,0.3429],"3c+":[0.5457,134,0.5465,285,-0.012,0.5746]}},
+ "Retro-Mutation": {"colors":"U","mv":3.0,"type":"spell","rarity":"common","overall":{"gih_wr":0.5539,"gih_games":12627,"gp_wr":0.5387,"gp_games":24485,"iwd":0.0308},"splash":{"gp_games":126,"gp_wr_raw":0.5397,"gih_games":56,"gih_wr_raw":0.5714},"by_archetype":{"WU":[0.5654,207,0.5569,413,0.0247,0.5266],"UB":[0.5069,238,0.4887,456,0.0366,0.5168],"UR":[0.5634,6110,0.5531,12074,0.0214,0.5624],"UG":[0.523,3144,0.5077,5899,0.0317,0.5232],"BG":[0.542,32,0.5259,68,0.0371,0.5312],"U":[0.4596,56,0.4431,77,0.0311,0.4821],"UBG":[0.5548,1104,0.5328,2096,0.0497,0.558],"URG":[0.572,712,0.5467,1359,0.0489,0.5857],"WUR":[0.5261,309,0.5164,624,0.0322,0.4984],"3c+":[0.5966,695,0.5617,1373,0.0591,0.6273]}},
+ "Return to the Sewers": {"colors":"U","mv":4.0,"type":"spell","rarity":"common","overall":{"gih_wr":0.5906,"gih_games":28890,"gp_wr":0.5742,"gp_games":52041,"iwd":0.0368},"splash":{"gp_games":408,"gp_wr_raw":0.5466,"gih_games":184,"gih_wr_raw":0.5272},"by_archetype":{"WU":[0.6049,519,0.5943,967,0.0206,0.5973],"UB":[0.5447,356,0.5227,612,0.0487,0.559],"UR":[0.5976,14474,0.5888,25817,0.02,0.5971],"UG":[0.5641,5784,0.5398,10260,0.0562,0.5652],"BG":[0.5717,113,0.5597,265,0.0247,0.5398],"U":[0.4925,52,0.476,83,0.0352,0.5],"UBG":[0.592,2402,0.5618,4510,0.0715,0.5945],"URG":[0.5933,2307,0.5732,4055,0.0499,0.5934],"WUR":[0.5557,860,0.554,1718,0.0023,0.5419],"3c+":[0.6319,1962,0.5987,3631,0.062,0.6432]}},
+ "Rhythm of the Wild": {"colors":"RG","mv":3.0,"type":"spell","rarity":"mythic","overall":{"gih_wr":0.5014,"gih_games":47,"gp_wr":0.5204,"gp_games":121,"iwd":-0.0505},"splash":{"gp_games":50,"gp_wr_raw":0.44,"gih_games":21,"gih_wr_raw":0.381},"by_archetype":{}},
+ "Rock Soldiers": {"colors":"R","mv":4.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.5078,"gih_games":3050,"gp_wr":0.5209,"gp_games":6924,"iwd":-0.0248},"splash":null,"by_archetype":{"WR":[0.4919,651,0.5122,1620,-0.0417,0.4869],"UR":[0.5148,2019,0.5292,4421,-0.0252,0.5136],"BR":[0.4062,55,0.4212,101,-0.0314,0.3818],"RG":[0.3902,27,0.4056,60,-0.0263,0.2963],"URG":[0.5076,54,0.519,140,-0.0214,0.537],"WUR":[0.4938,113,0.4974,268,-0.0007,0.5575],"3c+":[0.5143,107,0.5246,267,-0.0062,0.514]}},
+ "Rocksteady, Crash Courser": {"colors":"G","mv":6.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.5448,"gih_games":12004,"gp_wr":0.5356,"gp_games":25074,"iwd":0.0173},"splash":{"gp_games":103,"gp_wr_raw":0.5146,"gih_games":41,"gih_wr_raw":0.4634},"by_archetype":{"WB":[0.5806,29,0.5746,72,0.01,0.4828],"WG":[0.562,392,0.5492,944,0.0186,0.574],"UG":[0.5307,2724,0.5185,5582,0.0232,0.5319],"BG":[0.5448,4566,0.538,9601,0.0125,0.5445],"RG":[0.446,179,0.4391,368,0.0209,0.4246],"G":[0.5705,72,0.5584,164,0.0204,0.6111],"UBG":[0.553,1996,0.5436,4006,0.0196,0.5526],"URG":[0.5585,529,0.5479,1165,0.0314,0.552],"WBG":[0.5393,575,0.5309,1245,0.0189,0.5357],"3c+":[0.5736,934,0.5651,1907,0.0133,0.5749]}},
+ "Sally Pride, Lioness Leader": {"colors":"W","mv":5.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.6963,"gih_games":5402,"gp_wr":0.618,"gp_games":12376,"iwd":0.1393},"splash":{"gp_games":1311,"gp_wr_raw":0.5812,"gih_games":583,"gih_wr_raw":0.6209},"by_archetype":{"WU":[0.7144,122,0.6329,254,0.1431,0.7459],"WB":[0.7184,2261,0.6378,5251,0.1403,0.72],"WR":[0.7005,1226,0.6063,2959,0.1636,0.7113],"WG":[0.6808,229,0.608,514,0.1213,0.6681],"UR":[0.694,108,0.6232,247,0.1317,0.6204],"UG":[0.6556,149,0.5774,308,0.1399,0.6577],"BG":[0.6582,167,0.5923,409,0.1217,0.5808],"W":[0.7267,26,0.6489,51,0.1424,0.6923],"UBG":[0.6834,67,0.6046,166,0.1394,0.6866],"URG":[0.6885,59,0.6145,119,0.1252,0.6441],"WBG":[0.6745,272,0.592,610,0.1521,0.6838],"WUR":[0.6704,239,0.5907,489,0.1529,0.6695],"3c+":[0.6948,460,0.6215,966,0.1356,0.6848]}},
+ "Savanti Romero, Time's Exile": {"colors":"B","mv":5.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.605,"gih_games":4263,"gp_wr":0.5754,"gp_games":9866,"iwd":0.052},"splash":{"gp_games":189,"gp_wr_raw":0.4974,"gih_games":77,"gih_wr_raw":0.4935},"by_archetype":{"WB":[0.6195,1759,0.5959,4328,0.0388,0.6168],"UB":[0.5475,81,0.5186,176,0.0517,0.5309],"UG":[0.5638,37,0.5356,83,0.0556,0.4865],"BR":[0.5062,23,0.4767,55,0.0513,0.4783],"BG":[0.6077,1276,0.5636,2906,0.0757,0.6191],"UBG":[0.6016,576,0.5673,1205,0.0614,0.6094],"WBG":[0.5808,150,0.5527,349,0.0497,0.5667],"3c+":[0.5976,326,0.5753,672,0.0576,0.5613]}},
+ "Saved by the Shell": {"colors":"G","mv":2.0,"type":"spell","rarity":"uncommon","overall":{"gih_wr":0.5836,"gih_games":8844,"gp_wr":0.5534,"gp_games":18686,"iwd":0.0567},"splash":{"gp_games":32,"gp_wr_raw":0.5,"gih_games":13,"gih_wr_raw":0.4615},"by_archetype":{"WG":[0.5843,428,0.5618,919,0.0463,0.5654],"UG":[0.5747,2435,0.5437,5087,0.0541,0.5774],"BG":[0.5867,2965,0.5554,6308,0.0594,0.5868],"RG":[0.4897,120,0.4643,259,0.0298,0.4833],"G":[0.6037,56,0.5754,116,0.0542,0.5714],"UBG":[0.5852,1301,0.56,2650,0.0516,0.5803],"URG":[0.6023,578,0.5687,1227,0.0721,0.6021],"WBG":[0.5816,344,0.5519,817,0.0523,0.5814],"3c+":[0.6173,607,0.5764,1280,0.0911,0.6244]}},
+ "Sewer-veillance Cam": {"colors":"U","mv":1.0,"type":"spell","rarity":"common","overall":{"gih_wr":0.5943,"gih_games":30375,"gp_wr":0.5766,"gp_games":53486,"iwd":0.0409},"splash":{"gp_games":363,"gp_wr_raw":0.6061,"gih_games":166,"gih_wr_raw":0.6084},"by_archetype":{"WU":[0.6075,536,0.5923,932,0.038,0.6026],"UB":[0.5466,450,0.5253,750,0.0403,0.56],"UR":[0.599,17196,0.5869,29700,0.0288,0.5986],"UG":[0.5586,4258,0.5377,7707,0.048,0.5589],"BG":[0.5897,125,0.5649,271,0.0385,0.664],"U":[0.49,47,0.4743,78,0.0399,0.4468],"UBG":[0.5843,2241,0.5645,4110,0.0467,0.5841],"URG":[0.6069,2289,0.573,4032,0.0833,0.6112],"WUR":[0.5709,1025,0.5581,1927,0.0224,0.5698],"3c+":[0.6319,2167,0.599,3887,0.0634,0.6419]}},
+ "Shadowspear": {"colors":"","mv":1.0,"type":"spell","rarity":"mythic","overall":{"gih_wr":0.6175,"gih_games":401,"gp_wr":0.5719,"gp_games":899,"iwd":0.0793},"splash":null,"by_archetype":{"WB":[0.6423,72,0.5964,145,0.069,0.6806],"WR":[0.6019,59,0.5632,134,0.0589,0.5254],"UR":[0.636,103,0.5834,232,0.1041,0.6796],"BG":[0.6005,57,0.5555,121,0.0792,0.5965],"UBG":[0.6092,22,0.5624,61,0.0855,0.6364]}},
+ "Shark Shredder, Killer Clone": {"colors":"B","mv":4.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.5906,"gih_games":4033,"gp_wr":0.5698,"gp_games":9194,"iwd":0.037},"splash":{"gp_games":127,"gp_wr_raw":0.4409,"gih_games":65,"gih_wr_raw":0.4462},"by_archetype":{"WB":[0.5927,1882,0.5864,4465,0.0104,0.5855],"UB":[0.5379,73,0.5123,147,0.0503,0.5753],"UG":[0.5456,37,0.5278,82,0.0412,0.4054],"BR":[0.5,48,0.4723,96,0.0462,0.625],"BG":[0.5905,1131,0.5531,2531,0.0691,0.6021],"UBG":[0.597,420,0.5645,914,0.0514,0.6262],"WBG":[0.5787,177,0.5515,386,0.0367,0.6215],"3c+":[0.5843,237,0.5695,527,0.0427,0.5401]}},
+ "Shredder's Armor": {"colors":"B","mv":2.0,"type":"spell","rarity":"uncommon","overall":{"gih_wr":0.4865,"gih_games":928,"gp_wr":0.5238,"gp_games":2238,"iwd":-0.0666},"splash":null,"by_archetype":{"WB":[0.4891,502,0.5429,1211,-0.0984,0.4641],"UB":[0.4377,43,0.4679,91,-0.0504,0.5814],"BG":[0.4751,269,0.5078,666,-0.0584,0.4944],"UBG":[0.4781,38,0.513,89,-0.0566,0.5263],"WBG":[0.4603,25,0.4996,66,-0.0621,0.36],"3c+":[0.4893,35,0.5295,69,-0.0668,0.4]}},
+ "Shredder's Revenge": {"colors":"B","mv":3.0,"type":"spell","rarity":"common","overall":{"gih_wr":0.5585,"gih_games":7302,"gp_wr":0.5591,"gp_games":16446,"iwd":-0.0012},"splash":{"gp_games":72,"gp_wr_raw":0.5694,"gih_games":34,"gih_wr_raw":0.5588},"by_archetype":{"WB":[0.5599,4184,0.5733,9762,-0.0242,0.5574],"UB":[0.4936,63,0.4951,130,0.0058,0.4444],"BR":[0.4591,53,0.4565,92,0.0011,0.5094],"BG":[0.5545,1936,0.5367,4210,0.0354,0.5615],"UBG":[0.554,465,0.5418,971,0.0328,0.5699],"WBG":[0.5356,223,0.5354,474,-0.011,0.5471],"3c+":[0.5665,340,0.562,731,0.0095,0.5765]}},
+ "Shredder's Technique": {"colors":"B","mv":3.0,"type":"spell","rarity":"uncommon","overall":{"gih_wr":0.5794,"gih_games":11045,"gp_wr":0.5712,"gp_games":23740,"iwd":0.0154},"splash":{"gp_games":376,"gp_wr_raw":0.5559,"gih_games":184,"gih_wr_raw":0.5707},"by_archetype":{"WB":[0.5854,5087,0.5928,11517,-0.0153,0.5834],"UB":[0.5183,148,0.5124,343,0.0107,0.5],"UG":[0.5415,100,0.5316,190,0.0183,0.55],"BR":[0.4786,79,0.4715,149,0.008,0.4684],"BG":[0.5677,3116,0.5484,6404,0.0402,0.5693],"UBG":[0.5821,1197,0.5576,2324,0.0554,0.5906],"WBG":[0.5572,433,0.547,937,0.02,0.5589],"3c+":[0.6022,822,0.5743,1732,0.063,0.6168]}},
+ "Shredder, Unrelenting": {"colors":"B","mv":5.0,"type":"creature","rarity":"uncommon","overall":{"gih_wr":0.5673,"gih_games":8252,"gp_wr":0.5689,"gp_games":18554,"iwd":-0.0029},"splash":{"gp_games":85,"gp_wr_raw":0.5059,"gih_games":40,"gih_wr_raw":0.5},"by_archetype":{"WB":[0.5827,5874,0.5873,13269,-0.0105,0.5832],"UB":[0.4951,113,0.499,243,0.0071,0.4513],"BR":[0.4654,40,0.4617,93,0.0088,0.575],"BG":[0.5482,1376,0.5359,3075,0.0308,0.5523],"UBG":[0.5435,251,0.5477,529,-0.0041,0.5299],"WBG":[0.5273,240,0.5308,588,0.0108,0.5],"3c+":[0.5382,317,0.5572,675,-0.0176,0.4732]}},
+ "Silverclad Ferocidons": {"colors":"R","mv":7.0,"type":"creature","rarity":"mythic","overall":{"gih_wr":0.5012,"gih_games":77,"gp_wr":0.5151,"gp_games":179,"iwd":-0.0434},"splash":null,"by_archetype":{"WR":[0.5017,26,0.5199,73,-0.0505,0.3462]}},
+ "Skateboard": {"colors":"","mv":1.0,"type":"spell","rarity":"uncommon","overall":{"gih_wr":0.5114,"gih_games":2001,"gp_wr":0.5322,"gp_games":4809,"iwd":-0.0369},"splash":null,"by_archetype":{"WU":[0.521,26,0.5453,68,-0.0421,0.3846],"WB":[0.5305,559,0.5544,1411,-0.0483,0.5313],"WR":[0.49,365,0.5196,942,-0.0539,0.4712],"WG":[0.505,28,0.5231,91,-0.0351,0.6071],"UR":[0.5272,606,0.5408,1348,-0.02,0.5347],"UG":[0.4822,135,0.4918,275,-0.0068,0.5407],"BG":[0.4837,81,0.51,196,-0.0413,0.4074],"URG":[0.5102,19,0.5287,51,-0.029,0.5789],"WBG":[0.4847,21,0.5095,56,-0.0551,0.381],"WUR":[0.4897,39,0.5087,78,-0.0376,0.5385],"3c+":[0.5113,52,0.5345,129,-0.0284,0.4231]}},
+ "Slash, Reptile Rampager": {"colors":"R","mv":5.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.5701,"gih_games":3092,"gp_wr":0.5562,"gp_games":7180,"iwd":0.0238},"splash":{"gp_games":97,"gp_wr_raw":0.4536,"gih_games":37,"gih_wr_raw":0.4054},"by_archetype":{"WR":[0.5635,1066,0.5537,2648,0.0102,0.5647],"UR":[0.5943,1471,0.5691,3304,0.0487,0.5996],"BR":[0.4758,49,0.4617,105,0.0189,0.5102],"RG":[0.4552,46,0.4461,117,0.0102,0.3913],"URG":[0.5694,125,0.5574,256,0.0209,0.56],"WUR":[0.5428,83,0.5325,186,0.0308,0.4819],"3c+":[0.5668,206,0.5637,442,0.0073,0.5194]}},
+ "Slithering Cryptid": {"colors":"UG","mv":3.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.558,"gih_games":18305,"gp_wr":0.5484,"gp_games":34583,"iwd":0.02},"splash":null,"by_archetype":{"WU":[0.5881,116,0.5793,230,0.0191,0.5776],"WG":[0.5694,337,0.5549,713,0.0313,0.5786],"UB":[0.5186,110,0.5077,228,0.0215,0.5273],"UR":[0.5632,2341,0.5686,4809,-0.0078,0.5562],"UG":[0.544,5051,0.5274,9012,0.0373,0.5452],"BG":[0.5471,3827,0.5442,7531,0.0061,0.5453],"RG":[0.4572,102,0.4504,208,0.0127,0.4314],"G":[0.574,41,0.5656,91,0.0185,0.5366],"UBG":[0.5629,3435,0.5529,6032,0.0234,0.5627],"URG":[0.5901,1164,0.5651,2245,0.0517,0.6014],"WBG":[0.5525,283,0.5448,639,0.0057,0.5548],"WUR":[0.5519,153,0.5403,338,0.0272,0.5556],"3c+":[0.595,1321,0.5774,2463,0.0313,0.6026]}},
+ "South Wind Avatar": {"colors":"B","mv":4.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.5658,"gih_games":3228,"gp_wr":0.5578,"gp_games":7164,"iwd":0.014},"splash":{"gp_games":246,"gp_wr_raw":0.4715,"gih_games":107,"gih_wr_raw":0.5327},"by_archetype":{"WB":[0.5676,1300,0.5763,3061,-0.0163,0.5562],"UB":[0.5111,51,0.5019,132,0.0179,0.5098],"UG":[0.5282,51,0.5189,107,0.025,0.5098],"BR":[0.4662,28,0.4585,61,0.0198,0.3929],"BG":[0.5652,976,0.5468,2043,0.0296,0.5768],"UBG":[0.5625,381,0.5506,779,0.0189,0.5722],"WBG":[0.546,144,0.5363,317,0.0191,0.5486],"3c+":[0.5881,244,0.5664,532,0.0478,0.627]}},
+ "Spicy Oatmeal Pizza": {"colors":"R","mv":3.0,"type":"spell","rarity":"uncommon","overall":{"gih_wr":0.5779,"gih_games":13225,"gp_wr":0.5727,"gp_games":27333,"iwd":0.0101},"splash":{"gp_games":956,"gp_wr_raw":0.5607,"gih_games":438,"gih_wr_raw":0.5868},"by_archetype":{"WR":[0.5422,2367,0.5589,5448,-0.0309,0.5349],"UR":[0.5908,7760,0.5819,15464,0.0183,0.5911],"UG":[0.5531,184,0.5366,400,0.0291,0.6141],"BR":[0.4823,92,0.474,203,0.0154,0.5217],"BG":[0.5631,63,0.5591,158,-0.0132,0.619],"RG":[0.462,125,0.4602,333,-0.0034,0.456],"UBG":[0.5645,117,0.5608,242,0.0103,0.5556],"URG":[0.5852,971,0.5694,1980,0.0356,0.5932],"WUR":[0.5612,510,0.5537,1002,0.0061,0.5725],"3c+":[0.5843,975,0.5795,1960,0.0094,0.5846]}},
+ "Splinter's Technique": {"colors":"B","mv":4.0,"type":"spell","rarity":"rare","overall":{"gih_wr":0.5022,"gih_games":897,"gp_wr":0.5308,"gp_games":2224,"iwd":-0.0506},"splash":{"gp_games":30,"gp_wr_raw":0.4667,"gih_games":13,"gih_wr_raw":0.4615},"by_archetype":{"WB":[0.5107,426,0.5497,1130,-0.071,0.493],"BG":[0.484,265,0.5116,604,-0.0505,0.4868],"UBG":[0.4988,76,0.5177,181,-0.0216,0.5789],"WBG":[0.4749,48,0.5049,109,-0.0483,0.4167],"3c+":[0.5086,51,0.5365,113,-0.0502,0.5098]}},
+ "Splinter, Hamato Yoshi": {"colors":"B","mv":2.0,"type":"creature","rarity":"uncommon","overall":{"gih_wr":0.6014,"gih_games":9978,"gp_wr":0.5828,"gp_games":21257,"iwd":0.035},"splash":{"gp_games":85,"gp_wr_raw":0.5765,"gih_games":25,"gih_wr_raw":0.44},"by_archetype":{"WB":[0.6171,8163,0.5957,17246,0.0395,0.6179],"UB":[0.5356,77,0.5129,179,0.0481,0.5714],"BR":[0.4856,64,0.4724,111,0.0156,0.4375],"BG":[0.5585,865,0.5417,1927,0.0447,0.548],"UBG":[0.5659,140,0.5549,287,0.0334,0.5],"WBG":[0.5552,312,0.5435,711,0.0289,0.5288],"3c+":[0.5706,326,0.5698,703,0.0127,0.5123]}},
+ "Splinter, Radical Rat": {"colors":"WB","mv":3.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.5671,"gih_games":2850,"gp_wr":0.5654,"gp_games":6763,"iwd":0.0028},"splash":null,"by_archetype":{"WU":[0.5818,76,0.5746,170,0.0081,0.6579],"WB":[0.5749,1813,0.5779,4337,-0.0068,0.5736],"WR":[0.5498,268,0.5477,651,-0.0018,0.556],"WG":[0.5489,30,0.5477,71,0.0011,0.5333],"UB":[0.4984,57,0.4981,131,0.0061,0.4561],"BG":[0.5426,183,0.536,425,0.0228,0.5519],"UBG":[0.5473,63,0.5443,161,0.0135,0.5397],"WBG":[0.5287,101,0.5324,226,-0.0049,0.4752],"WUR":[0.5426,40,0.5354,85,0.0101,0.675],"3c+":[0.5678,207,0.5626,473,0.0152,0.5749]}},
+ "Squirrelanoids": {"colors":"B","mv":1.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.5811,"gih_games":22199,"gp_wr":0.5744,"gp_games":43471,"iwd":0.0137},"splash":{"gp_games":50,"gp_wr_raw":0.46,"gih_games":23,"gih_wr_raw":0.6087},"by_archetype":{"WB":[0.5929,13024,0.5918,25825,0.0018,0.5928],"UB":[0.5332,302,0.5185,529,0.0176,0.5662],"BR":[0.4806,114,0.4726,236,0.0086,0.5],"BG":[0.5617,5486,0.5487,10385,0.0289,0.5622],"UBG":[0.5842,1526,0.5594,2911,0.0551,0.5931],"WBG":[0.5444,794,0.5463,1623,-0.0048,0.5353],"3c+":[0.5749,925,0.5661,1901,0.0338,0.5676]}},
+ "Stockman, Mad Fly-entist": {"colors":"U","mv":5.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.5423,"gih_games":6430,"gp_wr":0.5341,"gp_games":13616,"iwd":0.015},"splash":{"gp_games":234,"gp_wr_raw":0.4872,"gih_games":105,"gih_wr_raw":0.4476},"by_archetype":{"WU":[0.5455,125,0.5538,290,-0.0159,0.424],"WB":[0.5619,32,0.5595,62,0.0068,0.375],"UB":[0.4928,147,0.4844,318,0.0163,0.4898],"UR":[0.5436,2403,0.5447,5243,0.0015,0.5381],"UG":[0.5168,1502,0.5043,3090,0.0236,0.5193],"BG":[0.5309,45,0.5223,99,0.021,0.5111],"UBG":[0.5504,883,0.5333,1834,0.0319,0.5595],"URG":[0.56,442,0.5392,904,0.0473,0.5792],"WUR":[0.5346,218,0.5252,473,-0.0026,0.5596],"3c+":[0.5801,595,0.5575,1213,0.0323,0.6084]}},
+ "Stomped by the Foot": {"colors":"B","mv":2.0,"type":"spell","rarity":"common","overall":{"gih_wr":0.5782,"gih_games":25449,"gp_wr":0.5705,"gp_games":48948,"iwd":0.0162},"splash":{"gp_games":675,"gp_wr_raw":0.5378,"gih_games":312,"gih_wr_raw":0.5801},"by_archetype":{"WB":[0.5831,11679,0.5885,23328,-0.0111,0.5822],"UB":[0.5233,444,0.5113,714,0.0335,0.527],"UR":[0.5892,32,0.5802,62,0.0207,0.5938],"UG":[0.5459,167,0.5289,371,0.0452,0.5749],"BR":[0.4705,162,0.4718,310,-0.0143,0.4321],"BG":[0.5725,7222,0.5516,13226,0.0465,0.5738],"UBG":[0.5923,2999,0.5617,5606,0.066,0.5985],"URG":[0.5792,67,0.5686,131,0.0201,0.6119],"WBG":[0.5502,945,0.5458,1875,0.0095,0.546],"3c+":[0.5837,1688,0.5768,3235,0.014,0.5829]}},
+ "Super Shredder": {"colors":"B","mv":2.0,"type":"creature","rarity":"mythic","overall":{"gih_wr":0.6018,"gih_games":2889,"gp_wr":0.5745,"gp_games":6447,"iwd":0.0494},"splash":{"gp_games":270,"gp_wr_raw":0.5148,"gih_games":135,"gih_wr_raw":0.5185},"by_archetype":{"WB":[0.6194,1206,0.5939,2876,0.0446,0.6169],"UB":[0.5456,77,0.5204,153,0.0344,0.5325],"UR":[0.6122,31,0.585,58,0.0542,0.5484],"UG":[0.5625,41,0.5351,88,0.056,0.5122],"BR":[0.4974,39,0.476,74,0.0322,0.359],"BG":[0.5993,834,0.5652,1760,0.0535,0.6115],"UBG":[0.6027,292,0.5632,603,0.0845,0.6267],"WBG":[0.583,123,0.5508,279,0.0673,0.5935],"3c+":[0.6054,192,0.5788,447,0.0578,0.5833]}},
+ "Swamp": {"colors":"","mv":0.0,"type":"land","rarity":"common","overall":{"gih_wr":0.5757,"gih_games":89686,"gp_wr":0.5713,"gp_games":103368,"iwd":0.0335},"splash":null,"by_archetype":{"WU":[0.5884,39,0.5874,70,0.0183,0.5385],"WB":[0.5942,40000,0.5899,40774,0.1615,0.5942],"WR":[0.531,482,0.5511,957,-0.0189,0.4793],"WG":[0.5625,231,0.5659,520,-0.0081,0.5498],"UB":[0.5166,1085,0.5147,1097,0.0271,0.5152],"UR":[0.5978,777,0.585,1585,0.0309,0.6088],"UG":[0.5408,3044,0.5398,5436,-0.0002,0.5417],"BR":[0.4778,454,0.4728,465,0.0357,0.4802],"BG":[0.5566,20868,0.5522,21466,0.1083,0.5565],"RG":[0.4618,89,0.4589,170,0.0188,0.4607],"W":[0.6047,64,0.6053,77,0.0184,0.5469],"G":[0.5835,160,0.5749,195,0.0361,0.6125],"UBG":[0.5673,9964,0.5603,11898,0.0428,0.5674],"URG":[0.5896,1376,0.5824,3224,0.0059,0.5981],"WBG":[0.5494,3503,0.5473,4172,0.0205,0.5487],"WUR":[0.5708,258,0.5573,652,0.0173,0.624],"3c+":[0.5828,7239,0.5812,10550,0.0057,0.5828]}},
+ "Sword of Sinew and Steel": {"colors":"","mv":3.0,"type":"spell","rarity":"mythic","overall":{"gih_wr":0.5672,"gih_games":284,"gp_wr":0.5384,"gp_games":607,"iwd":0.0429},"splash":null,"by_archetype":{"WB":[0.5926,56,0.5646,124,0.0398,0.5714],"WR":[0.5663,30,0.534,73,0.0507,0.6333],"UR":[0.5791,74,0.5533,169,0.0454,0.5135],"UG":[0.5361,39,0.5064,83,0.0442,0.5385],"BG":[0.5594,30,0.527,56,0.0511,0.6333]}},
+ "TCRI Building": {"colors":"","mv":0.0,"type":"land","rarity":"common","overall":{"gih_wr":0.606,"gih_games":22436,"gp_wr":0.583,"gp_games":43713,"iwd":0.0471},"splash":null,"by_archetype":{"WU":[0.6217,64,0.5955,123,0.0638,0.6406],"WR":[0.5913,292,0.5659,643,0.0634,0.5856],"UB":[0.549,91,0.5247,164,0.0517,0.5604],"UR":[0.6023,12305,0.5879,24206,0.0298,0.6015],"UG":[0.5782,1527,0.5503,3015,0.0498,0.5842],"BG":[0.5871,224,0.5669,503,0.0275,0.5893],"RG":[0.483,31,0.4649,71,0.0477,0.2903],"UBG":[0.6186,1388,0.5861,2713,0.0511,0.6318],"URG":[0.6054,2542,0.574,4679,0.0741,0.6062],"WBG":[0.5832,103,0.5634,221,0.0209,0.5922],"WUR":[0.5814,1137,0.5586,2202,0.0471,0.5814],"3c+":[0.6399,2680,0.5968,5054,0.0881,0.6478]}},
+ "Tainted Treats": {"colors":"BG","mv":3.0,"type":"spell","rarity":"uncommon","overall":{"gih_wr":0.6092,"gih_games":12735,"gp_wr":0.5687,"gp_games":24327,"iwd":0.0845},"splash":{"gp_games":2962,"gp_wr_raw":0.556,"gih_games":1436,"gih_wr_raw":0.5829},"by_archetype":{"WB":[0.6232,152,0.5958,293,0.0751,0.5263],"WG":[0.617,81,0.5752,166,0.0826,0.642],"UG":[0.5808,785,0.5428,1631,0.0773,0.5771],"BG":[0.6086,5852,0.5658,11219,0.0893,0.609],"UBG":[0.6061,3118,0.5639,5717,0.0982,0.6046],"URG":[0.6174,261,0.583,535,0.0621,0.6054],"WBG":[0.5943,883,0.563,1796,0.0567,0.5889],"3c+":[0.6503,1555,0.6023,2850,0.0918,0.6598]}},
+ "Technodrome": {"colors":"","mv":2.0,"type":"creature","rarity":"mythic","overall":{"gih_wr":0.5807,"gih_games":2773,"gp_wr":0.5675,"gp_games":6169,"iwd":0.0237},"splash":null,"by_archetype":{"WU":[0.6013,36,0.5873,73,0.0216,0.6389],"WB":[0.5989,56,0.591,110,0.0062,0.5357],"WR":[0.5685,64,0.5611,199,0.0024,0.5156],"UR":[0.5971,1431,0.5831,3224,0.0241,0.5982],"UG":[0.5441,386,0.5298,835,0.0322,0.5415],"BG":[0.5638,212,0.5545,505,0.0083,0.5566],"UBG":[0.5756,157,0.5581,327,0.0428,0.586],"URG":[0.5843,107,0.567,221,0.043,0.5981],"WBG":[0.5619,26,0.5481,57,0.0259,0.5769],"WUR":[0.5627,99,0.5477,208,0.0286,0.5758],"3c+":[0.5992,132,0.5782,267,0.0443,0.6439]}},
+ "Teleportation Circle": {"colors":"W","mv":4.0,"type":"spell","rarity":"mythic","overall":{"gih_wr":0.5954,"gih_games":246,"gp_wr":0.5636,"gp_games":605,"iwd":0.0508},"splash":{"gp_games":143,"gp_wr_raw":0.5944,"gih_games":62,"gih_wr_raw":0.6935},"by_archetype":{"WB":[0.6146,61,0.5823,160,0.0598,0.5902],"WR":[0.5774,44,0.5529,127,0.0333,0.4318],"WBG":[0.5798,24,0.5419,56,0.0684,0.75],"3c+":[0.6091,40,0.5736,90,0.0535,0.7]}},
+ "Tenderize": {"colors":"G","mv":2.0,"type":"spell","rarity":"common","overall":{"gih_wr":0.5767,"gih_games":23549,"gp_wr":0.5542,"gp_games":42709,"iwd":0.0498},"splash":{"gp_games":62,"gp_wr_raw":0.5,"gih_games":23,"gih_wr_raw":0.3913},"by_archetype":{"WG":[0.5926,870,0.5682,1600,0.0484,0.5966],"UG":[0.5658,6519,0.5362,11299,0.0697,0.5667],"BG":[0.5661,7462,0.5527,13752,0.0299,0.5649],"RG":[0.4784,267,0.4605,460,0.0381,0.4644],"G":[0.5972,131,0.5764,226,0.0431,0.5878],"UBG":[0.5923,3722,0.5614,6753,0.0706,0.5935],"URG":[0.6028,1764,0.5732,3219,0.0655,0.606],"WBG":[0.5596,1015,0.5491,1918,0.0235,0.5488],"3c+":[0.6182,1777,0.5894,3423,0.0535,0.6241]}},
+ "The Cloning of Shredder": {"colors":"B","mv":6.0,"type":"spell","rarity":"mythic","overall":{"gih_wr":0.61,"gih_games":3357,"gp_wr":0.5755,"gp_games":7576,"iwd":0.0616},"splash":{"gp_games":329,"gp_wr_raw":0.5653,"gih_games":145,"gih_wr_raw":0.5931},"by_archetype":{"WB":[0.6205,1265,0.5951,2996,0.0443,0.6134],"UB":[0.5529,53,0.5197,112,0.0625,0.5094],"UR":[0.6276,18,0.5895,65,0.0653,0.7778],"UG":[0.5744,73,0.5399,147,0.0586,0.5753],"BG":[0.6111,1101,0.5659,2444,0.0772,0.6222],"UBG":[0.5929,366,0.5615,772,0.0699,0.5738],"WBG":[0.5897,150,0.5531,304,0.0757,0.5867],"3c+":[0.6325,270,0.5869,604,0.0825,0.6667]}},
+ "The Last Ronin": {"colors":"BG","mv":6.0,"type":"spell","rarity":"mythic","overall":{"gih_wr":0.6868,"gih_games":3810,"gp_wr":0.6084,"gp_games":8103,"iwd":0.1478},"splash":{"gp_games":2174,"gp_wr_raw":0.6021,"gih_games":1017,"gih_wr_raw":0.6706},"by_archetype":{"WB":[0.6992,363,0.6326,821,0.1349,0.6584],"WG":[0.6868,20,0.6107,54,0.1434,0.55],"UR":[0.7094,28,0.6297,64,0.1596,0.6786],"UG":[0.6679,362,0.5835,735,0.1622,0.6823],"BG":[0.6867,1459,0.6038,3236,0.1515,0.6895],"UBG":[0.7121,713,0.6128,1398,0.1997,0.7363],"URG":[0.6991,143,0.6212,287,0.1406,0.7063],"WBG":[0.6599,301,0.5986,612,0.1063,0.6179],"3c+":[0.7089,380,0.6304,808,0.142,0.7132]}},
+ "The Last Ronin's Technique": {"colors":"W","mv":4.0,"type":"spell","rarity":"uncommon","overall":{"gih_wr":0.5975,"gih_games":11487,"gp_wr":0.5896,"gp_games":24729,"iwd":0.0149},"splash":{"gp_games":75,"gp_wr_raw":0.52,"gih_games":46,"gih_wr_raw":0.5217},"by_archetype":{"WU":[0.6179,186,0.5992,411,0.0327,0.672],"WB":[0.6107,7051,0.6023,15140,0.0154,0.611],"WR":[0.5845,2917,0.5759,6346,0.013,0.5862],"WG":[0.5668,234,0.5676,522,0.0059,0.5256],"W":[0.6182,43,0.6152,117,0.0014,0.5349],"WBG":[0.5642,327,0.5541,679,0.0318,0.5596],"WUR":[0.5724,194,0.5593,430,0.0231,0.5979],"3c+":[0.5685,497,0.5737,1017,0.0161,0.5272]}},
+ "The Neutrinos": {"colors":"WR","mv":4.0,"type":"creature","rarity":"uncommon","overall":{"gih_wr":0.5489,"gih_games":6381,"gp_wr":0.549,"gp_games":13550,"iwd":-0.0007},"splash":{"gp_games":1135,"gp_wr_raw":0.5154,"gih_games":523,"gih_wr_raw":0.499},"by_archetype":{"WB":[0.5544,180,0.5667,375,0.0035,0.4611],"WR":[0.5607,4780,0.5582,10137,0.0009,0.563],"UR":[0.5607,226,0.5639,517,0.0057,0.5354],"WUR":[0.5241,482,0.5251,1006,0.0179,0.5083],"3c+":[0.5368,644,0.5504,1353,-0.005,0.5047]}},
+ "The Ooze": {"colors":"","mv":2.0,"type":"spell","rarity":"rare","overall":{"gih_wr":0.5861,"gih_games":4591,"gp_wr":0.5646,"gp_games":10415,"iwd":0.0382},"splash":null,"by_archetype":{"WU":[0.6075,24,0.584,62,0.0478,0.625],"WB":[0.6097,674,0.5908,1684,0.0289,0.6083],"WR":[0.587,329,0.5621,884,0.0355,0.6018],"WG":[0.5783,64,0.5588,140,0.0398,0.5312],"UB":[0.5292,32,0.5109,67,0.0368,0.4062],"UR":[0.6049,1184,0.5822,2593,0.0397,0.6064],"UG":[0.5437,590,0.5326,1278,0.0127,0.5322],"BG":[0.5811,649,0.5521,1488,0.0527,0.5901],"UBG":[0.5929,329,0.5582,694,0.0732,0.6201],"URG":[0.5822,214,0.5659,424,0.0325,0.5561],"WBG":[0.5602,140,0.5459,306,0.023,0.5143],"WUR":[0.5633,76,0.5424,182,0.0522,0.5132],"3c+":[0.6018,237,0.574,496,0.0636,0.6118]}},
+ "Tokka & Rahzar, Terrible Twos": {"colors":"BR","mv":2.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.5226,"gih_games":1387,"gp_wr":0.5322,"gp_games":3313,"iwd":-0.0186},"splash":null,"by_archetype":{"WB":[0.5466,376,0.5588,940,-0.0291,0.5479],"WR":[0.5153,233,0.5252,576,-0.0185,0.515],"UR":[0.5319,207,0.5428,474,-0.0083,0.5121],"BR":[0.428,36,0.4364,79,-0.0129,0.4444],"BG":[0.5088,284,0.5198,656,-0.0259,0.5106],"UBG":[0.5188,40,0.5253,96,-0.0091,0.575],"WBG":[0.5081,33,0.5147,80,-0.0154,0.6061],"3c+":[0.5244,116,0.5392,254,-0.0161,0.4655]}},
+ "Transdimensional Bovine": {"colors":"G","mv":3.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.5969,"gih_games":4167,"gp_wr":0.5592,"gp_games":8898,"iwd":0.07},"splash":{"gp_games":45,"gp_wr_raw":0.4667,"gih_games":19,"gih_wr_raw":0.5263},"by_archetype":{"WG":[0.6025,125,0.5701,294,0.0494,0.584],"UG":[0.5687,933,0.5402,1966,0.0495,0.5627],"BG":[0.5911,1191,0.5572,2711,0.0625,0.5877],"RG":[0.5073,50,0.4666,130,0.0659,0.6],"G":[0.6107,35,0.5788,60,0.0577,0.4857],"UBG":[0.6172,843,0.5674,1638,0.1027,0.6287],"URG":[0.6156,372,0.5732,790,0.0883,0.621],"WBG":[0.5833,157,0.5514,357,0.0664,0.5414],"3c+":[0.6347,442,0.5884,908,0.0837,0.6561]}},
+ "Triceraton Commander": {"colors":"W","mv":2.0,"type":"creature","rarity":"mythic","overall":{"gih_wr":0.6193,"gih_games":2970,"gp_wr":0.5833,"gp_games":7018,"iwd":0.0626},"splash":{"gp_games":430,"gp_wr_raw":0.5233,"gih_games":196,"gih_wr_raw":0.5918},"by_archetype":{"WU":[0.6326,69,0.5953,149,0.0598,0.6667],"WB":[0.6391,1466,0.5974,3450,0.0739,0.6419],"WR":[0.5972,707,0.5735,1867,0.027,0.5912],"WG":[0.6059,101,0.5654,227,0.0892,0.6139],"UR":[0.6194,26,0.5866,66,0.0649,0.4615],"UG":[0.5742,38,0.5378,84,0.0717,0.5526],"BG":[0.5926,63,0.5581,146,0.066,0.5556],"UBG":[0.6078,34,0.5676,66,0.0746,0.7059],"WBG":[0.5924,88,0.5555,178,0.0668,0.6023],"WUR":[0.5895,100,0.555,216,0.0596,0.58],"3c+":[0.6235,249,0.585,506,0.0733,0.6305]}},
+ "Trouble in Pairs": {"colors":"W","mv":4.0,"type":"spell","rarity":"mythic","overall":{"gih_wr":0.5316,"gih_games":69,"gp_wr":0.5365,"gp_games":172,"iwd":-0.0202},"splash":null,"by_archetype":{"WB":[0.5406,45,0.5481,107,-0.0255,0.5111]}},
+ "Tunnel Rats": {"colors":"B","mv":2.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.5487,"gih_games":10180,"gp_wr":0.5521,"gp_games":21984,"iwd":-0.0065},"splash":null,"by_archetype":{"WB":[0.563,4973,0.5707,11233,-0.0142,0.5622],"UB":[0.5001,161,0.496,328,0.0054,0.5404],"BR":[0.449,67,0.4532,129,-0.0157,0.4478],"BG":[0.5291,3426,0.5301,7040,-0.0005,0.5289],"UBG":[0.5429,818,0.5379,1642,0.0161,0.5477],"WBG":[0.5325,368,0.5351,803,-0.0214,0.5462],"3c+":[0.5608,355,0.5562,784,0.0168,0.5718]}},
+ "Turncoat Kunoichi": {"colors":"W","mv":3.0,"type":"creature","rarity":"rare","overall":{"gih_wr":0.6199,"gih_games":4456,"gp_wr":0.5842,"gp_games":10357,"iwd":0.0628},"splash":{"gp_games":587,"gp_wr_raw":0.5809,"gih_games":269,"gih_wr_raw":0.6394},"by_archetype":{"WU":[0.6338,87,0.5926,169,0.0743,0.6897],"WB":[0.6284,2631,0.5936,6196,0.0613,0.6275],"WR":[0.5926,616,0.565,1534,0.0439,0.5828],"WG":[0.6047,57,0.5659,113,0.0767,0.6316],"BG":[0.6034,122,0.5578,272,0.0888,0.6639],"UBG":[0.5985,50,0.5647,115,0.0603,0.56],"URG":[0.6174,25,0.5769,51,0.0638,0.84],"WBG":[0.5971,273,0.556,587,0.0699,0.619],"WUR":[0.586,75,0.5542,185,0.046,0.56],"3c+":[0.6218,463,0.5813,1025,0.0789,0.6263]}},
+ "Turtle Blimp": {"colors":"","mv":5.0,"type":"spell","rarity":"uncommon","overall":{"gih_wr":0.5965,"gih_games":14838,"gp_wr":0.5887,"gp_games":31539,"iwd":0.0149},"splash":null,"by_archetype":{"WU":[0.6104,158,0.6034,297,0.0154,0.6013],"WB":[0.5934,2924,0.6039,6761,-0.0182,0.5876],"WR":[0.5596,1123,0.5715,2663,-0.0188,0.5423],"WG":[0.5742,204,0.5776,468,-0.0071,0.5245],"UB":[0.5382,112,0.5337,241,-0.0022,0.5268],"UR":[0.614,4706,0.6011,9743,0.0247,0.615],"UG":[0.5646,1249,0.548,2504,0.0372,0.5685],"BR":[0.4958,37,0.4892,69,0.0124,0.4595],"BG":[0.5925,1228,0.5769,2452,0.0246,0.601],"RG":[0.4903,30,0.4783,77,0.0112,0.6667],"G":[0.5982,29,0.5907,53,0.0127,0.5862],"UBG":[0.5935,734,0.5739,1401,0.0518,0.6008],"URG":[0.612,687,0.5871,1329,0.0558,0.6303],"WBG":[0.5791,232,0.5718,542,-0.0035,0.5948],"WUR":[0.5714,353,0.5641,806,0.0167,0.5666],"3c+":[0.6272,988,0.6022,2034,0.044,0.6447]}},
+ "Turtle Lair": {"colors":"","mv":0.0,"type":"land","rarity":"uncommon","overall":{"gih_wr":0.5806,"gih_games":6883,"gp_wr":0.5713,"gp_games":15874,"iwd":0.0164},"splash":null,"by_archetype":{"WU":[0.591,30,0.5827,65,0.0117,0.5667],"WB":[0.6028,3537,0.5946,8291,0.0111,0.6042],"WR":[0.5415,779,0.5508,1826,-0.0151,0.5186],"WG":[0.5713,128,0.5589,292,0.0196,0.5938],"UB":[0.5181,31,0.5088,60,0.0218,0.4839],"UR":[0.5826,504,0.5743,1104,0.0215,0.5754],"UG":[0.5367,434,0.5242,953,0.0327,0.5346],"BG":[0.5582,464,0.5467,1072,0.0251,0.5582],"RG":[0.464,37,0.4549,76,0.0074,0.4865],"UBG":[0.5679,184,0.5526,424,0.0424,0.5761],"URG":[0.57,57,0.5615,123,0.0295,0.5088],"WBG":[0.5628,173,0.5445,382,0.038,0.6012],"WUR":[0.5564,93,0.5445,203,0.0201,0.5806],"3c+":[0.5897,418,0.5717,966,0.0407,0.6005]}},
+ "Turtle Power!": {"colors":"G","mv":3.0,"type":"spell","rarity":"rare","overall":{"gih_wr":0.4939,"gih_games":325,"gp_wr":0.4959,"gp_games":701,"iwd":-0.0193},"splash":{"gp_games":35,"gp_wr_raw":0.6571,"gih_games":10,"gih_wr_raw":0.4},"by_archetype":{"WG":[0.5027,55,0.5098,108,-0.0293,0.4182],"UG":[0.4803,111,0.4818,237,-0.0181,0.4865],"BG":[0.4966,29,0.5006,62,-0.0214,0.4138],"URG":[0.5118,24,0.5151,57,-0.0095,0.375],"3c+":[0.5246,39,0.5251,84,-0.0065,0.5128]}},
+ "Turtle Van": {"colors":"","mv":3.0,"type":"spell","rarity":"rare","overall":{"gih_wr":0.5745,"gih_games":4479,"gp_wr":0.5633,"gp_games":10209,"iwd":0.0197},"splash":null,"by_archetype":{"WU":[0.589,62,0.5811,131,0.0132,0.5323],"WB":[0.5943,930,0.5898,2281,0.001,0.5914],"WR":[0.5631,373,0.5551,957,0.0119,0.555],"WG":[0.566,59,0.5592,137,-0.0018,0.5254],"UR":[0.6011,1135,0.5767,2555,0.0472,0.6088],"UG":[0.5446,511,0.5289,1051,0.0283,0.5519],"BG":[0.5574,592,0.5471,1298,0.0199,0.5541],"RG":[0.4695,37,0.454,79,0.0252,0.5676],"UBG":[0.5635,238,0.5512,504,0.0359,0.5504],"URG":[0.5762,115,0.5633,250,0.0284,0.5739],"WBG":[0.5586,73,0.5461,169,0.0125,0.589],"WUR":[0.5579,77,0.5432,147,0.0291,0.5844],"3c+":[0.5737,214,0.5693,501,0.0153,0.5327]}},
+ "Turtles Forever": {"colors":"W","mv":4.0,"type":"spell","rarity":"rare","overall":{"gih_wr":0.5244,"gih_games":516,"gp_wr":0.5464,"gp_games":1261,"iwd":-0.0393},"splash":{"gp_games":102,"gp_wr_raw":0.5392,"gih_games":46,"gih_wr_raw":0.5652},"by_archetype":{"WB":[0.5393,227,0.5624,559,-0.0424,0.5374],"WR":[0.4993,121,0.5267,295,-0.0362,0.438],"BG":[0.5059,28,0.5251,53,-0.0368,0.6071],"WBG":[0.497,25,0.5206,69,-0.0478,0.48],"3c+":[0.5277,66,0.5482,150,-0.0295,0.5303]}},
+ "Turtles in Time": {"colors":"U","mv":7.0,"type":"spell","rarity":"mythic","overall":{"gih_wr":0.5263,"gih_games":242,"gp_wr":0.5172,"gp_games":533,"iwd":0.0024},"splash":null,"by_archetype":{"UR":[0.5405,76,0.5356,152,0.0004,0.5132],"UG":[0.491,51,0.4876,134,-0.0108,0.451],"UBG":[0.5167,44,0.5134,84,-0.0025,0.4318],"3c+":[0.543,32,0.5314,71,0.0204,0.625]}},
+ "Umezawa's Jitte": {"colors":"","mv":2.0,"type":"spell","rarity":"mythic","overall":{"gih_wr":0.6874,"gih_games":513,"gp_wr":0.6321,"gp_games":1217,"iwd":0.1023},"splash":null,"by_archetype":{"WB":[0.7011,117,0.6521,273,0.0869,0.6581],"WR":[0.6816,51,0.6243,130,0.0965,0.7451],"UR":[0.7118,133,0.6472,327,0.1125,0.782],"UG":[0.652,31,0.5955,76,0.1011,0.7097],"BG":[0.6757,84,0.6162,187,0.1086,0.7262],"UBG":[0.6771,39,0.6212,84,0.1102,0.6667]}},
+ "Undercity Sewers": {"colors":"","mv":0.0,"type":"land","rarity":"mythic","overall":{"gih_wr":0.5924,"gih_games":280,"gp_wr":0.5812,"gp_games":597,"iwd":0.0227},"splash":null,"by_archetype":{"UG":[0.5627,27,0.5522,62,0.0118,0.5926],"BG":[0.5825,32,0.5717,60,0.0177,0.5938],"UBG":[0.5833,87,0.5751,195,0.0269,0.5287],"3c+":[0.6135,66,0.5959,134,0.0414,0.6818]}},
+ "Underworld Breach": {"colors":"R","mv":2.0,"type":"spell","rarity":"mythic","overall":{"gih_wr":0.5635,"gih_games":17,"gp_wr":0.5603,"gp_games":46,"iwd":0.001},"splash":null,"by_archetype":{}},
+ "Uneasy Alliance": {"colors":"W","mv":2.0,"type":"spell","rarity":"common","overall":{"gih_wr":0.5772,"gih_games":22271,"gp_wr":0.5795,"gp_games":44183,"iwd":-0.0047},"splash":{"gp_games":659,"gp_wr_raw":0.607,"gih_games":337,"gih_wr_raw":0.6439},"by_archetype":{"WU":[0.5804,425,0.5846,788,-0.0014,0.5718],"WB":[0.5893,12482,0.5911,24906,-0.0036,0.5892],"WR":[0.5581,5319,0.5636,10682,-0.012,0.558],"WG":[0.563,718,0.5684,1359,-0.0223,0.5655],"UR":[0.5836,41,0.5839,75,-0.0022,0.6341],"UG":[0.5369,48,0.5344,100,0.0052,0.625],"BG":[0.5556,108,0.5557,206,-0.0058,0.5833],"W":[0.6087,129,0.6074,199,0.0013,0.6357],"UBG":[0.5613,56,0.5625,107,-0.0054,0.5893],"URG":[0.5745,30,0.5716,69,0.0048,0.7333],"WBG":[0.5428,892,0.5505,1766,-0.0183,0.5392],"WUR":[0.5488,562,0.551,1078,-0.0086,0.5516],"3c+":[0.5738,1461,0.5698,2848,0.0202,0.5722]}},
+ "Utrom Scientists": {"colors":"U","mv":3.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.5443,"gih_games":12914,"gp_wr":0.5414,"gp_games":24396,"iwd":0.0058},"splash":{"gp_games":29,"gp_wr_raw":0.4828,"gih_games":13,"gih_wr_raw":0.6154},"by_archetype":{"WU":[0.5708,429,0.5625,745,0.0007,0.5921],"UB":[0.4915,293,0.4872,493,-0.0038,0.5051],"UR":[0.5572,8859,0.5527,16771,0.0093,0.5575],"UG":[0.5068,1435,0.4989,2690,0.0209,0.508],"UBG":[0.5123,402,0.5187,797,0.0101,0.4751],"URG":[0.5275,499,0.5318,935,0.0036,0.507],"WUR":[0.5134,481,0.517,953,-0.0103,0.5031],"3c+":[0.5405,476,0.548,937,-0.0215,0.5252]}},
+ "Venus, Torn Between Worlds": {"colors":"G","mv":5.0,"type":"creature","rarity":"uncommon","overall":{"gih_wr":0.5358,"gih_games":5599,"gp_wr":0.5248,"gp_games":12159,"iwd":0.0194},"splash":{"gp_games":91,"gp_wr_raw":0.4725,"gih_games":37,"gih_wr_raw":0.5135},"by_archetype":{"WG":[0.5527,135,0.5398,338,0.0188,0.5704],"UG":[0.5196,2156,0.5082,4581,0.0217,0.5195],"BG":[0.5407,1248,0.5315,2786,0.0137,0.5409],"RG":[0.4467,53,0.4355,125,0.012,0.4717],"G":[0.5654,34,0.5509,70,0.0212,0.6765],"UBG":[0.5399,1189,0.5328,2519,0.0167,0.5349],"URG":[0.5628,303,0.5435,662,0.0455,0.5776],"WBG":[0.531,135,0.5229,296,0.0195,0.5037],"3c+":[0.5675,315,0.556,699,0.0165,0.5714]}},
+ "Waves of Aggression": {"colors":"WR","mv":5.0,"type":"spell","rarity":"mythic","overall":{"gih_wr":0.4692,"gih_games":91,"gp_wr":0.5297,"gp_games":230,"iwd":-0.1096},"splash":null,"by_archetype":{"WB":[0.4777,30,0.5455,69,-0.1232,0.3333],"WR":[0.4435,27,0.5159,88,-0.1371,0.1852]}},
+ "Weather Maker": {"colors":"","mv":3.0,"type":"spell","rarity":"rare","overall":{"gih_wr":0.614,"gih_games":4850,"gp_wr":0.576,"gp_games":10375,"iwd":0.0711},"splash":null,"by_archetype":{"WU":[0.6378,41,0.5974,111,0.0732,0.6829],"WB":[0.6133,366,0.5953,858,0.0358,0.5601],"WR":[0.5811,125,0.5626,335,0.0454,0.416],"WG":[0.6053,58,0.5713,123,0.0642,0.5345],"UB":[0.5686,40,0.5253,90,0.0811,0.675],"UR":[0.6252,1331,0.5899,2903,0.0671,0.6221],"UG":[0.5871,582,0.5413,1206,0.0933,0.5945],"BG":[0.6076,595,0.5681,1212,0.0668,0.6151],"UBG":[0.6167,544,0.5741,1051,0.0787,0.6268],"URG":[0.6206,287,0.5805,595,0.0747,0.6272],"WBG":[0.5936,114,0.5566,262,0.0753,0.5702],"WUR":[0.5962,145,0.5588,348,0.0655,0.5931],"3c+":[0.6566,559,0.5964,1151,0.1082,0.6959]}},
+ "West Wind Avatar": {"colors":"G","mv":7.0,"type":"creature","rarity":"uncommon","overall":{"gih_wr":0.587,"gih_games":11020,"gp_wr":0.557,"gp_games":23417,"iwd":0.0564},"splash":null,"by_archetype":{"WG":[0.5842,342,0.5668,738,0.028,0.5556],"UG":[0.56,2657,0.5359,5659,0.0459,0.5578],"BG":[0.591,3883,0.5565,8322,0.0659,0.5916],"RG":[0.4961,120,0.4645,283,0.0542,0.5167],"G":[0.6108,82,0.578,167,0.0668,0.6341],"UBG":[0.5944,1854,0.5668,3785,0.0526,0.5939],"URG":[0.6059,705,0.5724,1450,0.0706,0.6071],"WBG":[0.5891,450,0.5588,1065,0.0449,0.5978],"3c+":[0.6278,923,0.5897,1933,0.0667,0.6392]}},
+ "Wingnut, Bat on the Belfry": {"colors":"R","mv":2.0,"type":"creature","rarity":"uncommon","overall":{"gih_wr":0.5317,"gih_games":5021,"gp_wr":0.5458,"gp_games":11581,"iwd":-0.0253},"splash":null,"by_archetype":{"WR":[0.5365,3068,0.5533,7270,-0.0342,0.5385],"UR":[0.5341,1399,0.5501,3147,-0.0161,0.5254],"BR":[0.4417,54,0.4541,110,-0.021,0.463],"RG":[0.433,80,0.4392,163,-0.002,0.5],"R":[0.4252,29,0.436,56,-0.0187,0.5172],"URG":[0.5373,34,0.5507,79,-0.0199,0.5294],"WUR":[0.5278,160,0.5317,337,-0.0049,0.5813],"3c+":[0.5247,195,0.5515,410,-0.0288,0.441]}},
+ "Zog, Triceraton Castaway": {"colors":"R","mv":5.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.5209,"gih_games":3655,"gp_wr":0.5252,"gp_games":8157,"iwd":-0.0088},"splash":{"gp_games":240,"gp_wr_raw":0.5042,"gih_games":127,"gih_wr_raw":0.5039},"by_archetype":{"WR":[0.5275,1449,0.5331,3539,-0.0188,0.5328],"UR":[0.5234,1190,0.5312,2480,-0.0007,0.5134],"UG":[0.49,26,0.4943,56,-0.0092,0.5],"BR":[0.4289,61,0.4358,161,-0.0242,0.4262],"RG":[0.4151,98,0.4184,212,-0.0024,0.4184],"UBG":[0.5173,45,0.5226,80,-0.0135,0.5111],"URG":[0.5291,157,0.5288,333,0.0114,0.5414],"WUR":[0.5064,174,0.5119,348,-0.0197,0.5115],"3c+":[0.5355,381,0.5368,820,0.0054,0.5354]}},
+ "Zoo Escapees": {"colors":"G","mv":2.0,"type":"creature","rarity":"common","overall":{"gih_wr":0.541,"gih_games":13144,"gp_wr":0.5309,"gp_games":25047,"iwd":0.0206},"splash":null,"by_archetype":{"WG":[0.5447,470,0.5447,968,-0.0088,0.5319],"UG":[0.525,3319,0.5083,6170,0.0397,0.5255],"BG":[0.5428,5465,0.5374,10419,0.0095,0.5427],"RG":[0.4461,138,0.4385,280,0.0125,0.4348],"G":[0.5675,83,0.5547,157,0.0229,0.6024],"UBG":[0.5521,1962,0.5368,3616,0.038,0.5525],"URG":[0.5578,478,0.5481,970,0.0235,0.5544],"WBG":[0.5384,445,0.5339,953,-0.0041,0.5371],"3c+":[0.5709,784,0.5554,1514,0.0398,0.5727]}}
+ }
+}

@@ -1,0 +1,525 @@
+{
+  "card": "Karai, Future of the Foot",
+  "title": "flagged unsupported by a false-positive Duration_ThisTurn swallow warning; the data plays as printed",
+  "status": "active",
+  "kind": "coverage",
+  "upstream_issue": null,
+  "marks_supported": true,
+  "applies_to": {
+    "server_version": "0.116.0",
+    "build_commit": "3f79456",
+    "card_data_sha256": "c4cfb737d0c0b1b135d3a353d71a95606f6ee147727bc11c3d16b82ece33da41",
+    "entry_sha256": "d1090fcf98054fb913219aaefb4e552e65814293f336bba40ac37034e3150af3"
+  },
+  "rules": {
+    "oracle": "Sneak {2}{W}{B} (You may cast this spell for {2}{W}{B} if you also return an unblocked attacker you control to hand during the declare blockers step. She enters tapped and attacking.)\nWhenever Karai deals combat damage to a player, return target creature card from your graveyard to your hand. If her sneak cost was paid this turn, instead return that card to the battlefield.",
+    "cr": [
+      "702.190a",
+      "702.190b",
+      "510.3a",
+      "603.2",
+      "608.2b",
+      "608.2c",
+      "611.2a"
+    ],
+    "actual": "The coverage report lists the card as unsupported with one gap, `Swallow:Duration_ThisTurn` (\"Whenever Karai deals combat damage to a player, return target creature card from your graveyard to your hand. If her sneak cost was paid thi…\"): it claims the parser dropped the clause's \"this turn\".",
+    "expected": "Whenever Karai deals combat damage to a player, the targeted creature card in her controller's graveyard returns to hand; if her sneak cost was paid during the current turn, it is put onto the battlefield instead. A card whose sneak cost was paid on an earlier turn returns to hand.",
+    "diagnosis": "False positive. The \"this turn\" is carried by the sub-ability's condition `CastVariantPaidInstead { variant: Sneak }`, whose turn scope is intrinsic: `instead_swap_applies` (game/effects/mod.rs:25116-25122) and `evaluate_condition` (game/effects/mod.rs:26313) both compare the object's `cast_variant_paid` with `Some((Sneak, state.turn_number))`, and the sneak cast stamps that pair. The Duration_ThisTurn detector (parser/swallow_check.rs:5367, `detect_duration_this_turn`) only accepts typed carriers whose names contain `ThisTurn` (the AbilityCondition arm at parser/swallow_check.rs:5633-5641) plus an explicit (h2) list, and `AbilityCondition::CastVariantPaidInstead` is in neither, so it reports a swallowed duration; game/coverage.rs:8316 turns every `SwallowedClause` into a `Swallow:{detector}` gap, which marks the card unsupported.",
+    "suggested_fix": "In `detect_duration_this_turn` (parser/swallow_check.rs), treat `AbilityCondition::CastVariantPaid { .. }` and `AbilityCondition::CastVariantPaidInstead { .. }` as turn-history carriers, next to the (h2) carriers whose names don't end in `ThisTurn` (their runtime check is `cast_variant_paid == Some((variant, turn_number))`, so the turn scope is part of the condition, CR 702.190a). Alternatively exempt the \"<cost> was paid this turn\" / \"cost was paid this turn\" suffix in `QUANTITY_CONTEXT_SUFFIXES` and confirm it with the typed condition. A regression test: Karai, Future of the Foot parses with no `SwallowedClause` and stays supported in the coverage report.",
+    "override_note": "Nothing is patched: the test ops pin the parsed trigger the sandbox games verified (combat damage to a player by Karai, the Graveyard->Hand return of a targeted creature card you own, and the `CastVariantPaidInstead Sneak` sub that moves that same card (ParentTarget) to the battlefield instead). The cases show: the hand branch when Karai was hard cast (her sneak cost was not paid); the sneak branch (cast for {2}{W}{B} during the declare blockers step by returning an unblocked attacker, CR 702.190a; she enters tapped and attacking, CR 702.190b), where her trigger puts the card onto the battlefield instead (CR 608.2c); the same Karai connecting again two turns later returning the card to hand, because the sneak cost was paid on an earlier turn; no trigger when she is blocked (CR 510.3a); and nothing returned when the target leaves the graveyard first (CR 608.2b)."
+  },
+  "patch": [
+    {
+      "op": "test",
+      "path": "/triggers/0/mode",
+      "value": "DamageDone"
+    },
+    {
+      "op": "test",
+      "path": "/triggers/0/damage_kind",
+      "value": "CombatOnly"
+    },
+    {
+      "op": "test",
+      "path": "/triggers/0/valid_source",
+      "value": {
+        "type": "SelfRef"
+      }
+    },
+    {
+      "op": "test",
+      "path": "/triggers/0/valid_target",
+      "value": {
+        "type": "Player"
+      }
+    },
+    {
+      "op": "test",
+      "path": "/triggers/0/execute/effect/destination",
+      "value": "Hand"
+    },
+    {
+      "op": "test",
+      "path": "/triggers/0/execute/sub_ability/effect/destination",
+      "value": "Battlefield"
+    },
+    {
+      "op": "test",
+      "path": "/triggers/0/execute/sub_ability/effect/target",
+      "value": {
+        "type": "ParentTarget"
+      }
+    },
+    {
+      "op": "test",
+      "path": "/triggers/0/execute/sub_ability/condition",
+      "value": {
+        "type": "CastVariantPaidInstead",
+        "variant": "Sneak"
+      }
+    },
+    {
+      "op": "test",
+      "path": "/parse_warnings/0/detector",
+      "value": "Duration_ThisTurn"
+    }
+  ],
+  "tests": [
+    {
+      "name": "hard cast, attack on a later turn and connect: the card returns to hand (sneak cost not paid)",
+      "setup": [
+        {
+          "card": "Karai, Future of the Foot",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Hill Giant",
+          "owner": 0,
+          "zone": "Graveyard"
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "cast": {
+            "card": "Karai, Future of the Foot"
+          }
+        },
+        {
+          "advance": {
+            "phase": "Upkeep",
+            "active": 1
+          }
+        },
+        {
+          "attack": [
+            {
+              "card": "Karai, Future of the Foot",
+              "owner": 0
+            }
+          ]
+        },
+        {
+          "advance": {
+            "phase": "EndCombat",
+            "active": 0,
+            "now": true
+          }
+        }
+      ],
+      "answers": {
+        "targets": [
+          {
+            "card": "Hill Giant",
+            "owner": 0,
+            "zone": "Graveyard"
+          }
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            17
+          ],
+          "zones": [
+            {
+              "card": "Hill Giant",
+              "owner": 0,
+              "zone": "Hand"
+            },
+            {
+              "card": "Hill Giant",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 0
+            }
+          ]
+        }
+      },
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      }
+    },
+    {
+      "name": "sneak during declare blockers (CR 702.190a/b): Karai enters tapped and attacking, connects, the card returns to the battlefield",
+      "setup": [
+        {
+          "card": "Karai, Future of the Foot",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Hill Giant",
+          "owner": 0,
+          "zone": "Graveyard"
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "attack": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 0
+            }
+          ]
+        },
+        {
+          "advance": {
+            "phase": "DeclareBlockers",
+            "active": 0,
+            "now": true
+          }
+        },
+        {
+          "sneak": {
+            "card": "Karai, Future of the Foot",
+            "return": {
+              "card": "Grizzly Bears",
+              "owner": 0
+            }
+          }
+        },
+        {
+          "advance": {
+            "phase": "EndCombat",
+            "active": 0,
+            "now": true
+          }
+        }
+      ],
+      "answers": {
+        "targets": [
+          {
+            "card": "Hill Giant",
+            "owner": 0,
+            "zone": "Graveyard"
+          }
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            17
+          ],
+          "zones": [
+            {
+              "card": "Hill Giant",
+              "owner": 0,
+              "zone": "Battlefield"
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "zone": "Hand"
+            }
+          ],
+          "objects": [
+            {
+              "card": "Karai, Future of the Foot",
+              "zone": "Battlefield",
+              "tapped": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "sneak cast on turn 1, connects again on turn 3: the card returns to hand (paid on an earlier turn)",
+      "setup": [
+        {
+          "card": "Karai, Future of the Foot",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Hill Giant",
+          "owner": 0,
+          "zone": "Graveyard"
+        },
+        {
+          "card": "Gray Ogre",
+          "owner": 0,
+          "zone": "Graveyard"
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "attack": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 0
+            }
+          ]
+        },
+        {
+          "advance": {
+            "phase": "DeclareBlockers",
+            "active": 0,
+            "now": true
+          }
+        },
+        {
+          "sneak": {
+            "card": "Karai, Future of the Foot",
+            "return": {
+              "card": "Grizzly Bears",
+              "owner": 0
+            }
+          }
+        },
+        {
+          "advance": {
+            "phase": "EndCombat",
+            "active": 0,
+            "now": true
+          }
+        },
+        {
+          "advance": {
+            "phase": "PreCombatMain",
+            "active": 0
+          }
+        },
+        {
+          "attack": [
+            {
+              "card": "Karai, Future of the Foot",
+              "owner": 0
+            }
+          ]
+        },
+        {
+          "advance": {
+            "phase": "EndCombat",
+            "active": 0,
+            "now": true
+          }
+        }
+      ],
+      "answers": {
+        "targets": [
+          {
+            "card": "Hill Giant",
+            "owner": 0,
+            "zone": "Graveyard"
+          },
+          {
+            "card": "Gray Ogre",
+            "owner": 0,
+            "zone": "Graveyard"
+          }
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            14
+          ],
+          "zones": [
+            {
+              "card": "Hill Giant",
+              "owner": 0,
+              "zone": "Battlefield"
+            },
+            {
+              "card": "Gray Ogre",
+              "owner": 0,
+              "zone": "Hand"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "blocked: no combat damage to a player, no trigger (CR 510.3a)",
+      "setup": [
+        {
+          "card": "Karai, Future of the Foot",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Hill Giant",
+          "owner": 0,
+          "zone": "Graveyard"
+        },
+        {
+          "card": "Wall of Stone",
+          "owner": 1,
+          "zone": "Battlefield"
+        }
+      ],
+      "steps": [
+        {
+          "attack": [
+            {
+              "card": "Karai, Future of the Foot",
+              "owner": 0
+            }
+          ]
+        },
+        {
+          "block": [
+            {
+              "blocker": {
+                "card": "Wall of Stone",
+                "owner": 1
+              },
+              "attacker": {
+                "card": "Karai, Future of the Foot",
+                "owner": 0
+              }
+            }
+          ]
+        },
+        {
+          "advance": {
+            "phase": "EndCombat",
+            "active": 0,
+            "now": true
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            20
+          ],
+          "zones": [
+            {
+              "card": "Hill Giant",
+              "owner": 0,
+              "zone": "Graveyard"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "the target leaves the graveyard with the trigger on the stack: nothing returns (CR 608.2b)",
+      "setup": [
+        {
+          "card": "Karai, Future of the Foot",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Hill Giant",
+          "owner": 0,
+          "zone": "Graveyard"
+        }
+      ],
+      "steps": [
+        {
+          "attack": [
+            {
+              "card": "Karai, Future of the Foot",
+              "owner": 0
+            }
+          ]
+        },
+        {
+          "advance": {
+            "phase": "CombatDamage",
+            "active": 0,
+            "now": true
+          }
+        },
+        {
+          "debug": "MoveToZone",
+          "object": {
+            "card": "Hill Giant",
+            "owner": 0,
+            "zone": "Graveyard"
+          },
+          "data": {
+            "to_zone": "Exile",
+            "simulate": false
+          }
+        },
+        {
+          "resolve": true
+        }
+      ],
+      "answers": {
+        "targets": [
+          {
+            "card": "Hill Giant",
+            "owner": 0,
+            "zone": "Graveyard"
+          }
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            17
+          ],
+          "zones": [
+            {
+              "card": "Hill Giant",
+              "owner": 0,
+              "zone": "Exile"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "history": [
+    {
+      "date": "2026-10-23",
+      "status": "active",
+      "note": "Written against Oracle text and CR 702.190a/b, 510.3a, 608.2b/c; tested on 0.116.0 (3f79456): all cases play as printed on the upstream data."
+    }
+  ]
+}

@@ -1,0 +1,575 @@
+{
+  "card": "Requiem Monolith",
+  "title": "the granted damage trigger's \"draw that many cards and lose that much life\" is unparsed, so it does nothing",
+  "status": "active",
+  "kind": "parser",
+  "upstream_issue": null,
+  "marks_supported": true,
+  "applies_to": {
+    "server_version": "0.116.0",
+    "build_commit": "3f79456",
+    "card_data_sha256": "c4cfb737d0c0b1b135d3a353d71a95606f6ee147727bc11c3d16b82ece33da41",
+    "entry_sha256": "1d624ff8cb64acd2fe5a002bb4a2281c555704265036881ebcc75569b8c9020e"
+  },
+  "rules": {
+    "oracle": "{T}: Until end of turn, target creature gains \"Whenever this creature is dealt damage, you draw that many cards and lose that much life.\" That creature's controller may have this artifact deal 1 damage to it. Activate only as a sorcery.",
+    "cr": [
+      "113.8",
+      "603.3a",
+      "603.2",
+      "120.3",
+      "704.5g",
+      "611.2a",
+      "608.2c"
+    ],
+    "actual": "The granted trigger fires but its body is `Unimplemented` (\"draw that many cards and lose that much life\"): no one draws or loses life when the creature is dealt damage, including the optional 1 damage from the Monolith.",
+    "expected": "Until end of turn the creature has the triggered ability. Whenever it is dealt damage, the ability's controller, who is the creature's controller (an ability's controller is the controller of the object it is on, CR 113.8, 603.3a), draws that many cards and loses that much life, so on an opponent's creature the opponent draws and loses life, not the Monolith's controller. The creature's controller then chooses whether the Monolith deals 1 damage to it, which triggers the ability once. Damage dealt later that turn, even lethal damage, triggers it too; on later turns it is gone.",
+    "diagnosis": "The quoted trigger's effect clause \"you draw that many cards and lose that much life\" is a compound with a shared subject and two verbs (draw / lose) whose amounts are anaphoric (\"that many\", \"that much\"). The verb-argument splitter doesn't split \"draw X and lose Y\" when the subject \"you\" is explicit and both amounts refer back to the trigger event, so the whole clause falls through to `Unimplemented { name: \"unparsed_verb_arguments\" }`. Each half alone parses (Body of Knowledge's \"draw that many cards\", Filthy Cur's \"you lose that much life\").",
+    "suggested_fix": "In the imperative-chain parser, split \"[you] draw that many cards and lose that much life\" into `Draw { count: EventContextAmount, target: Controller }` followed by a `SequentialSibling` `LoseLife { amount: EventContextAmount, target: Controller }`, binding both anaphors to the trigger event's amount (`QuantityRef::EventContextAmount` prefers the triggering event's amount over the previous effect's count, game/quantity.rs:8013, so the life loss is the damage dealt even if fewer cards could be drawn). Integration test: Requiem Monolith targeting an opponent's creature, the opponent accepts the 1 damage and draws 1 and loses 1; Lightning Bolt on it later that turn makes them draw 3 and lose 3.",
+    "override_note": "The patch replaces the unimplemented body with Body of Knowledge's Draw{EventContextAmount, Controller} and Filthy Cur's LoseLife{EventContextAmount, Controller} as a sequential sibling. In a triggered ability \"you\" is its controller, which for a granted ability is the controller of the creature that has it (CR 113.8, 603.3a), and the engine's Controller resolves to that player, as the opponent's-creature cases show. \"That many\" and \"that much\" are the damage dealt by the triggering event (CR 120.3), not the number of cards drawn. The grant and the optional 1 damage decided by the creature's controller were already right and are unchanged: the 1 damage is dealt after the grant, so it triggers the ability (CR 608.2c). The grant lasts until end of turn (CR 611.2a), and the ability triggers on lethal damage too, since it triggers when the damage is dealt (CR 603.2), before the state-based action that destroys the creature (CR 704.5g)."
+  },
+  "patch": [
+    {
+      "op": "test",
+      "path": "/abilities/0/effect/static_abilities/0/modifications/0/trigger/execute/effect",
+      "value": {
+        "type": "Unimplemented",
+        "name": "unparsed_verb_arguments",
+        "description": "draw that many cards and lose that much life"
+      }
+    },
+    {
+      "op": "test",
+      "path": "/abilities/0/effect/static_abilities/0/modifications/0/trigger/execute/sub_ability",
+      "value": null
+    },
+    {
+      "op": "test",
+      "path": "/abilities/0/sub_ability/player_scope",
+      "value": {
+        "type": "ParentObjectTargetController"
+      }
+    },
+    {
+      "op": "replace",
+      "path": "/abilities/0/effect/static_abilities/0/modifications/0/trigger/execute/effect",
+      "value": {
+        "type": "Draw",
+        "count": {
+          "type": "Ref",
+          "qty": {
+            "type": "EventContextAmount"
+          }
+        },
+        "target": {
+          "type": "Controller"
+        }
+      }
+    },
+    {
+      "op": "replace",
+      "path": "/abilities/0/effect/static_abilities/0/modifications/0/trigger/execute/sub_ability",
+      "value": {
+        "kind": "Spell",
+        "effect": {
+          "type": "LoseLife",
+          "amount": {
+            "type": "Ref",
+            "qty": {
+              "type": "EventContextAmount"
+            }
+          },
+          "target": {
+            "type": "Controller"
+          }
+        },
+        "cost": null,
+        "sub_ability": null,
+        "duration": null,
+        "description": null,
+        "target_prompt": null,
+        "condition": null,
+        "optional_targeting": false,
+        "optional": false,
+        "forward_result": false,
+        "sub_link": "SequentialSibling"
+      }
+    }
+  ],
+  "tests": [
+    {
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "name": "your creature, you have the Monolith deal 1 damage to it: you draw 1 and lose 1 life",
+      "setup": [
+        {
+          "card": "Requiem Monolith",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Craw Wurm",
+          "owner": 0,
+          "zone": "Battlefield"
+        }
+      ],
+      "answers": {
+        "optional": [
+          true
+        ]
+      },
+      "steps": [
+        {
+          "activate": {
+            "card": "Requiem Monolith",
+            "targets": [
+              {
+                "card": "Craw Wurm",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "life": [
+            19,
+            20
+          ],
+          "hand": [
+            8,
+            7
+          ],
+          "library": [
+            32,
+            33
+          ]
+        },
+        "bug": {
+          "life": [
+            20,
+            20
+          ],
+          "hand": [
+            7,
+            7
+          ],
+          "library": [
+            33,
+            33
+          ]
+        }
+      }
+    },
+    {
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "name": "an opponent's creature, its controller has the Monolith deal 1 damage: \"you\" is the creature's controller, who draws 1 and loses 1 life (CR 113.8, 603.3a)",
+      "setup": [
+        {
+          "card": "Requiem Monolith",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Craw Wurm",
+          "owner": 1,
+          "zone": "Battlefield"
+        }
+      ],
+      "answers": {
+        "optional": [
+          true
+        ]
+      },
+      "steps": [
+        {
+          "activate": {
+            "card": "Requiem Monolith",
+            "targets": [
+              {
+                "card": "Craw Wurm",
+                "owner": 1,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            19
+          ],
+          "hand": [
+            7,
+            8
+          ],
+          "library": [
+            33,
+            32
+          ]
+        },
+        "bug": {
+          "life": [
+            20,
+            20
+          ],
+          "hand": [
+            7,
+            7
+          ],
+          "library": [
+            33,
+            33
+          ]
+        }
+      }
+    },
+    {
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "name": "an opponent's creature, its controller declines the 1 damage; 3 damage later that turn: they draw 3 and lose 3 life",
+      "setup": [
+        {
+          "card": "Requiem Monolith",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Craw Wurm",
+          "owner": 1,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Lightning Bolt",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "answers": {
+        "optional": [
+          false
+        ]
+      },
+      "steps": [
+        {
+          "activate": {
+            "card": "Requiem Monolith",
+            "targets": [
+              {
+                "card": "Craw Wurm",
+                "owner": 1,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "cast": {
+            "card": "Lightning Bolt",
+            "targets": [
+              {
+                "card": "Craw Wurm",
+                "owner": 1,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            17
+          ],
+          "hand": [
+            7,
+            10
+          ],
+          "library": [
+            33,
+            30
+          ],
+          "zones": [
+            {
+              "card": "Craw Wurm",
+              "owner": 1,
+              "zone": "Battlefield"
+            }
+          ]
+        },
+        "bug": {
+          "life": [
+            20,
+            20
+          ],
+          "hand": [
+            7,
+            7
+          ],
+          "library": [
+            33,
+            33
+          ]
+        }
+      }
+    },
+    {
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "name": "lethal damage still triggers it: a 2/2 dealt 3 damage, its controller draws 3 and loses 3 life (it triggers as the damage is dealt, before the creature dies, CR 603.2, 704.5g)",
+      "setup": [
+        {
+          "card": "Requiem Monolith",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 1,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Lightning Bolt",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "answers": {
+        "optional": [
+          false
+        ]
+      },
+      "steps": [
+        {
+          "activate": {
+            "card": "Requiem Monolith",
+            "targets": [
+              {
+                "card": "Grizzly Bears",
+                "owner": 1,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "cast": {
+            "card": "Lightning Bolt",
+            "targets": [
+              {
+                "card": "Grizzly Bears",
+                "owner": 1,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            17
+          ],
+          "hand": [
+            7,
+            10
+          ],
+          "zones": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Graveyard"
+            }
+          ]
+        },
+        "bug": {
+          "life": [
+            20,
+            20
+          ],
+          "hand": [
+            7,
+            7
+          ],
+          "zones": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Graveyard"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "name": "your creature, you decline the 1 damage: nothing happens",
+      "setup": [
+        {
+          "card": "Requiem Monolith",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Craw Wurm",
+          "owner": 0,
+          "zone": "Battlefield"
+        }
+      ],
+      "answers": {
+        "optional": [
+          false
+        ]
+      },
+      "steps": [
+        {
+          "activate": {
+            "card": "Requiem Monolith",
+            "targets": [
+              {
+                "card": "Craw Wurm",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            20
+          ],
+          "hand": [
+            7,
+            7
+          ],
+          "library": [
+            33,
+            33
+          ],
+          "objects": [
+            {
+              "card": "Requiem Monolith",
+              "owner": 0,
+              "zone": "Battlefield",
+              "tapped": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "name": "until end of turn: damage on the next turn draws nothing",
+      "setup": [
+        {
+          "card": "Requiem Monolith",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Craw Wurm",
+          "owner": 1,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Lightning Bolt",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "answers": {
+        "optional": [
+          false
+        ]
+      },
+      "steps": [
+        {
+          "activate": {
+            "card": "Requiem Monolith",
+            "targets": [
+              {
+                "card": "Craw Wurm",
+                "owner": 1,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "advance": {
+            "phase": "PreCombatMain",
+            "active": 1
+          }
+        },
+        {
+          "cast": {
+            "card": "Lightning Bolt",
+            "targets": [
+              {
+                "card": "Craw Wurm",
+                "owner": 1,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            20
+          ],
+          "hand": [
+            6,
+            8
+          ],
+          "library": [
+            33,
+            32
+          ]
+        }
+      }
+    }
+  ],
+  "history": [
+    {
+      "date": "2026-10-23",
+      "status": "active",
+      "note": "Written against Oracle text and CR 113.8, 603.3a, 120.3 and 611.2a; tested on 0.116.0 (3f79456)."
+    }
+  ]
+}

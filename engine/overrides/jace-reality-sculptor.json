@@ -1,0 +1,797 @@
+{
+  "card": "Jace, Reality Sculptor",
+  "title": "the [0] ignores its twenty-five-loyalty activation restriction",
+  "status": "active",
+  "kind": "parser",
+  "upstream_issue": null,
+  "marks_supported": true,
+  "applies_to": {
+    "server_version": "0.116.0",
+    "build_commit": "3f79456",
+    "card_data_sha256": "c4cfb737d0c0b1b135d3a353d71a95606f6ee147727bc11c3d16b82ece33da41",
+    "entry_sha256": "fe97cbc2a151e2e65163e2c16c8a38979748972a59df7bc051e7979004852bc3"
+  },
+  "rules": {
+    "oracle": "[+1]: Empower Jace X, where X is the number of Islands you control.\n[−3]: Until your next turn, whenever a creature attacks you or a planeswalker you control, it gets -5/-0 until end of turn.\n[0]: Exile all but the bottom card of each opponent's library. Activate only if there are twenty-five or more loyalty counters among Jaces you control.",
+    "cr": [
+      "602.5b",
+      "606.3",
+      "701.71a",
+      "611.2b",
+      "603.7a"
+    ],
+    "actual": "The [0] can be activated whatever the number of loyalty counters: with fewer than twenty-five among the Jaces you control it is still offered, and it exiles all but the bottom card of each opponent's library. Opponents' Jaces aren't the issue; there is simply no restriction. [+1] and [−3] are correct.",
+    "expected": "\"Activate only if there are twenty-five or more loyalty counters among Jaces you control\" restricts when the [0] can be activated (CR 602.5b): it counts the loyalty counters on every Jace permanent you control (Jace, Reality Sculptor itself, Jace planeswalker tokens and other Jaces), not your opponents' Jaces, and is checked only as you activate (the [0] cost doesn't change the count). Below twenty-five the ability can't be activated at all; at twenty-five or more it resolves and exiles all but the bottom card of each opponent's library. The usual loyalty timing still applies (sorcery speed, once per turn per planeswalker, CR 606.3).",
+    "diagnosis": "The parser attaches the correct threshold (QuantityCheck: CountersOnObjects{loyalty, Jaces you control} >= 25) as the condition of a sub_ability whose effect is Unimplemented{unrecognized_clause_head: \"Activate only\"}, i.e. the restriction sentence is treated as one more effect step. The Unimplemented step is a no-op, and activation_restrictions keeps only AsSorcery, so nothing gates activation.",
+    "suggested_fix": "When a loyalty ability line ends with \"Activate only if <condition>.\", have the activated-ability parser lower it to ActivationRestriction::RequiresCondition{condition: ParsedCondition::QuantityComparison{lhs: Ref(CountersOnObjects{counter_type: loyalty, filter: Typed{[Subtype Jace], controller: You}}), comparator: GE, rhs: Fixed 25}} appended to activation_restrictions (after AsSorcery), the same restriction shape non-loyalty \"Activate only if you control three or more artifacts\" (Argent Sphinx) produces, instead of splitting it into an Unimplemented \"Activate only\" sub_ability. can_activate_loyalty_ability_impl already evaluates activation_restrictions for loyalty abilities, so no engine change is needed.",
+    "override_note": "The patch drops the Unimplemented sub-step and appends RequiresCondition{QuantityComparison(CountersOnObjects{loyalty, Typed{Subtype Jace, controller You}} >= 25)} to the [0]'s activation_restrictions. Loyalty abilities go through the shared activation-restriction check (legal actions and the activation handler alike), which evaluates the comparison from the activating player's side when the ability is activated (CR 602.5b): loyalty counters on all battlefield Jaces you control are summed, opponents' Jaces aren't. The [0]'s effect (ExileTop of each opponent's library, count = that library's size - 1) and the [+1] and [−3] are unchanged and were tested as guards."
+  },
+  "patch": [
+    {
+      "op": "test",
+      "path": "/abilities/2/cost",
+      "value": {
+        "type": "Loyalty",
+        "amount": 0
+      }
+    },
+    {
+      "op": "test",
+      "path": "/abilities/2/effect/type",
+      "value": "ExileTop"
+    },
+    {
+      "op": "test",
+      "path": "/abilities/2/sub_ability/effect",
+      "value": {
+        "type": "Unimplemented",
+        "name": "unrecognized_clause_head",
+        "description": "Activate only"
+      }
+    },
+    {
+      "op": "test",
+      "path": "/abilities/2/sub_ability/condition",
+      "value": {
+        "type": "QuantityCheck",
+        "lhs": {
+          "type": "Ref",
+          "qty": {
+            "type": "CountersOnObjects",
+            "counter_type": "loyalty",
+            "filter": {
+              "type": "Typed",
+              "type_filters": [
+                {
+                  "Subtype": "Jace"
+                }
+              ],
+              "controller": "You",
+              "properties": []
+            }
+          }
+        },
+        "comparator": "GE",
+        "rhs": {
+          "type": "Fixed",
+          "value": 25
+        }
+      }
+    },
+    {
+      "op": "test",
+      "path": "/abilities/2/activation_restrictions",
+      "value": [
+        {
+          "type": "AsSorcery"
+        }
+      ]
+    },
+    {
+      "op": "replace",
+      "path": "/abilities/2/sub_ability",
+      "value": null
+    },
+    {
+      "op": "add",
+      "path": "/abilities/2/activation_restrictions/-",
+      "value": {
+        "type": "RequiresCondition",
+        "data": {
+          "condition": {
+            "type": "QuantityComparison",
+            "lhs": {
+              "type": "Ref",
+              "qty": {
+                "type": "CountersOnObjects",
+                "counter_type": "loyalty",
+                "filter": {
+                  "type": "Typed",
+                  "type_filters": [
+                    {
+                      "Subtype": "Jace"
+                    }
+                  ],
+                  "controller": "You",
+                  "properties": []
+                }
+              }
+            },
+            "comparator": "GE",
+            "rhs": {
+              "type": "Fixed",
+              "value": 25
+            }
+          }
+        }
+      }
+    }
+  ],
+  "tests": [
+    {
+      "name": "[0] with 24 loyalty counters on Jace: can't be activated (CR 602.5b)",
+      "setup": [
+        {
+          "card": "Jace, Reality Sculptor",
+          "owner": 0,
+          "zone": "Battlefield",
+          "counters": {
+            "loyalty": 24
+          }
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "offered": {
+            "label": "[0]",
+            "activate": {
+              "card": "Jace, Reality Sculptor",
+              "ability": 2
+            }
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "offered": {
+            "[0]": false
+          }
+        },
+        "bug": {
+          "offered": {
+            "[0]": true
+          }
+        }
+      }
+    },
+    {
+      "name": "[0] with Jace 19 + a Jace token 5 = 24: can't be activated",
+      "setup": [
+        {
+          "card": "Jace, Reality Sculptor",
+          "owner": 0,
+          "zone": "Battlefield",
+          "counters": {
+            "loyalty": 19
+          }
+        },
+        {
+          "card": "Way of the Mind Sculptor",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "cast": {
+            "card": "Way of the Mind Sculptor"
+          }
+        },
+        {
+          "offered": {
+            "label": "[0]",
+            "activate": {
+              "card": "Jace, Reality Sculptor",
+              "ability": 2
+            }
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "offered": {
+            "[0]": false
+          },
+          "objects": [
+            {
+              "card": "Jace",
+              "controller": 0,
+              "zone": "Battlefield",
+              "loyalty": 5
+            }
+          ]
+        },
+        "bug": {
+          "offered": {
+            "[0]": true
+          }
+        }
+      }
+    },
+    {
+      "name": "[0]: an opponent's Jace with 30 loyalty doesn't count for you",
+      "setup": [
+        {
+          "card": "Jace, Reality Sculptor",
+          "owner": 0,
+          "zone": "Battlefield",
+          "counters": {
+            "loyalty": 1
+          }
+        },
+        {
+          "card": "Jace, Reality Sculptor",
+          "owner": 1,
+          "zone": "Battlefield",
+          "counters": {
+            "loyalty": 30
+          }
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "offered": {
+            "label": "[0]",
+            "activate": {
+              "card": "Jace, Reality Sculptor",
+              "ability": 2,
+              "controller": 0
+            }
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "offered": {
+            "[0]": false
+          }
+        },
+        "bug": {
+          "offered": {
+            "[0]": true
+          }
+        }
+      }
+    },
+    {
+      "name": "[+1] with three Islands: Jace to 6, a Jace token with 3 loyalty (CR 701.71a)",
+      "setup": [
+        {
+          "card": "Jace, Reality Sculptor",
+          "owner": 0,
+          "zone": "Battlefield",
+          "counters": {
+            "loyalty": 5
+          }
+        },
+        {
+          "card": "Island",
+          "owner": 0,
+          "zone": "Battlefield",
+          "count": 3
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "activate": {
+            "card": "Jace, Reality Sculptor",
+            "ability": 0
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Jace, Reality Sculptor",
+              "owner": 0,
+              "loyalty": 6
+            },
+            {
+              "card": "Jace",
+              "controller": 0,
+              "zone": "Battlefield",
+              "loyalty": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "[+1] with an existing Jace token and two Islands: the token goes from 5 to 7",
+      "setup": [
+        {
+          "card": "Jace, Reality Sculptor",
+          "owner": 0,
+          "zone": "Battlefield",
+          "counters": {
+            "loyalty": 5
+          }
+        },
+        {
+          "card": "Island",
+          "owner": 0,
+          "zone": "Battlefield",
+          "count": 2
+        },
+        {
+          "card": "Way of the Mind Sculptor",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "cast": {
+            "card": "Way of the Mind Sculptor"
+          }
+        },
+        {
+          "activate": {
+            "card": "Jace, Reality Sculptor",
+            "ability": 0
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Jace, Reality Sculptor",
+              "owner": 0,
+              "loyalty": 6
+            },
+            {
+              "card": "Jace",
+              "controller": 0,
+              "zone": "Battlefield",
+              "loyalty": 7
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "[-3]: on the opponent's turn an attacker at you and one at Jace each get -5/-0 (CR 611.2b)",
+      "setup": [
+        {
+          "card": "Jace, Reality Sculptor",
+          "owner": 0,
+          "zone": "Battlefield",
+          "counters": {
+            "loyalty": 5
+          }
+        },
+        {
+          "card": "Craw Wurm",
+          "owner": 1,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Centaur Courser",
+          "owner": 1,
+          "zone": "Battlefield",
+          "sick": false
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "activate": {
+            "card": "Jace, Reality Sculptor",
+            "ability": 1
+          }
+        },
+        {
+          "advance": {
+            "phase": "BeginCombat",
+            "active": 1
+          }
+        },
+        {
+          "attack": [
+            {
+              "card": "Craw Wurm",
+              "owner": 1,
+              "target": {
+                "player": 0
+              }
+            },
+            {
+              "card": "Centaur Courser",
+              "owner": 1,
+              "target": {
+                "card": "Jace, Reality Sculptor",
+                "owner": 0
+              }
+            }
+          ]
+        },
+        {
+          "advance": {
+            "phase": "PostCombatMain",
+            "active": 1
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "life": [
+            19,
+            20
+          ],
+          "objects": [
+            {
+              "card": "Jace, Reality Sculptor",
+              "owner": 0,
+              "loyalty": 2
+            },
+            {
+              "card": "Craw Wurm",
+              "owner": 1,
+              "power": 1,
+              "toughness": 4
+            },
+            {
+              "card": "Centaur Courser",
+              "owner": 1,
+              "power": -2,
+              "toughness": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "[-3] lasts until your next turn: the opponent's following turn has no -5/-0",
+      "setup": [
+        {
+          "card": "Jace, Reality Sculptor",
+          "owner": 0,
+          "zone": "Battlefield",
+          "counters": {
+            "loyalty": 5
+          }
+        },
+        {
+          "card": "Craw Wurm",
+          "owner": 1,
+          "zone": "Battlefield",
+          "sick": false
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "activate": {
+            "card": "Jace, Reality Sculptor",
+            "ability": 1
+          }
+        },
+        {
+          "advance": {
+            "phase": "BeginCombat",
+            "active": 1
+          }
+        },
+        {
+          "attack": [
+            {
+              "card": "Craw Wurm",
+              "owner": 1,
+              "target": {
+                "player": 0
+              }
+            }
+          ]
+        },
+        {
+          "advance": {
+            "phase": "PostCombatMain",
+            "active": 1
+          }
+        },
+        {
+          "advance": {
+            "phase": "BeginCombat",
+            "active": 1
+          }
+        },
+        {
+          "attack": [
+            {
+              "card": "Craw Wurm",
+              "owner": 1,
+              "target": {
+                "player": 0
+              }
+            }
+          ]
+        },
+        {
+          "advance": {
+            "phase": "PostCombatMain",
+            "active": 1
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "life": [
+            13,
+            20
+          ],
+          "objects": [
+            {
+              "card": "Craw Wurm",
+              "owner": 1,
+              "power": 6
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "[0] with exactly 25 loyalty on Jace: the opponent's library is exiled down to its bottom card",
+      "setup": [
+        {
+          "card": "Jace, Reality Sculptor",
+          "owner": 0,
+          "zone": "Battlefield",
+          "counters": {
+            "loyalty": 25
+          }
+        },
+        {
+          "card": "Island",
+          "owner": 1,
+          "zone": "Exile"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "debug": "MoveToZone",
+          "object": {
+            "card": "Island",
+            "owner": 1,
+            "zone": "Exile"
+          },
+          "data": {
+            "to_zone": "Library",
+            "library_position": {
+              "type": "Bottom"
+            },
+            "simulate": false
+          }
+        },
+        {
+          "offered": {
+            "label": "[0]",
+            "activate": {
+              "card": "Jace, Reality Sculptor",
+              "ability": 2
+            }
+          }
+        },
+        {
+          "activate": {
+            "card": "Jace, Reality Sculptor",
+            "ability": 2
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "offered": {
+            "[0]": true
+          },
+          "library": [
+            33,
+            1
+          ],
+          "objects": [
+            {
+              "card": "Jace, Reality Sculptor",
+              "owner": 0,
+              "loyalty": 25
+            }
+          ],
+          "zones": [
+            {
+              "card": "Mountain",
+              "owner": 1,
+              "zone": "Exile",
+              "count": 33
+            },
+            {
+              "card": "Island",
+              "owner": 1,
+              "zone": "Exile",
+              "count": 0
+            },
+            {
+              "card": "Mountain",
+              "owner": 0,
+              "zone": "Exile",
+              "count": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "[0] counts loyalty among all your Jaces: Jace 20 + a Jace token 5 = 25",
+      "setup": [
+        {
+          "card": "Jace, Reality Sculptor",
+          "owner": 0,
+          "zone": "Battlefield",
+          "counters": {
+            "loyalty": 20
+          }
+        },
+        {
+          "card": "Way of the Mind Sculptor",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "cast": {
+            "card": "Way of the Mind Sculptor"
+          }
+        },
+        {
+          "offered": {
+            "label": "[0]",
+            "activate": {
+              "card": "Jace, Reality Sculptor",
+              "ability": 2
+            }
+          }
+        },
+        {
+          "activate": {
+            "card": "Jace, Reality Sculptor",
+            "ability": 2
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "offered": {
+            "[0]": true
+          },
+          "library": [
+            33,
+            1
+          ],
+          "zones": [
+            {
+              "card": "Mountain",
+              "owner": 1,
+              "zone": "Exile",
+              "count": 32
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "[0] with a one-card opponent library: nothing is exiled",
+      "setup": [
+        {
+          "card": "Jace, Reality Sculptor",
+          "owner": 0,
+          "zone": "Battlefield",
+          "counters": {
+            "loyalty": 25
+          }
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "debug": "Mill",
+          "data": {
+            "player_id": 1,
+            "count": 32
+          }
+        },
+        {
+          "activate": {
+            "card": "Jace, Reality Sculptor",
+            "ability": 2
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "library": [
+            33,
+            1
+          ],
+          "zones": [
+            {
+              "card": "Mountain",
+              "owner": 1,
+              "zone": "Exile",
+              "count": 0
+            },
+            {
+              "card": "Mountain",
+              "owner": 1,
+              "zone": "Graveyard",
+              "count": 32
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "history": [
+    {
+      "date": "2026-10-23",
+      "status": "active",
+      "note": "Written against Oracle text and CR 602.5b/606.3; tested on 0.116.0 (3f79456): upstream activates the [0] with 24 loyalty counters among your Jaces (and with an opponent's Jace at 30) and exiles the opponent's library down to one card; with the override it isn't offered and a forced activation is rejected, while it works at 25 (one Jace, or Jace + token). [+1] and [-3] verified as guards."
+    }
+  ]
+}

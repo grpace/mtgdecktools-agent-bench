@@ -1,0 +1,23 @@
+# Allow-list: the only list of what goes into the Director/Hub image (the Dockerfile copies the whole context).
+# Keeps local data, runs, tokens and analysis out of the build. deploy/deploy.sh reads the `!` lines as the image's
+# inputs (its -dirty check and the files it ships to the build host); CI checks the image holds every file the
+# code reads at run time (scripts/image-files.mjs).
+*
+!package.json
+!package-lock.json
+!packages
+!registry
+!sets
+!prompts
+!engine
+!deps
+!scripts
+!docs/METHODOLOGY.md
+!docs/legal
+!highlights
+!deploy/lobby.json
+**/node_modules
+packages/site/dist
+packages/site/dist-data
+scripts/bench/dist
+**/__pycache__

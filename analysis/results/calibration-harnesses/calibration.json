@@ -1,0 +1,2179 @@
+{
+ "generated_at": "2026-10-23T22:33:46.503Z",
+ "generator": "packages/site/src/calibrate.ts",
+ "sims": 200,
+ "power_sims": 0,
+ "replicates": 200,
+ "jobs": 12,
+ "new_options": {},
+ "pool_sd": {},
+ "checkpoints": [
+  6,
+  12,
+  24,
+  48
+ ],
+ "power_checkpoints": [
+  1,
+  2,
+  3,
+  4,
+  6,
+  8,
+  10,
+  12,
+  15,
+  18,
+  22,
+  26,
+  30,
+  36,
+  42,
+  48
+ ],
+ "pairing_version": 4,
+ "match_tally": {
+  "matches": 345600,
+  "mirrors": 24380,
+  "noResult": 4211
+ },
+ "scenarios": [
+  {
+   "name": "central",
+   "note": "skill SD 100, deck SD 0.25, contributor SD 30, 10 contributors, half Private Tables, 12 identities",
+   "identities": 12,
+   "skillSd": 100,
+   "deckSd": 0.25,
+   "setSd": 30,
+   "playElo": 20,
+   "zipf": 1,
+   "contributors": 10,
+   "contribSd": 30,
+   "privateShare": 0.5,
+   "forfeit": {
+    "base": 0.005,
+    "flaky": 0.04,
+    "flakyShare": 0.1
+   },
+   "noResult": 0.005
+  },
+  {
+   "name": "harnesses pooled",
+   "note": "each contributor runs each identity on one of 2 harnesses (70/30), harness SD 40 Elo; truth = the identity as its seats ran",
+   "identities": 12,
+   "skillSd": 100,
+   "deckSd": 0.25,
+   "setSd": 30,
+   "playElo": 20,
+   "zipf": 1,
+   "contributors": 10,
+   "contribSd": 30,
+   "privateShare": 0.5,
+   "forfeit": {
+    "base": 0.005,
+    "flaky": 0.04,
+    "flakyShare": 0.1
+   },
+   "noResult": 0.005,
+   "harnessMix": {
+    "harnesses": 2,
+    "sd": 40,
+    "skew": 0.7
+   }
+  },
+  {
+   "name": "harnesses pooled, strong",
+   "note": "as harnesses pooled, harness SD 80 Elo and a 50/50 mix",
+   "identities": 12,
+   "skillSd": 100,
+   "deckSd": 0.25,
+   "setSd": 30,
+   "playElo": 20,
+   "zipf": 1,
+   "contributors": 10,
+   "contribSd": 30,
+   "privateShare": 0.5,
+   "forfeit": {
+    "base": 0.005,
+    "flaky": 0.04,
+    "flakyShare": 0.1
+   },
+   "noResult": 0.005,
+   "harnessMix": {
+    "harnesses": 2,
+    "sd": 80,
+    "skew": 0.5
+   },
+   "stress": "harness effects twice the size, evenly mixed"
+  }
+ ],
+ "coverage": [
+  {
+   "sc": "central",
+   "methods": [
+    {
+     "m": "old",
+     "n": 9046,
+     "coverage": 0.9662834401945611,
+     "width": 253.43648017844498,
+     "rmse": 59.41460696655676,
+     "buckets": [
+      {
+       "games": "1–9",
+       "n": 598,
+       "coverage": 0.9565217391304348,
+       "width": 426.0210906719422,
+       "rmse": 108.35441736103823
+      },
+      {
+       "games": "10–29",
+       "n": 1765,
+       "coverage": 0.9626062322946176,
+       "width": 346.0996566264184,
+       "rmse": 76.79487792365119
+      },
+      {
+       "games": "30–59",
+       "n": 2044,
+       "coverage": 0.9716242661448141,
+       "width": 294.6644397656479,
+       "rmse": 59.501807280964556
+      },
+      {
+       "games": "60–119",
+       "n": 2178,
+       "coverage": 0.9747474747474747,
+       "width": 221.41949519763602,
+       "rmse": 46.150181289940505
+      },
+      {
+       "games": "120–",
+       "n": 2461,
+       "coverage": 0.9593661113368549,
+       "width": 139.13617151780437,
+       "rmse": 32.676937493334236
+      }
+     ],
+     "byEvents": [
+      {
+       "events": "1–2",
+       "n": 1983,
+       "coverage": 0.9581442259203228
+      },
+      {
+       "events": "3–4",
+       "n": 1718,
+       "coverage": 0.9708963911525029
+      },
+      {
+       "events": "5–9",
+       "n": 2525,
+       "coverage": 0.9762376237623762
+      },
+      {
+       "events": "10–",
+       "n": 2820,
+       "coverage": 0.9602836879432625
+      }
+     ],
+     "rankCoverage": 0.9944726951138625,
+     "extremes": {
+      "n": 1600,
+      "coverage": 0.95375,
+      "shrink": 26.868060520738933,
+      "width": 267.4809150518966,
+      "midCoverage": 0.9689766317485898
+     }
+    },
+    {
+     "m": "new",
+     "n": 9046,
+     "coverage": 0.9561131992040681,
+     "width": 235.25304807613313,
+     "rmse": 59.41460696655676,
+     "buckets": [
+      {
+       "games": "1–9",
+       "n": 598,
+       "coverage": 0.9749163879598662,
+       "width": 456.8998292390399,
+       "rmse": 108.35441736103823
+      },
+      {
+       "games": "10–29",
+       "n": 1765,
+       "coverage": 0.9631728045325779,
+       "width": 333.89303638370797,
+       "rmse": 76.79487792365119
+      },
+      {
+       "games": "30–59",
+       "n": 2044,
+       "coverage": 0.9613502935420744,
+       "width": 257.74075816085065,
+       "rmse": 59.501807280964556
+      },
+      {
+       "games": "60–119",
+       "n": 2178,
+       "coverage": 0.9504132231404959,
+       "width": 193.7282025519733,
+       "rmse": 46.150181289940505
+      },
+      {
+       "games": "120–",
+       "n": 2461,
+       "coverage": 0.9471759447379114,
+       "width": 128.72394593886165,
+       "rmse": 32.676937493334236
+      }
+     ],
+     "byEvents": [
+      {
+       "events": "1–2",
+       "n": 1983,
+       "coverage": 0.967725668179526
+      },
+      {
+       "events": "3–4",
+       "n": 1718,
+       "coverage": 0.9610011641443539
+      },
+      {
+       "events": "5–9",
+       "n": 2525,
+       "coverage": 0.958019801980198
+      },
+      {
+       "events": "10–",
+       "n": 2820,
+       "coverage": 0.9432624113475178
+      }
+     ],
+     "rankCoverage": 0.9935883263320805,
+     "extremes": {
+      "n": 1600,
+      "coverage": 0.935,
+      "shrink": 26.868060520738933,
+      "width": 248.76918945087698,
+      "midCoverage": 0.9606500134300295
+     }
+    },
+    {
+     "m": "event-only",
+     "n": 9046,
+     "coverage": 0.9265973911120937,
+     "width": 213.92271582761373,
+     "rmse": 59.41460696655676,
+     "buckets": [
+      {
+       "games": "1–9",
+       "n": 598,
+       "coverage": 0.9565217391304348,
+       "width": 425.43603705002164,
+       "rmse": 108.35441736103823
+      },
+      {
+       "games": "10–29",
+       "n": 1765,
+       "coverage": 0.9490084985835694,
+       "width": 306.1529372743221,
+       "rmse": 76.79487792365119
+      },
+      {
+       "games": "30–59",
+       "n": 2044,
+       "coverage": 0.937866927592955,
+       "width": 236.23517482655717,
+       "rmse": 59.501807280964556
+      },
+      {
+       "games": "60–119",
+       "n": 2178,
+       "coverage": 0.9228650137741047,
+       "width": 176.17575204080734,
+       "rmse": 46.150181289940505
+      },
+      {
+       "games": "120–",
+       "n": 2461,
+       "coverage": 0.897196261682243,
+       "width": 111.2550660874165,
+       "rmse": 32.676937493334236
+      }
+     ],
+     "byEvents": [
+      {
+       "events": "1–2",
+       "n": 1983,
+       "coverage": 0.9500756429652042
+      },
+      {
+       "events": "3–4",
+       "n": 1718,
+       "coverage": 0.9412107101280559
+      },
+      {
+       "events": "5–9",
+       "n": 2525,
+       "coverage": 0.9318811881188119
+      },
+      {
+       "events": "10–",
+       "n": 2820,
+       "coverage": 0.8964539007092198
+      }
+     ],
+     "rankCoverage": 0.9864028299801016,
+     "extremes": {
+      "n": 1600,
+      "coverage": 0.906875,
+      "shrink": 26.868060520738933,
+      "width": 228.09773323120754,
+      "midCoverage": 0.9308353478377652
+     }
+    },
+    {
+     "m": "new+cap",
+     "n": 9046,
+     "coverage": 0.9590979438425824,
+     "width": 242.58830408922745,
+     "rmse": 59.64054031013337,
+     "buckets": [
+      {
+       "games": "1–9",
+       "n": 598,
+       "coverage": 0.9749163879598662,
+       "width": 461.811393606208,
+       "rmse": 107.91755611193315
+      },
+      {
+       "games": "10–29",
+       "n": 1765,
+       "coverage": 0.9705382436260623,
+       "width": 350.1392263442541,
+       "rmse": 76.70752126353807
+      },
+      {
+       "games": "30–59",
+       "n": 2044,
+       "coverage": 0.9662426614481409,
+       "width": 268.30965530942046,
+       "rmse": 60.46867027886026
+      },
+      {
+       "games": "60–119",
+       "n": 2178,
+       "coverage": 0.9527089072543617,
+       "width": 197.858106252385,
+       "rmse": 46.5643339099551
+      },
+      {
+       "games": "120–",
+       "n": 2461,
+       "coverage": 0.94676960585128,
+       "width": 130.40835434655983,
+       "rmse": 32.69413527761715
+      }
+     ],
+     "byEvents": [
+      {
+       "events": "1–2",
+       "n": 1983,
+       "coverage": 0.9717599596570852
+      },
+      {
+       "events": "3–4",
+       "n": 1718,
+       "coverage": 0.9691501746216531
+      },
+      {
+       "events": "5–9",
+       "n": 2525,
+       "coverage": 0.96
+      },
+      {
+       "events": "10–",
+       "n": 2820,
+       "coverage": 0.9432624113475178
+      }
+     ],
+     "rankCoverage": 0.994693787309308,
+     "extremes": {
+      "n": 1600,
+      "coverage": 0.93875,
+      "shrink": 27.70288238217033,
+      "width": 256.2052962340618,
+      "midCoverage": 0.9634703196347032
+     }
+    },
+    {
+     "m": "new+cap30",
+     "n": 9046,
+     "coverage": 0.9705947380057484,
+     "width": 263.62964986518176,
+     "rmse": 60.06017887296143,
+     "buckets": [
+      {
+       "games": "1–9",
+       "n": 598,
+       "coverage": 0.9782608695652174,
+       "width": 478.03033406567624,
+       "rmse": 105.2264662510022
+      },
+      {
+       "games": "10–29",
+       "n": 1765,
+       "coverage": 0.9881019830028328,
+       "width": 399.00280917557757,
+       "rmse": 76.43293348280726
+      },
+      {
+       "games": "30–59",
+       "n": 2044,
+       "coverage": 0.9770058708414873,
+       "width": 292.8852047441925,
+       "rmse": 62.66477389166753
+      },
+      {
+       "games": "60–119",
+       "n": 2178,
+       "coverage": 0.9664830119375574,
+       "width": 210.56816350045113,
+       "rmse": 47.78745276390576
+      },
+      {
+       "games": "120–",
+       "n": 2461,
+       "coverage": 0.9544900446972775,
+       "width": 137.10560589726038,
+       "rmse": 33.11119308317889
+      }
+     ],
+     "byEvents": [
+      {
+       "events": "1–2",
+       "n": 1983,
+       "coverage": 0.9858799798285426
+      },
+      {
+       "events": "3–4",
+       "n": 1718,
+       "coverage": 0.9790454016298021
+      },
+      {
+       "events": "5–9",
+       "n": 2525,
+       "coverage": 0.975049504950495
+      },
+      {
+       "events": "10–",
+       "n": 2820,
+       "coverage": 0.950709219858156
+      }
+     ],
+     "rankCoverage": 0.9974574397523768,
+     "extremes": {
+      "n": 1600,
+      "coverage": 0.954375,
+      "shrink": 31.38338224275095,
+      "width": 278.94310171442777,
+      "midCoverage": 0.9740800429760945
+     }
+    }
+   ]
+  },
+  {
+   "sc": "harnesses pooled",
+   "methods": [
+    {
+     "m": "old",
+     "n": 9090,
+     "coverage": 0.9678767876787678,
+     "width": 257.589859743761,
+     "rmse": 60.27411227804516,
+     "buckets": [
+      {
+       "games": "1–9",
+       "n": 651,
+       "coverage": 0.9554531490015361,
+       "width": 426.3673306715943,
+       "rmse": 108.72193332600038
+      },
+      {
+       "games": "10–29",
+       "n": 1786,
+       "coverage": 0.9703247480403135,
+       "width": 352.3557073790759,
+       "rmse": 78.54825732362461
+      },
+      {
+       "games": "30–59",
+       "n": 2027,
+       "coverage": 0.9738529847064628,
+       "width": 299.66016261780794,
+       "rmse": 59.16767568054055
+      },
+      {
+       "games": "60–119",
+       "n": 2167,
+       "coverage": 0.9746192893401016,
+       "width": 223.4719846009804,
+       "rmse": 45.61680858147052
+      },
+      {
+       "games": "120–",
+       "n": 2459,
+       "coverage": 0.9585197234648231,
+       "width": 139.46500982835732,
+       "rmse": 33.15954390475903
+      }
+     ],
+     "byEvents": [
+      {
+       "events": "1–2",
+       "n": 2067,
+       "coverage": 0.9608127721335269
+      },
+      {
+       "events": "3–4",
+       "n": 1704,
+       "coverage": 0.9788732394366197
+      },
+      {
+       "events": "5–9",
+       "n": 2503,
+       "coverage": 0.9732321214542549
+      },
+      {
+       "events": "10–",
+       "n": 2816,
+       "coverage": 0.9616477272727273
+      }
+     ],
+     "rankCoverage": 0.9962596259625962,
+     "extremes": {
+      "n": 1600,
+      "coverage": 0.95375,
+      "shrink": 27.476799775230507,
+      "width": 272.1613619897974,
+      "midCoverage": 0.9708945260347129
+     }
+    },
+    {
+     "m": "new",
+     "n": 9090,
+     "coverage": 0.9596259625962597,
+     "width": 238.1326196732768,
+     "rmse": 60.27411227804516,
+     "buckets": [
+      {
+       "games": "1–9",
+       "n": 651,
+       "coverage": 0.9754224270353302,
+       "width": 456.95154841225053,
+       "rmse": 108.72193332600038
+      },
+      {
+       "games": "10–29",
+       "n": 1786,
+       "coverage": 0.9748040313549832,
+       "width": 336.53654261955586,
+       "rmse": 78.54825732362461
+      },
+      {
+       "games": "30–59",
+       "n": 2027,
+       "coverage": 0.9605328071040947,
+       "width": 259.74438776128136,
+       "rmse": 59.16767568054055
+      },
+      {
+       "games": "60–119",
+       "n": 2167,
+       "coverage": 0.9529303184125519,
+       "width": 195.36319185375473,
+       "rmse": 45.61680858147052
+      },
+      {
+       "games": "120–",
+       "n": 2459,
+       "coverage": 0.9495729971533143,
+       "width": 128.6058881480173,
+       "rmse": 33.15954390475903
+      }
+     ],
+     "byEvents": [
+      {
+       "events": "1–2",
+       "n": 2067,
+       "coverage": 0.9733913884857281
+      },
+      {
+       "events": "3–4",
+       "n": 1704,
+       "coverage": 0.9653755868544601
+      },
+      {
+       "events": "5–9",
+       "n": 2503,
+       "coverage": 0.9560527367159408
+      },
+      {
+       "events": "10–",
+       "n": 2816,
+       "coverage": 0.94921875
+      }
+     ],
+     "rankCoverage": 0.9954895489548955,
+     "extremes": {
+      "n": 1600,
+      "coverage": 0.9325,
+      "shrink": 27.476799775230507,
+      "width": 255.17747178812482,
+      "midCoverage": 0.9654205607476636
+     }
+    },
+    {
+     "m": "event-only",
+     "n": 9090,
+     "coverage": 0.9327832783278328,
+     "width": 217.18313067021555,
+     "rmse": 60.27411227804516,
+     "buckets": [
+      {
+       "games": "1–9",
+       "n": 651,
+       "coverage": 0.9539170506912442,
+       "width": 425.489360618146,
+       "rmse": 108.72193332600038
+      },
+      {
+       "games": "10–29",
+       "n": 1786,
+       "coverage": 0.9552071668533034,
+       "width": 309.04859326811476,
+       "rmse": 78.54825732362461
+      },
+      {
+       "games": "30–59",
+       "n": 2027,
+       "coverage": 0.938332511100148,
+       "width": 238.6809345975178,
+       "rmse": 59.16767568054055
+      },
+      {
+       "games": "60–119",
+       "n": 2167,
+       "coverage": 0.9390862944162437,
+       "width": 178.5009786618136,
+       "rmse": 45.61680858147052
+      },
+      {
+       "games": "120–",
+       "n": 2459,
+       "coverage": 0.9007726718178121,
+       "width": 111.68052918408952,
+       "rmse": 33.15954390475903
+      }
+     ],
+     "byEvents": [
+      {
+       "events": "1–2",
+       "n": 2067,
+       "coverage": 0.9521044992743106
+      },
+      {
+       "events": "3–4",
+       "n": 1704,
+       "coverage": 0.943075117370892
+      },
+      {
+       "events": "5–9",
+       "n": 2503,
+       "coverage": 0.9396723931282461
+      },
+      {
+       "events": "10–",
+       "n": 2816,
+       "coverage": 0.90625
+      }
+     ],
+     "rankCoverage": 0.9905390539053905,
+     "extremes": {
+      "n": 1600,
+      "coverage": 0.91,
+      "shrink": 27.476799775230507,
+      "width": 234.27883865398547,
+      "midCoverage": 0.9376502002670227
+     }
+    }
+   ]
+  },
+  {
+   "sc": "harnesses pooled, strong",
+   "methods": [
+    {
+     "m": "old",
+     "n": 9043,
+     "coverage": 0.9660510892402964,
+     "width": 259.54839197889504,
+     "rmse": 60.73572377923943,
+     "buckets": [
+      {
+       "games": "1–9",
+       "n": 601,
+       "coverage": 0.9584026622296173,
+       "width": 424.88961557972107,
+       "rmse": 110.66785278241936
+      },
+      {
+       "games": "10–29",
+       "n": 1806,
+       "coverage": 0.9634551495016611,
+       "width": 354.0589982883876,
+       "rmse": 79.75383061782925
+      },
+      {
+       "games": "30–59",
+       "n": 2011,
+       "coverage": 0.9731476877175534,
+       "width": 303.3643698371071,
+       "rmse": 60.03797466684819
+      },
+      {
+       "games": "60–119",
+       "n": 2192,
+       "coverage": 0.9744525547445255,
+       "width": 226.5662220690948,
+       "rmse": 45.587891073986725
+      },
+      {
+       "games": "120–",
+       "n": 2433,
+       "coverage": 0.956432387998356,
+       "width": 142.05014068024067,
+       "rmse": 33.34805253003608
+      }
+     ],
+     "byEvents": [
+      {
+       "events": "1–2",
+       "n": 1996,
+       "coverage": 0.9594188376753507
+      },
+      {
+       "events": "3–4",
+       "n": 1676,
+       "coverage": 0.9719570405727923
+      },
+      {
+       "events": "5–9",
+       "n": 2545,
+       "coverage": 0.9732809430255402
+      },
+      {
+       "events": "10–",
+       "n": 2826,
+       "coverage": 0.9607218683651805
+      }
+     ],
+     "rankCoverage": 0.9945814442109919,
+     "extremes": {
+      "n": 1600,
+      "coverage": 0.95125,
+      "shrink": 33.27485842271206,
+      "width": 271.70768201400284,
+      "midCoverage": 0.9692328362219536
+     }
+    },
+    {
+     "m": "new",
+     "n": 9043,
+     "coverage": 0.9562092226031185,
+     "width": 240.09084360605783,
+     "rmse": 60.73572377923943,
+     "buckets": [
+      {
+       "games": "1–9",
+       "n": 601,
+       "coverage": 0.9700499168053245,
+       "width": 455.65643858008724,
+       "rmse": 110.66785278241936
+      },
+      {
+       "games": "10–29",
+       "n": 1806,
+       "coverage": 0.9623477297895903,
+       "width": 339.0116410047659,
+       "rmse": 79.75383061782925
+      },
+      {
+       "games": "30–59",
+       "n": 2011,
+       "coverage": 0.9587270014917951,
+       "width": 262.0194430237277,
+       "rmse": 60.03797466684819
+      },
+      {
+       "games": "60–119",
+       "n": 2192,
+       "coverage": 0.9543795620437956,
+       "width": 198.76839552453748,
+       "rmse": 45.587891073986725
+      },
+      {
+       "games": "120–",
+       "n": 2433,
+       "coverage": 0.9478010686395396,
+       "width": 132.51768704391696,
+       "rmse": 33.34805253003608
+      }
+     ],
+     "byEvents": [
+      {
+       "events": "1–2",
+       "n": 1996,
+       "coverage": 0.9624248496993988
+      },
+      {
+       "events": "3–4",
+       "n": 1676,
+       "coverage": 0.9594272076372315
+      },
+      {
+       "events": "5–9",
+       "n": 2545,
+       "coverage": 0.9555992141453831
+      },
+      {
+       "events": "10–",
+       "n": 2826,
+       "coverage": 0.9504600141542817
+      }
+     ],
+     "rankCoverage": 0.9945814442109919,
+     "extremes": {
+      "n": 1600,
+      "coverage": 0.929375,
+      "shrink": 33.27485842271206,
+      "width": 254.60847932695037,
+      "midCoverage": 0.9619776971651216
+     }
+    },
+    {
+     "m": "event-only",
+     "n": 9043,
+     "coverage": 0.9318810129381843,
+     "width": 219.7053567345778,
+     "rmse": 60.73572377923943,
+     "buckets": [
+      {
+       "games": "1–9",
+       "n": 601,
+       "coverage": 0.9584026622296173,
+       "width": 424.12812047028785,
+       "rmse": 110.66785278241936
+      },
+      {
+       "games": "10–29",
+       "n": 1806,
+       "coverage": 0.9462901439645626,
+       "width": 311.4740508366687,
+       "rmse": 79.75383061782925
+      },
+      {
+       "games": "30–59",
+       "n": 2011,
+       "coverage": 0.9413227250124316,
+       "width": 240.95797477687722,
+       "rmse": 60.03797466684819
+      },
+      {
+       "games": "60–119",
+       "n": 2192,
+       "coverage": 0.9352189781021898,
+       "width": 182.47174546737367,
+       "rmse": 45.587891073986725
+      },
+      {
+       "games": "120–",
+       "n": 2433,
+       "coverage": 0.903822441430333,
+       "width": 117.06857846129853,
+       "rmse": 33.34805253003608
+      }
+     ],
+     "byEvents": [
+      {
+       "events": "1–2",
+       "n": 1996,
+       "coverage": 0.9473947895791583
+      },
+      {
+       "events": "3–4",
+       "n": 1676,
+       "coverage": 0.9391408114558473
+      },
+      {
+       "events": "5–9",
+       "n": 2545,
+       "coverage": 0.9390962671905697
+      },
+      {
+       "events": "10–",
+       "n": 2826,
+       "coverage": 0.9101203113941967
+      }
+     ],
+     "rankCoverage": 0.9888311401083711,
+     "extremes": {
+      "n": 1600,
+      "coverage": 0.9025,
+      "shrink": 33.27485842271206,
+      "width": 234.3068674636222,
+      "midCoverage": 0.9381969635899503
+     }
+    }
+   ]
+  }
+ ],
+ "pairs": [
+  {
+   "sc": "central",
+   "pairs": 47075,
+   "old_overlap": {
+    "separated": 0.12870950610727563,
+    "wrong": 0.002145568575672553
+   },
+   "new_overlap": {
+    "separated": 0.14748805098247478,
+    "wrong": 0.001440299582313121
+   },
+   "new_diff": {
+    "separated": 0.2757514604354753,
+    "wrong": 0.010784993451968261,
+    "coverage": 0.9560732473724131
+   },
+   "gap100": {
+    "old": 0.05739365293720459,
+    "new": 0.21095784701456544
+   }
+  },
+  {
+   "sc": "harnesses pooled",
+   "pairs": 47543,
+   "old_overlap": {
+    "separated": 0.12687461876616957,
+    "wrong": 0.0011604774535809018
+   },
+   "new_overlap": {
+    "separated": 0.14601518625244517,
+    "wrong": 0.0007202535292422932
+   },
+   "new_diff": {
+    "separated": 0.2720905285741329,
+    "wrong": 0.0074211502782931356,
+    "coverage": 0.9574143997253926
+   },
+   "gap100": {
+    "old": 0.049142416650607056,
+    "new": 0.1990749662748121
+   }
+  },
+  {
+   "sc": "harnesses pooled, strong",
+   "pairs": 47047,
+   "old_overlap": {
+    "separated": 0.12196314323973899,
+    "wrong": 0.0006971070059254096
+   },
+   "new_overlap": {
+    "separated": 0.1402852466682254,
+    "wrong": 0.0007575757575757576
+   },
+   "new_diff": {
+    "separated": 0.26426764724637064,
+    "wrong": 0.009169146625914905,
+    "coverage": 0.9549803038829487
+   },
+   "gap100": {
+    "old": 0.04661398419525858,
+    "new": 0.18905671701510454
+   }
+  }
+ ],
+ "power": [
+  {
+   "design": "private 4×2",
+   "note": "Private Tables of 4 identities × 2 seats; A and B at every table with two others from a field of 6; 6 contributors take turns",
+   "old": {
+    "curve": [
+     {
+      "tables": 1,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 2,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 3,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 4,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 6,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 8,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 10,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 12,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 15,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 18,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 22,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 26,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 30,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 36,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 42,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 48,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     }
+    ],
+    "games50": null,
+    "games80": null,
+    "tables50": null,
+    "tables80": null
+   },
+   "new": {
+    "curve": [
+     {
+      "tables": 1,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 2,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 3,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 4,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 6,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 8,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 10,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 12,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 15,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 18,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 22,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 26,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 30,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 36,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 42,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 48,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     }
+    ],
+    "games50": null,
+    "games80": null,
+    "tables50": null,
+    "tables80": null
+   }
+  },
+  {
+   "design": "lobby",
+   "note": "lobby tables; A and B one seat each at every table, six other identities from a field of 6, 3–4 contributors",
+   "old": {
+    "curve": [
+     {
+      "tables": 1,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 2,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 3,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 4,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 6,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 8,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 10,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 12,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 15,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 18,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 22,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 26,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 30,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 36,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 42,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 48,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     }
+    ],
+    "games50": null,
+    "games80": null,
+    "tables50": null,
+    "tables80": null
+   },
+   "new": {
+    "curve": [
+     {
+      "tables": 1,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 2,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 3,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 4,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 6,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 8,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 10,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 12,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 15,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 18,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 22,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 26,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 30,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 36,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 42,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     },
+     {
+      "tables": 48,
+      "games": null,
+      "rate": null,
+      "wrong": null
+     }
+    ],
+    "games50": null,
+    "games80": null,
+    "tables50": null,
+    "tables80": null
+   }
+  }
+ ],
+ "contributors": [
+  {
+   "zThresholds": [
+    {
+     "z": 3,
+     "falsePositive": 0.06598832859494239,
+     "victimByT": [
+      {
+       "T": 6,
+       "caught": null
+      },
+      {
+       "T": 12,
+       "caught": null
+      },
+      {
+       "T": 24,
+       "caught": null
+      },
+      {
+       "T": 48,
+       "caught": null
+      }
+     ]
+    },
+    {
+     "z": 3.5,
+     "falsePositive": 0.0288792458476732,
+     "victimByT": [
+      {
+       "T": 6,
+       "caught": null
+      },
+      {
+       "T": 12,
+       "caught": null
+      },
+      {
+       "T": 24,
+       "caught": null
+      },
+      {
+       "T": 48,
+       "caught": null
+      }
+     ]
+    },
+    {
+     "z": 4,
+     "falsePositive": 0.01481370641927278,
+     "victimByT": [
+      {
+       "T": 6,
+       "caught": null
+      },
+      {
+       "T": 12,
+       "caught": null
+      },
+      {
+       "T": 24,
+       "caught": null
+      },
+      {
+       "T": 48,
+       "caught": null
+      }
+     ]
+    },
+    {
+     "z": 4.5,
+     "falsePositive": 0.010773604668562023,
+     "victimByT": [
+      {
+       "T": 6,
+       "caught": null
+      },
+      {
+       "T": 12,
+       "caught": null
+      },
+      {
+       "T": 24,
+       "caught": null
+      },
+      {
+       "T": 48,
+       "caught": null
+      }
+     ]
+    }
+   ],
+   "sc": "central",
+   "rows": 6683,
+   "floorFails": 0.21023492443513392,
+   "flagged": 0.022145742929821938,
+   "inconsistent": 0.03531348196917552,
+   "victimByT": [
+    {
+     "T": 6,
+     "n": 0,
+     "games": null,
+     "topShare": null,
+     "bias": null,
+     "biasCap": null,
+     "biasCap30": null,
+     "floorFails": null,
+     "flagged": null,
+     "inconsistent": null,
+     "caught": null
+    },
+    {
+     "T": 12,
+     "n": 0,
+     "games": null,
+     "topShare": null,
+     "bias": null,
+     "biasCap": null,
+     "biasCap30": null,
+     "floorFails": null,
+     "flagged": null,
+     "inconsistent": null,
+     "caught": null
+    },
+    {
+     "T": 24,
+     "n": 0,
+     "games": null,
+     "topShare": null,
+     "bias": null,
+     "biasCap": null,
+     "biasCap30": null,
+     "floorFails": null,
+     "flagged": null,
+     "inconsistent": null,
+     "caught": null
+    },
+    {
+     "T": 48,
+     "n": 0,
+     "games": null,
+     "topShare": null,
+     "bias": null,
+     "biasCap": null,
+     "biasCap30": null,
+     "floorFails": null,
+     "flagged": null,
+     "inconsistent": null,
+     "caught": null
+    }
+   ],
+   "flaggedByT": [
+    {
+     "T": 6,
+     "n": 834,
+     "flagged": 0.03117505995203837,
+     "inconsistent": 0.03117505995203837
+    },
+    {
+     "T": 12,
+     "n": 1447,
+     "flagged": 0.0331720801658604,
+     "inconsistent": 0.04630269523151347
+    },
+    {
+     "T": 24,
+     "n": 2042,
+     "flagged": 0.01665034280117532,
+     "inconsistent": 0.03770812928501469
+    },
+    {
+     "T": 48,
+     "n": 2360,
+     "flagged": 0.01694915254237288,
+     "inconsistent": 0.027966101694915254
+    }
+   ],
+   "victim": null
+  },
+  {
+   "zThresholds": [
+    {
+     "z": 3,
+     "falsePositive": 0.07365098451826244,
+     "victimByT": [
+      {
+       "T": 6,
+       "caught": null
+      },
+      {
+       "T": 12,
+       "caught": null
+      },
+      {
+       "T": 24,
+       "caught": null
+      },
+      {
+       "T": 48,
+       "caught": null
+      }
+     ]
+    },
+    {
+     "z": 3.5,
+     "falsePositive": 0.0315647076506839,
+     "victimByT": [
+      {
+       "T": 6,
+       "caught": null
+      },
+      {
+       "T": 12,
+       "caught": null
+      },
+      {
+       "T": 24,
+       "caught": null
+      },
+      {
+       "T": 48,
+       "caught": null
+      }
+     ]
+    },
+    {
+     "z": 4,
+     "falsePositive": 0.01788666766872088,
+     "victimByT": [
+      {
+       "T": 6,
+       "caught": null
+      },
+      {
+       "T": 12,
+       "caught": null
+      },
+      {
+       "T": 24,
+       "caught": null
+      },
+      {
+       "T": 48,
+       "caught": null
+      }
+     ]
+    },
+    {
+     "z": 4.5,
+     "falsePositive": 0.013076807455283331,
+     "victimByT": [
+      {
+       "T": 6,
+       "caught": null
+      },
+      {
+       "T": 12,
+       "caught": null
+      },
+      {
+       "T": 24,
+       "caught": null
+      },
+      {
+       "T": 48,
+       "caught": null
+      }
+     ]
+    }
+   ],
+   "sc": "harnesses pooled",
+   "rows": 6653,
+   "floorFails": 0.19299564106418157,
+   "flagged": 0.020441905907109575,
+   "inconsistent": 0.03592364346911168,
+   "victimByT": [
+    {
+     "T": 6,
+     "n": 0,
+     "games": null,
+     "topShare": null,
+     "bias": null,
+     "biasCap": null,
+     "biasCap30": null,
+     "floorFails": null,
+     "flagged": null,
+     "inconsistent": null,
+     "caught": null
+    },
+    {
+     "T": 12,
+     "n": 0,
+     "games": null,
+     "topShare": null,
+     "bias": null,
+     "biasCap": null,
+     "biasCap30": null,
+     "floorFails": null,
+     "flagged": null,
+     "inconsistent": null,
+     "caught": null
+    },
+    {
+     "T": 24,
+     "n": 0,
+     "games": null,
+     "topShare": null,
+     "bias": null,
+     "biasCap": null,
+     "biasCap30": null,
+     "floorFails": null,
+     "flagged": null,
+     "inconsistent": null,
+     "caught": null
+    },
+    {
+     "T": 48,
+     "n": 0,
+     "games": null,
+     "topShare": null,
+     "bias": null,
+     "biasCap": null,
+     "biasCap30": null,
+     "floorFails": null,
+     "flagged": null,
+     "inconsistent": null,
+     "caught": null
+    }
+   ],
+   "flaggedByT": [
+    {
+     "T": 6,
+     "n": 824,
+     "flagged": 0.02063106796116505,
+     "inconsistent": 0.024271844660194174
+    },
+    {
+     "T": 12,
+     "n": 1441,
+     "flagged": 0.030534351145038167,
+     "inconsistent": 0.04510756419153366
+    },
+    {
+     "T": 24,
+     "n": 2033,
+     "flagged": 0.02164289227742253,
+     "inconsistent": 0.039350713231677326
+    },
+    {
+     "T": 48,
+     "n": 2355,
+     "flagged": 0.013163481953290871,
+     "inconsistent": 0.031422505307855626
+    }
+   ],
+   "victim": null
+  },
+  {
+   "zThresholds": [
+    {
+     "z": 3,
+     "falsePositive": 0.08921036769138035,
+     "victimByT": [
+      {
+       "T": 6,
+       "caught": null
+      },
+      {
+       "T": 12,
+       "caught": null
+      },
+      {
+       "T": 24,
+       "caught": null
+      },
+      {
+       "T": 48,
+       "caught": null
+      }
+     ]
+    },
+    {
+     "z": 3.5,
+     "falsePositive": 0.04008438818565401,
+     "victimByT": [
+      {
+       "T": 6,
+       "caught": null
+      },
+      {
+       "T": 12,
+       "caught": null
+      },
+      {
+       "T": 24,
+       "caught": null
+      },
+      {
+       "T": 48,
+       "caught": null
+      }
+     ]
+    },
+    {
+     "z": 4,
+     "falsePositive": 0.022001205545509342,
+     "victimByT": [
+      {
+       "T": 6,
+       "caught": null
+      },
+      {
+       "T": 12,
+       "caught": null
+      },
+      {
+       "T": 24,
+       "caught": null
+      },
+      {
+       "T": 48,
+       "caught": null
+      }
+     ]
+    },
+    {
+     "z": 4.5,
+     "falsePositive": 0.013863773357444244,
+     "victimByT": [
+      {
+       "T": 6,
+       "caught": null
+      },
+      {
+       "T": 12,
+       "caught": null
+      },
+      {
+       "T": 24,
+       "caught": null
+      },
+      {
+       "T": 48,
+       "caught": null
+      }
+     ]
+    }
+   ],
+   "sc": "harnesses pooled, strong",
+   "rows": 6636,
+   "floorFails": 0.21624472573839662,
+   "flagged": 0.027576853526220614,
+   "inconsistent": 0.045961422543701023,
+   "victimByT": [
+    {
+     "T": 6,
+     "n": 0,
+     "games": null,
+     "topShare": null,
+     "bias": null,
+     "biasCap": null,
+     "biasCap30": null,
+     "floorFails": null,
+     "flagged": null,
+     "inconsistent": null,
+     "caught": null
+    },
+    {
+     "T": 12,
+     "n": 0,
+     "games": null,
+     "topShare": null,
+     "bias": null,
+     "biasCap": null,
+     "biasCap30": null,
+     "floorFails": null,
+     "flagged": null,
+     "inconsistent": null,
+     "caught": null
+    },
+    {
+     "T": 24,
+     "n": 0,
+     "games": null,
+     "topShare": null,
+     "bias": null,
+     "biasCap": null,
+     "biasCap30": null,
+     "floorFails": null,
+     "flagged": null,
+     "inconsistent": null,
+     "caught": null
+    },
+    {
+     "T": 48,
+     "n": 0,
+     "games": null,
+     "topShare": null,
+     "bias": null,
+     "biasCap": null,
+     "biasCap30": null,
+     "floorFails": null,
+     "flagged": null,
+     "inconsistent": null,
+     "caught": null
+    }
+   ],
+   "flaggedByT": [
+    {
+     "T": 6,
+     "n": 828,
+     "flagged": 0.036231884057971016,
+     "inconsistent": 0.03864734299516908
+    },
+    {
+     "T": 12,
+     "n": 1439,
+     "flagged": 0.034051424600416956,
+     "inconsistent": 0.04447533009034051
+    },
+    {
+     "T": 24,
+     "n": 2020,
+     "flagged": 0.0297029702970297,
+     "inconsistent": 0.04455445544554455
+    },
+    {
+     "T": 48,
+     "n": 2349,
+     "flagged": 0.018731375053214133,
+     "inconsistent": 0.05065985525755641
+    }
+   ],
+   "victim": null
+  }
+ ],
+ "cap": [
+  {
+   "sc": "central",
+   "rmse": 59.41460696655676,
+   "coverage": 0.9561131992040681,
+   "width": 235.25304807613313,
+   "caps": [
+    {
+     "cap": 0.5,
+     "rmse": 59.64054031013337,
+     "coverage": 0.9590979438425824,
+     "width": 242.58830408922745
+    },
+    {
+     "cap": 0.3,
+     "rmse": 60.06017887296143,
+     "coverage": 0.9705947380057484,
+     "width": 263.62964986518176
+    }
+   ]
+  }
+ ],
+ "pooling": [],
+ "margin": [
+  {
+   "sc": "central",
+   "byG": [
+    {
+     "G": 10,
+     "n": 9,
+     "r2": 0.6871291309676791,
+     "rmse": 66.25632350637943,
+     "coverage": 1
+    },
+    {
+     "G": 20,
+     "n": 1212,
+     "r2": 0.5535618332437302,
+     "rmse": 67.39685941408477,
+     "coverage": 0.9612211221122112
+    },
+    {
+     "G": 30,
+     "n": 1949,
+     "r2": 0.6275662406245439,
+     "rmse": 59.095488009320604,
+     "coverage": 0.9604925602873269
+    },
+    {
+     "G": 40,
+     "n": 2173,
+     "r2": 0.7010400317329974,
+     "rmse": 52.99873130539692,
+     "coverage": 0.9581224114127934
+    },
+    {
+     "G": 60,
+     "n": 2178,
+     "r2": 0.7688005238710076,
+     "rmse": 46.150181289940505,
+     "coverage": 0.9504132231404959
+    }
+   ]
+  },
+  {
+   "sc": "harnesses pooled",
+   "byG": [
+    {
+     "G": 10,
+     "n": 7,
+     "r2": 0.13565742399343328,
+     "rmse": 78.31814315245843,
+     "coverage": 1
+    },
+    {
+     "G": 20,
+     "n": 1185,
+     "r2": 0.6063642858632486,
+     "rmse": 65.4169142872996,
+     "coverage": 0.9729957805907173
+    },
+    {
+     "G": 30,
+     "n": 1936,
+     "r2": 0.6577515655076034,
+     "rmse": 58.67895414269911,
+     "coverage": 0.9612603305785123
+    },
+    {
+     "G": 40,
+     "n": 2131,
+     "r2": 0.7109585076300128,
+     "rmse": 53.85047703255965,
+     "coverage": 0.9544814641013608
+    },
+    {
+     "G": 60,
+     "n": 2167,
+     "r2": 0.7844092927961646,
+     "rmse": 45.61680858147052,
+     "coverage": 0.9529303184125519
+    }
+   ]
+  },
+  {
+   "sc": "harnesses pooled, strong",
+   "byG": [
+    {
+     "G": 10,
+     "n": 11,
+     "r2": 0.7454244790756526,
+     "rmse": 72.18687685938501,
+     "coverage": 1
+    },
+    {
+     "G": 20,
+     "n": 1160,
+     "r2": 0.5569597420351104,
+     "rmse": 68.58716618871213,
+     "coverage": 0.9534482758620689
+    },
+    {
+     "G": 30,
+     "n": 1949,
+     "r2": 0.6468270919525935,
+     "rmse": 59.868916865214885,
+     "coverage": 0.9594663930220626
+    },
+    {
+     "G": 40,
+     "n": 2189,
+     "r2": 0.723914637244351,
+     "rmse": 53.1008575486704,
+     "coverage": 0.9588853357697579
+    },
+    {
+     "G": 60,
+     "n": 2192,
+     "r2": 0.7857281410924764,
+     "rmse": 45.587891073986725,
+     "coverage": 0.9543795620437956
+    }
+   ]
+  }
+ ],
+ "rank_correlation": [
+  {
+   "sc": "central",
+   "byT": [
+    {
+     "T": 6,
+     "rho": 0.6708230103230106
+    },
+    {
+     "T": 12,
+     "rho": 0.728202797202797
+    },
+    {
+     "T": 24,
+     "rho": 0.8038741258741264
+    },
+    {
+     "T": 48,
+     "rho": 0.8691783216783219
+    }
+   ]
+  },
+  {
+   "sc": "harnesses pooled",
+   "byT": [
+    {
+     "T": 6,
+     "rho": 0.675273892773893
+    },
+    {
+     "T": 12,
+     "rho": 0.7305454545454546
+    },
+    {
+     "T": 24,
+     "rho": 0.820203962703963
+    },
+    {
+     "T": 48,
+     "rho": 0.8830769230769232
+    }
+   ]
+  },
+  {
+   "sc": "harnesses pooled, strong",
+   "byT": [
+    {
+     "T": 6,
+     "rho": 0.6613678821178821
+    },
+    {
+     "T": 12,
+     "rho": 0.7347465034965033
+    },
+    {
+     "T": 24,
+     "rho": 0.8060664335664336
+    },
+    {
+     "T": 48,
+     "rho": 0.8668951048951042
+    }
+   ]
+  }
+ ],
+ "elapsed_s": 28.106
+}

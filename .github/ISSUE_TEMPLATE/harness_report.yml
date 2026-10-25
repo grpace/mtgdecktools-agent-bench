@@ -1,0 +1,31 @@
+name: Harness report
+description: Results of seating a harness (Codex, Gemini CLI, OpenCode, Cursor, …) in an event, working or not.
+labels: [harness]
+body:
+  - type: input
+    id: harness
+    attributes:
+      label: Harness and version
+      placeholder: codex 0.x / gemini-cli 0.x / opencode 0.x
+    validations:
+      required: true
+  - type: input
+    id: model
+    attributes:
+      label: Model and effort
+    validations:
+      required: true
+  - type: dropdown
+    id: outcome
+    attributes:
+      label: Outcome
+      options: [Played a full event, Played part of an event, Could not connect or play]
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: What worked and what broke
+      description: Setup steps you needed beyond docs/HARNESSES.md, usage extraction (tokens, cost), relaunches, timeouts.
+    validations:
+      required: true

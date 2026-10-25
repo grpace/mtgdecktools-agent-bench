@@ -1,0 +1,506 @@
+{
+  "card": "Suspend Aggression",
+  "title": "flagged unsupported by a false-positive DynamicQty swallow warning; the data plays as printed",
+  "status": "active",
+  "kind": "coverage",
+  "upstream_issue": null,
+  "marks_supported": true,
+  "applies_to": {
+    "server_version": "0.116.0",
+    "build_commit": "3f79456",
+    "card_data_sha256": "c4cfb737d0c0b1b135d3a353d71a95606f6ee147727bc11c3d16b82ece33da41",
+    "entry_sha256": "2f35d111d6267ab2a83282791faf4aac55cfd8c2e60e9ee9c9222aa88e9c18b1"
+  },
+  "rules": {
+    "oracle": "Exile target nonland permanent and the top card of your library. For each of those cards, its owner may play it until the end of their next turn.",
+    "cr": [
+      "608.2b",
+      "608.2c",
+      "601.2",
+      "305.1",
+      "111.7",
+      "400.7",
+      "514.2"
+    ],
+    "actual": "The coverage report lists the card as unsupported with one gap, `Swallow:DynamicQty` (\"Exile target nonland permanent and the top card of your library. For each of those cards, its owner may play it until the end of their next …\", diagnosis: parser, unparsed_quantity, operand \"of those cards\"): it claims the parser dropped a quantity.",
+    "expected": "The target nonland permanent and the top card of the caster's library are exiled. Each card's owner (only that player) may play it, paying its costs and following timing rules, from that moment until the end of that owner's next turn: if the spell resolves during that player's own turn, through their following turn; if during another player's turn, through the rest of that turn and their next one. A token target ceases to exist in exile, and the top card is still exiled. If the target is illegal on resolution, the spell doesn't resolve and no card is exiled.",
+    "diagnosis": "False positive. \"For each of those cards\" is a distributive (each card's owner gets a permission for that card), not a quantity. The data carries it with typed carriers: the ChangeZone and ExileTop steps feed one tracked set (the engine's regression test compound_zone_change_chain_unifies_tracked_set, game/effects/mod.rs:53345, is built on this card), GrantCastingPermission targets TrackedSet 0 with grantee ObjectOwner, which resolves each card's owner separately (game/effects/grant_permission.rs:43), and the PlayFromExile duration UntilEndOfNextTurnOf is armed per grantee at that player's next untap (arm_grantee_next_turn_casting_permissions, game/layers.rs:845, whose comment names this card). detect_dynamic_qty (parser/swallow_check.rs:3010) sees the \"for each \" marker, finds no QuantityRef or non-Fixed QuantityExpr in the unit and no exempt carrier, and records a SwallowedClause; game/coverage.rs:8316 turns it into a `Swallow:DynamicQty` gap, which marks the card unsupported.",
+    "suggested_fix": "In detect_dynamic_qty (parser/swallow_check.rs), treat a \"for each of those cards, its owner ...\" distributive as represented when the unit carries an effect that targets a TrackedSet and distributes per object, e.g. GrantCastingPermission { target: TrackedSet, grantee: ObjectOwner } (each card's owner is resolved separately at runtime), the same way the detector already exempts other carriers whose per-object iteration is intrinsic to the variant. Regression test: Suspend Aggression parses with no SwallowedClause and is supported in the coverage report.",
+    "override_note": "Nothing is patched: the test ops pin the parsed chain the sandbox games verified (ChangeZone of target nonland permanent to exile, ExileTop 1 of the controller's library, and GrantCastingPermission PlayFromExile UntilEndOfNextTurnOf on TrackedSet 0 with grantee ObjectOwner). The cases show each owner casting their own card: cast on your turn, the opponent casts their creature on their next turn and you cast your top card on your next turn; cast on the opponent's turn, they cast it the same turn; an illegal target exiles nothing (CR 608.2b); a token target ceases to exist (CR 111.7) and the top card is still castable. The same sandbox, reading every seat's legal actions and the exiled cards' permissions at each main phase, also showed: the permission is only the owner's (neither player was offered the other's card); a land on top of your library is offered as a land play (PlayLand), not a cast; each permission is gone after the end of its owner's next turn (cast on your turn: the opponent's on turn 3, yours on turn 4; cast on the opponent's turn: yours after your next turn, theirs after their next turn); and with no mana the opponent isn't offered the cast, so costs are paid. Those checks aren't in `tests` because the scenario script can't assert that an action is not offered."
+  },
+  "patch": [
+    {
+      "op": "test",
+      "path": "/abilities/0/effect",
+      "value": {
+        "type": "ChangeZone",
+        "origin": null,
+        "destination": "Exile",
+        "target": {
+          "type": "Typed",
+          "type_filters": [
+            "Permanent",
+            {
+              "Non": "Land"
+            }
+          ],
+          "controller": null,
+          "properties": []
+        },
+        "owner_library": false,
+        "enter_transformed": false,
+        "enter_tapped": false,
+        "enters_attacking": false
+      }
+    },
+    {
+      "op": "test",
+      "path": "/abilities/0/sub_ability/effect",
+      "value": {
+        "type": "ExileTop",
+        "player": {
+          "type": "Controller"
+        },
+        "count": {
+          "type": "Fixed",
+          "value": 1
+        },
+        "position": {
+          "type": "Top"
+        }
+      }
+    },
+    {
+      "op": "test",
+      "path": "/abilities/0/sub_ability/sub_ability/effect",
+      "value": {
+        "type": "GrantCastingPermission",
+        "permission": {
+          "type": "PlayFromExile",
+          "duration": {
+            "UntilEndOfNextTurnOf": {
+              "player": {
+                "type": "Controller"
+              }
+            }
+          },
+          "granted_to": 0
+        },
+        "target": {
+          "type": "TrackedSet",
+          "id": 0
+        },
+        "grantee": {
+          "type": "ObjectOwner"
+        }
+      }
+    },
+    {
+      "op": "test",
+      "path": "/abilities/0/sub_ability/sub_ability/sub_link",
+      "value": "SequentialSibling"
+    }
+  ],
+  "tests": [
+    {
+      "name": "cast on your turn: the opponent casts their permanent on their next turn, you cast your top card on your next turn",
+      "setup": [
+        {
+          "card": "Suspend Aggression",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 1,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "infinite_mana": [
+        0,
+        1
+      ],
+      "steps": [
+        {
+          "debug": "MoveToZone",
+          "object": {
+            "card": "Grizzly Bears",
+            "owner": 0,
+            "zone": "Hand"
+          },
+          "data": {
+            "to_zone": "Library",
+            "library_position": {
+              "type": "Top"
+            }
+          }
+        },
+        {
+          "cast": {
+            "card": "Suspend Aggression",
+            "targets": [
+              {
+                "card": "Grizzly Bears",
+                "owner": 1,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "advance": {
+            "phase": "PreCombatMain",
+            "active": 1
+          }
+        },
+        {
+          "cast": {
+            "card": "Grizzly Bears",
+            "by": 1,
+            "from": "Exile"
+          }
+        },
+        {
+          "advance": {
+            "phase": "PreCombatMain",
+            "active": 0
+          }
+        },
+        {
+          "cast": {
+            "card": "Grizzly Bears",
+            "by": 0,
+            "from": "Exile"
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "zones": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Battlefield"
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "zone": "Battlefield"
+            },
+            {
+              "card": "Suspend Aggression",
+              "owner": 0,
+              "zone": "Graveyard"
+            }
+          ],
+          "objects": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "controller": 1,
+              "zone": "Battlefield"
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "controller": 0,
+              "zone": "Battlefield"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "cast on the opponent's turn: they may cast their permanent later that same turn, you cast yours on your next turn",
+      "setup": [
+        {
+          "card": "Suspend Aggression",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 1,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 1
+      },
+      "infinite_mana": [
+        0,
+        1
+      ],
+      "steps": [
+        {
+          "debug": "MoveToZone",
+          "object": {
+            "card": "Grizzly Bears",
+            "owner": 0,
+            "zone": "Hand"
+          },
+          "data": {
+            "to_zone": "Library",
+            "library_position": {
+              "type": "Top"
+            }
+          }
+        },
+        {
+          "cast": {
+            "card": "Suspend Aggression",
+            "targets": [
+              {
+                "card": "Grizzly Bears",
+                "owner": 1,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "cast": {
+            "card": "Grizzly Bears",
+            "by": 1,
+            "from": "Exile"
+          }
+        },
+        {
+          "advance": {
+            "phase": "PreCombatMain",
+            "active": 0
+          }
+        },
+        {
+          "cast": {
+            "card": "Grizzly Bears",
+            "by": 0,
+            "from": "Exile"
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "zones": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Battlefield"
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "zone": "Battlefield"
+            },
+            {
+              "card": "Suspend Aggression",
+              "owner": 0,
+              "zone": "Graveyard"
+            }
+          ],
+          "objects": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "controller": 1,
+              "zone": "Battlefield"
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "controller": 0,
+              "zone": "Battlefield"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "the target leaves in response: the spell doesn't resolve and the top card isn't exiled (CR 608.2b, ruling)",
+      "setup": [
+        {
+          "card": "Suspend Aggression",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 1,
+          "zone": "Battlefield"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "cast": {
+            "card": "Suspend Aggression",
+            "targets": [
+              {
+                "card": "Grizzly Bears",
+                "owner": 1,
+                "zone": "Battlefield"
+              }
+            ],
+            "respond": [
+              {
+                "debug": "MoveToZone",
+                "object": {
+                  "card": "Grizzly Bears",
+                  "owner": 1,
+                  "zone": "Battlefield"
+                },
+                "data": {
+                  "to_zone": "Graveyard",
+                  "simulate": false
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "zones": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Graveyard"
+            },
+            {
+              "card": "Suspend Aggression",
+              "owner": 0,
+              "zone": "Graveyard"
+            },
+            {
+              "card": "Mountain",
+              "owner": 0,
+              "zone": "Exile",
+              "count": 0
+            }
+          ],
+          "library": [
+            33,
+            null
+          ],
+          "hand": [
+            7,
+            null
+          ]
+        }
+      }
+    },
+    {
+      "name": "a token target ceases to exist in exile (CR 111.7); the top card is still exiled and castable",
+      "setup": [
+        {
+          "card": "Suspend Aggression",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Raise the Alarm",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "debug": "MoveToZone",
+          "object": {
+            "card": "Grizzly Bears",
+            "owner": 0,
+            "zone": "Hand"
+          },
+          "data": {
+            "to_zone": "Library",
+            "library_position": {
+              "type": "Top"
+            }
+          }
+        },
+        {
+          "cast": {
+            "card": "Raise the Alarm"
+          }
+        },
+        {
+          "cast": {
+            "card": "Suspend Aggression",
+            "targets": [
+              {
+                "card": "Soldier",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "cast": {
+            "card": "Grizzly Bears",
+            "by": 0,
+            "from": "Exile"
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "zones": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "zone": "Battlefield"
+            }
+          ],
+          "objects": [
+            {
+              "card": "Soldier",
+              "owner": 0,
+              "count": 1
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "history": [
+    {
+      "date": "2026-10-23",
+      "status": "active",
+      "note": "Coverage override: the card was swapped out only because of a false-positive Swallow:DynamicQty gap in phase-rs's coverage report. Verified against Oracle text, the card's rulings and CR 608.2b, 111.7 and 514.2 in sandbox games on phase-rs 0.116.0 (3f79456): each owner may play their exiled card until the end of their own next turn, and nothing else differs."
+    }
+  ]
+}

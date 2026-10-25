@@ -1,0 +1,343 @@
+{
+  "card": "Inkmoth Nexus",
+  "title": "the coverage report flags the Blinkmoth subtype as a parser misfire; the card plays as printed",
+  "status": "active",
+  "kind": "coverage",
+  "upstream_issue": null,
+  "marks_supported": true,
+  "applies_to": {
+    "server_version": "0.116.0",
+    "build_commit": "3f79456",
+    "card_data_sha256": "c4cfb737d0c0b1b135d3a353d71a95606f6ee147727bc11c3d16b82ece33da41",
+    "entry_sha256": "0998b98c97f35403e989037e136cb143e046220c4130397fb2cc79b4ffaa94ff"
+  },
+  "rules": {
+    "oracle": "{T}: Add {C}.\n{1}: This land becomes a 1/1 Phyrexian Blinkmoth artifact creature with flying and infect until end of turn. It's still a land. (It deals damage to creatures in the form of -1/-1 counters and to players in the form of poison counters.)",
+    "cr": [
+      "205.3m",
+      "205.1b",
+      "305.7",
+      "611.2a",
+      "613.1d",
+      "613.1f",
+      "702.9b",
+      "702.90b",
+      "702.90c",
+      "704.5c"
+    ],
+    "actual": "phase-rs's coverage report lists the card as unsupported with the gap `ParserMisfire:InvalidSubtype(Blinkmoth)`.",
+    "expected": "{1}: until end of turn it becomes a 1/1 Phyrexian Blinkmoth artifact creature with flying and infect that is still a land (CR 305.7, 611.2a). With infect its damage to a player is poison counters (CR 702.90b) and to a creature -1/-1 counters (CR 702.90c).",
+    "diagnosis": "`coverage::check_subtype_lexicon` (game/coverage.rs:8125) flags every `AddSubtype` whose value isn't in `collect_valid_subtypes` (game/coverage.rs:7919), and that lexicon is built only from the subtypes printed on card type lines. No card prints Blinkmoth on its type line (it only appears in become effects and in Blinkmoth Nexus's own pump), so the real creature type Blinkmoth (CR 205.3m; it is in the engine's own crates/engine/data/oracle-subtypes.json) is reported as a parser misfire. The parsed abilities are exactly the Oracle text, and the sandbox games show them working.",
+    "suggested_fix": "Build the coverage lexicon from the full CR 205.3 subtype list the engine already ships (crates/engine/data/oracle-subtypes.json, via database::subtype_vocab) in addition to printed type lines, so a real subtype that only appears in rules text (Blinkmoth; probably others like it) isn't a ParserMisfire. Keep flagging tokens that aren't subtypes at all (\"Gets\", \"Until\"), which is what the check is for.",
+    "override_note": "Nothing is patched: the test ops pin the animation's modifications (1/1, flying, infect, artifact and creature types, Phyrexian and Blinkmoth subtypes; the separate \"still a land\" step keeps the land type), as verified. The sandbox games show it as printed: animated it attacks as a 1/1 flier whose damage gives a player a poison counter instead of life loss (a player at 9 poison loses), a reach blocker gets a -1/-1 counter instead of damage and the Nexus dies as a creature, it is an artifact and still a land while animated, and only a land on the next turn."
+  },
+  "patch": [
+    {
+      "op": "test",
+      "path": "/abilities/1/effect/static_abilities/0/modifications",
+      "value": [
+        {
+          "type": "SetPower",
+          "value": 1
+        },
+        {
+          "type": "SetToughness",
+          "value": 1
+        },
+        {
+          "type": "AddKeyword",
+          "keyword": "Flying"
+        },
+        {
+          "type": "AddKeyword",
+          "keyword": "Infect"
+        },
+        {
+          "type": "AddType",
+          "core_type": "Artifact"
+        },
+        {
+          "type": "AddType",
+          "core_type": "Creature"
+        },
+        {
+          "type": "RemoveAllSubtypes",
+          "set": "Creature"
+        },
+        {
+          "type": "AddSubtype",
+          "subtype": "Phyrexian"
+        },
+        {
+          "type": "AddSubtype",
+          "subtype": "Blinkmoth"
+        }
+      ]
+    },
+    {
+      "op": "test",
+      "path": "/abilities/1/sub_ability/effect/static_abilities/0/modifications",
+      "value": [
+        {
+          "type": "AddType",
+          "core_type": "Land"
+        }
+      ]
+    }
+  ],
+  "tests": [
+    {
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "name": "animated, unblocked: infect damage to a player is poison counters, not life loss (the 10th poison counter wins, CR 702.90b, 704.5c)",
+      "setup": [
+        {
+          "card": "Inkmoth Nexus",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        }
+      ],
+      "steps": [
+        {
+          "debug": "ModifyPlayerCounters",
+          "data": {
+            "player_id": 1,
+            "counter_kind": "Poison",
+            "delta": 9
+          }
+        },
+        {
+          "activate": {
+            "card": "Inkmoth Nexus",
+            "text": "becomes"
+          }
+        },
+        {
+          "attack": [
+            {
+              "card": "Inkmoth Nexus",
+              "owner": 0,
+              "zone": "Battlefield"
+            }
+          ]
+        },
+        {
+          "advance": {
+            "phase": "End",
+            "active": 0
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            20
+          ],
+          "winner": 0,
+          "objects": [
+            {
+              "card": "Inkmoth Nexus",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 1,
+              "toughness": 1,
+              "keywords": [
+                "Flying",
+                "Infect"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "name": "animated, blocked by a reach creature: its damage to a creature is -1/-1 counters (CR 702.90c), and it dies as a creature",
+      "setup": [
+        {
+          "card": "Inkmoth Nexus",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Giant Spider",
+          "owner": 1,
+          "zone": "Battlefield"
+        }
+      ],
+      "steps": [
+        {
+          "activate": {
+            "card": "Inkmoth Nexus",
+            "text": "becomes"
+          }
+        },
+        {
+          "attack": [
+            {
+              "card": "Inkmoth Nexus",
+              "owner": 0,
+              "zone": "Battlefield"
+            }
+          ]
+        },
+        {
+          "block": [
+            {
+              "blocker": {
+                "card": "Giant Spider",
+                "owner": 1,
+                "zone": "Battlefield"
+              },
+              "attacker": {
+                "card": "Inkmoth Nexus",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            }
+          ]
+        },
+        {
+          "advance": {
+            "phase": "End",
+            "active": 0
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            20
+          ],
+          "zones": [
+            {
+              "card": "Inkmoth Nexus",
+              "owner": 0,
+              "zone": "Graveyard"
+            }
+          ],
+          "objects": [
+            {
+              "card": "Giant Spider",
+              "owner": 1,
+              "zone": "Battlefield",
+              "power": 1,
+              "toughness": 3,
+              "counters": {
+                "M1M1": 1
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "name": "animated it's an artifact and still a land; on the next turn only a land",
+      "setup": [
+        {
+          "card": "Inkmoth Nexus",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Shatter",
+          "owner": 0,
+          "zone": "Hand",
+          "count": 2
+        },
+        {
+          "card": "Stone Rain",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "steps": [
+        {
+          "activate": {
+            "card": "Inkmoth Nexus",
+            "text": "becomes"
+          }
+        },
+        {
+          "offered": {
+            "label": "an artifact once animated",
+            "cast": {
+              "card": "Shatter"
+            }
+          }
+        },
+        {
+          "offered": {
+            "label": "still a land once animated",
+            "cast": {
+              "card": "Stone Rain"
+            }
+          }
+        },
+        {
+          "advance": {
+            "phase": "PreCombatMain",
+            "active": 1
+          }
+        },
+        {
+          "offered": {
+            "label": "an artifact on the next turn",
+            "cast": {
+              "card": "Shatter"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Inkmoth Nexus",
+              "owner": 0,
+              "zone": "Battlefield",
+              "no_keywords": [
+                "Flying",
+                "Infect"
+              ]
+            }
+          ],
+          "offered": {
+            "an artifact once animated": true,
+            "still a land once animated": true,
+            "an artifact on the next turn": false
+          }
+        }
+      }
+    }
+  ],
+  "history": [
+    {
+      "date": "2026-10-23",
+      "status": "active",
+      "note": "Coverage override: verified in sandbox games on 0.116.0 (3f79456) against Oracle text and CR 205.3m, 305.7 and 611.2a; upstream data already plays as printed."
+    }
+  ]
+}

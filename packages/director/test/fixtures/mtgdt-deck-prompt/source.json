@@ -1,0 +1,35 @@
+{
+ "source": "Magic-Deck-Builder src/pages/DeckBuilderPage.tsx (generateAiPromptString)",
+ "source_commit": "40f941eece48ba792b1928219d553a5228c29c1a",
+ "function_sha256": "979659bdb86de5626521f94266ea2adbf563d8d762b2f45dd1fa4e5dd34f0304",
+ "settings": {
+  "none.txt": {
+   "targetSize": 40,
+   "colors": "WUBRG (AI color choice)",
+   "includeSideboard": false,
+   "setContext": "none",
+   "ignoreTierScores": true
+  },
+  "set-context.txt": {
+   "targetSize": 40,
+   "colors": "WUBRG (AI color choice)",
+   "includeSideboard": false,
+   "setContext": "on (placeholder)",
+   "ignoreTierScores": true
+  },
+  "set-context-tiers.txt": {
+   "targetSize": 40,
+   "colors": "WUBRG (AI color choice)",
+   "includeSideboard": false,
+   "setContext": "on (placeholder)",
+   "ignoreTierScores": false
+  },
+  "tiers-only.txt": {
+   "targetSize": 40,
+   "colors": "WUBRG (AI color choice)",
+   "includeSideboard": false,
+   "setContext": "none",
+   "ignoreTierScores": false
+  }
+ }
+}

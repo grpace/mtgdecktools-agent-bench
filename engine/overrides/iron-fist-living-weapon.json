@@ -1,0 +1,700 @@
+{
+  "card": "Iron Fist, Living Weapon",
+  "title": "the cast trigger is demoted to an unimplemented ability because the granted text names Iron Fist",
+  "status": "active",
+  "kind": "parser",
+  "upstream_issue": null,
+  "marks_supported": true,
+  "applies_to": {
+    "server_version": "0.116.0",
+    "build_commit": "3f79456",
+    "card_data_sha256": "c4cfb737d0c0b1b135d3a353d71a95606f6ee147727bc11c3d16b82ece33da41",
+    "entry_sha256": "7dffdaa66e52272121ab8ef1c35fb8a62923b6d72be494375963c37f23e6ffde"
+  },
+  "rules": {
+    "oracle": "Whenever you cast a spell that targets a creature you control, Iron Fist gains \"{T}: Iron Fist deals damage equal to his power to any other target\" until end of turn.",
+    "cr": [
+      "201.5",
+      "603.2",
+      "611.2a",
+      "514.2",
+      "115.4",
+      "208.3",
+      "302.6",
+      "602.2b"
+    ],
+    "actual": "Casting a spell that targets a creature you control does nothing: Iron Fist never gains the ability. The whole line is a single `Unimplemented granter_reference_unreached` ability, so the card is a vanilla 2/3.",
+    "expected": "Whenever you cast a spell that targets a creature you control (Iron Fist himself or another), Iron Fist gains \"{T}: Iron Fist deals damage equal to his power to any other target\" until end of turn (CR 611.2a, 514.2). The damage uses his power as the ability resolves (CR 208.3), and \"any other target\" is any creature, player, planeswalker or battle except Iron Fist (CR 115.4). The {T} cost means he can't use it the turn he comes under your control (CR 302.6) and only once while untapped, even if he gained it more than once.",
+    "diagnosis": "The parser builds the trigger (SpellCast with a `Targets` creature-you-control filter, then a self-targeted GenericEffect grant), but the granted text names its granter twice (\"Iron Fist deals damage equal to his power\"), so the parser masks those names as granter references. `granter_reference_unreached` (parser/oracle.rs:10033, applied by `demote_definitions` at parser/oracle.rs:9957, the guard added in #9423) counts more granter references in the tree than the granter-symbol walk reaches (`granter_symbols::node_fields`, types/ability_visit.rs:1199: its `effect` arm doesn't visit `DealDamage.damage_source`, and `quantity_ref` binds only `CountersOn`, `ObjectCount` and `PropertyAggregate` scopes, not `QuantityRef::Power`), and replaces the whole trigger with `Unimplemented granter_reference_unreached`. Here the granter and the object that gains the ability are the same permanent (\"Iron Fist gains ...\"), so there is no other object for the references to bind to.",
+    "suggested_fix": "When a \"<this object> gains \"<ability>\"\" grant targets the source itself, lower the source's name (and \"his\"/\"her\"/\"its\") inside the granted text to the self reference (`SelfRef` / `Source`), as for any printed ability (CR 201.5: an object's name in its own ability text means that object), instead of a granter reference; the guard then has nothing to refuse. The resulting shape is a `SpellCast` trigger (`valid_card: Typed { properties: [Targets(Typed Creature, controller You)] }`, `valid_target: Controller`, as Mockingbird, Ace Agent parses) executing `GenericEffect { duration: UntilEndOfTurn, static_abilities: [Continuous { affected: SelfRef, modifications: [GrantAbility(Activated { cost: Tap, effect: DealDamage { amount: Power(Source), target: Typed { type_filters: [], properties: [Another] } } })] }] }`, the body the parser already produces for the granted text on its own (game/effects/deal_damage.rs `iron_fist_granted_body`). Alternatively extend the granter walk to the `DealDamage` source and `QuantityRef::Power` scope positions so the general granter binding (#9423) covers this card. Regression test: cast a pump spell on another creature you control, then activate the granted ability at a player and check the damage; check it is gone on the next turn.",
+    "override_note": "The patch replaces the unimplemented ability with that trigger, assembled from shapes the engine already runs: the SpellCast head of Mockingbird, Ace Agent; the self-targeted GenericEffect grant until end of turn of the manlands (Lavaclaw Reaches); and the granted body the parser itself makes of \"{T}: Iron Fist deals damage equal to his power to any other target\" (Burning Anger's grant shape with Red Hulk's \"any other target\" filter, `Typed [] {Another}`, which the targeting code enumerates as any target except the source, game/targeting.rs:286). Iron Fist both grants and gains the ability, so the self reference is exact (CR 201.5); copy effects don't copy granted abilities (CR 707.2). The tests show the grant and the damage (his power on resolution), the kill on a 6/4 after Giant Growth on Iron Fist, one activation after two triggers (the {T} cost; the sandbox shows the ability once on Iron Fist), no trigger for a spell that targets only an opponent's creature, the ability gone on the next turn, and no activation while he is summoning sick (CR 302.6). In the sandbox the granted ability's legal targets were both players and the other creatures, never Iron Fist himself."
+  },
+  "patch": [
+    {
+      "op": "test",
+      "path": "/abilities/0/effect/name",
+      "value": "granter_reference_unreached"
+    },
+    {
+      "op": "test",
+      "path": "/triggers",
+      "value": []
+    },
+    {
+      "op": "test",
+      "path": "/abilities/0/description",
+      "value": "Whenever you cast a spell that targets a creature you control, ~ gains \"{T}: ~ deals damage equal to his power to any other target\" until end of turn."
+    },
+    {
+      "op": "remove",
+      "path": "/abilities/0"
+    },
+    {
+      "op": "add",
+      "path": "/triggers/-",
+      "value": {
+        "mode": "SpellCast",
+        "execute": {
+          "kind": "Spell",
+          "effect": {
+            "type": "GenericEffect",
+            "static_abilities": [
+              {
+                "mode": "Continuous",
+                "affected": {
+                  "type": "SelfRef"
+                },
+                "modifications": [
+                  {
+                    "type": "GrantAbility",
+                    "definition": {
+                      "kind": "Activated",
+                      "effect": {
+                        "type": "DealDamage",
+                        "amount": {
+                          "type": "Ref",
+                          "qty": {
+                            "type": "Power",
+                            "scope": {
+                              "type": "Source"
+                            }
+                          }
+                        },
+                        "target": {
+                          "type": "Typed",
+                          "type_filters": [],
+                          "controller": null,
+                          "properties": [
+                            {
+                              "type": "Another"
+                            }
+                          ]
+                        }
+                      },
+                      "cost": {
+                        "type": "Tap"
+                      },
+                      "sub_ability": null,
+                      "duration": null,
+                      "description": "{T}: ~ deals damage equal to his power to any other target",
+                      "target_prompt": null,
+                      "condition": null,
+                      "optional_targeting": false,
+                      "optional": false,
+                      "forward_result": false
+                    }
+                  }
+                ],
+                "condition": null,
+                "affected_zone": null,
+                "effect_zone": null,
+                "active_zones": [],
+                "characteristic_defining": false,
+                "description": "gain \"{T}: ~ deals damage equal to his power to any other target\""
+              }
+            ],
+            "duration": "UntilEndOfTurn",
+            "target": null
+          },
+          "cost": null,
+          "sub_ability": null,
+          "duration": "UntilEndOfTurn",
+          "description": null,
+          "target_prompt": null,
+          "condition": null,
+          "optional_targeting": false,
+          "optional": false,
+          "forward_result": false
+        },
+        "valid_card": {
+          "type": "Typed",
+          "type_filters": [],
+          "controller": null,
+          "properties": [
+            {
+              "type": "Targets",
+              "filter": {
+                "type": "Typed",
+                "type_filters": [
+                  "Creature"
+                ],
+                "controller": "You",
+                "properties": []
+              }
+            }
+          ]
+        },
+        "origin": null,
+        "destination": null,
+        "trigger_zones": [
+          "Battlefield"
+        ],
+        "phase": null,
+        "optional": false,
+        "damage_kind": "Any",
+        "secondary": false,
+        "valid_target": {
+          "type": "Controller"
+        },
+        "valid_source": null,
+        "description": "Whenever you cast a spell that targets a creature you control, ~ gains \"{T}: ~ deals damage equal to his power to any other target\" until end of turn.",
+        "constraint": null,
+        "condition": null,
+        "batched": false
+      }
+    }
+  ],
+  "tests": [
+    {
+      "name": "a spell targets another creature you control: Iron Fist gains the ability and deals damage equal to his power (2) to the opponent",
+      "setup": [
+        {
+          "card": "Iron Fist, Living Weapon",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Giant Growth",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "cast": {
+            "card": "Giant Growth",
+            "targets": [
+              {
+                "card": "Grizzly Bears",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "activate": {
+            "card": "Iron Fist, Living Weapon",
+            "if_offered": true,
+            "label": "granted ability",
+            "targets": [
+              {
+                "player": 1
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            18
+          ],
+          "offered": {
+            "granted ability": true
+          },
+          "objects": [
+            {
+              "card": "Iron Fist, Living Weapon",
+              "owner": 0,
+              "zone": "Battlefield",
+              "tapped": true
+            }
+          ]
+        },
+        "bug": {
+          "life": [
+            20,
+            20
+          ],
+          "offered": {
+            "granted ability": false
+          },
+          "objects": [
+            {
+              "card": "Iron Fist, Living Weapon",
+              "owner": 0,
+              "zone": "Battlefield",
+              "tapped": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "a spell targets Iron Fist himself: the damage uses his power on resolution (5 after Giant Growth) and kills a 6/4 (any other target, CR 115.4)",
+      "setup": [
+        {
+          "card": "Iron Fist, Living Weapon",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Giant Growth",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Craw Wurm",
+          "owner": 1,
+          "zone": "Battlefield"
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "cast": {
+            "card": "Giant Growth",
+            "targets": [
+              {
+                "card": "Iron Fist, Living Weapon",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "activate": {
+            "card": "Iron Fist, Living Weapon",
+            "if_offered": true,
+            "label": "granted ability",
+            "targets": [
+              {
+                "card": "Craw Wurm",
+                "owner": 1,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            20
+          ],
+          "offered": {
+            "granted ability": true
+          },
+          "zones": [
+            {
+              "card": "Craw Wurm",
+              "owner": 1,
+              "zone": "Graveyard"
+            }
+          ],
+          "objects": [
+            {
+              "card": "Iron Fist, Living Weapon",
+              "owner": 0,
+              "zone": "Battlefield",
+              "tapped": true,
+              "power": 5,
+              "toughness": 6
+            }
+          ]
+        },
+        "bug": {
+          "offered": {
+            "granted ability": false
+          },
+          "zones": [
+            {
+              "card": "Craw Wurm",
+              "owner": 1,
+              "zone": "Battlefield"
+            }
+          ],
+          "objects": [
+            {
+              "card": "Iron Fist, Living Weapon",
+              "owner": 0,
+              "zone": "Battlefield",
+              "tapped": false,
+              "power": 5,
+              "toughness": 6
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "two such spells in one turn: both triggers resolve, and the {T} cost still allows only one activation (CR 602.2b)",
+      "setup": [
+        {
+          "card": "Iron Fist, Living Weapon",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Giant Growth",
+          "owner": 0,
+          "zone": "Hand",
+          "count": 2
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "cast": {
+            "card": "Giant Growth",
+            "targets": [
+              {
+                "card": "Grizzly Bears",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "cast": {
+            "card": "Giant Growth",
+            "targets": [
+              {
+                "card": "Iron Fist, Living Weapon",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "activate": {
+            "card": "Iron Fist, Living Weapon",
+            "if_offered": true,
+            "label": "first activation",
+            "targets": [
+              {
+                "player": 1
+              }
+            ]
+          }
+        },
+        {
+          "activate": {
+            "card": "Iron Fist, Living Weapon",
+            "if_offered": true,
+            "label": "second activation",
+            "targets": [
+              {
+                "player": 1
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            15
+          ],
+          "offered": {
+            "first activation": true,
+            "second activation": false
+          },
+          "objects": [
+            {
+              "card": "Iron Fist, Living Weapon",
+              "owner": 0,
+              "zone": "Battlefield",
+              "tapped": true
+            }
+          ]
+        },
+        "bug": {
+          "life": [
+            20,
+            20
+          ],
+          "offered": {
+            "first activation": false,
+            "second activation": false
+          }
+        }
+      }
+    },
+    {
+      "name": "a spell that targets only an opponent's creature: no trigger, no ability",
+      "setup": [
+        {
+          "card": "Iron Fist, Living Weapon",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Shock",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 1,
+          "zone": "Battlefield"
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "cast": {
+            "card": "Shock",
+            "targets": [
+              {
+                "card": "Grizzly Bears",
+                "owner": 1,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "activate": {
+            "card": "Iron Fist, Living Weapon",
+            "if_offered": true,
+            "label": "granted ability",
+            "targets": [
+              {
+                "player": 1
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            20
+          ],
+          "offered": {
+            "granted ability": false
+          },
+          "zones": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Graveyard"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "until end of turn: on his controller's next turn the ability is gone (CR 514.2)",
+      "setup": [
+        {
+          "card": "Iron Fist, Living Weapon",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Giant Growth",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "cast": {
+            "card": "Giant Growth",
+            "targets": [
+              {
+                "card": "Grizzly Bears",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "advance": {
+            "phase": "PreCombatMain",
+            "active": 0
+          }
+        },
+        {
+          "activate": {
+            "card": "Iron Fist, Living Weapon",
+            "if_offered": true,
+            "label": "granted ability",
+            "targets": [
+              {
+                "player": 1
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            20
+          ],
+          "offered": {
+            "granted ability": false
+          },
+          "objects": [
+            {
+              "card": "Iron Fist, Living Weapon",
+              "owner": 0,
+              "zone": "Battlefield",
+              "tapped": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Iron Fist came under his controller's control this turn: the {T} ability can't be activated (CR 302.6)",
+      "setup": [
+        {
+          "card": "Iron Fist, Living Weapon",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": true
+        },
+        {
+          "card": "Giant Growth",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "cast": {
+            "card": "Giant Growth",
+            "targets": [
+              {
+                "card": "Iron Fist, Living Weapon",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "activate": {
+            "card": "Iron Fist, Living Weapon",
+            "if_offered": true,
+            "label": "granted ability",
+            "targets": [
+              {
+                "player": 1
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            20
+          ],
+          "offered": {
+            "granted ability": false
+          },
+          "objects": [
+            {
+              "card": "Iron Fist, Living Weapon",
+              "owner": 0,
+              "zone": "Battlefield",
+              "tapped": false
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "history": [
+    {
+      "date": "2026-10-23",
+      "status": "active",
+      "note": "Written against Oracle text and CR 201.5, 603.2, 611.2a, 514.2, 115.4, 208.3, 302.6; tested on 0.116.0 (3f79456)."
+    }
+  ]
+}

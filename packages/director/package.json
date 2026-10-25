@@ -1,0 +1,23 @@
+{
+  "name": "@mtgdt/director",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/main.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx src/spectate.test.ts && tsx src/set-context-filter.test.ts && tsx src/public-text.test.ts && tsx src/game.test.ts && tsx src/game-resume.test.ts && tsx src/sideboard.test.ts && tsx src/event-done.test.ts && tsx src/event-voids.test.ts && tsx src/session-rotation.test.ts && tsx src/seat-names.test.ts && tsx src/admission.test.ts && tsx src/durable.test.ts && tsx src/booster-archive.test.ts && tsx src/boosters.test.ts && tsx src/log-files.test.ts && tsx src/pairings.test.ts && tsx src/lobby.test.ts && tsx src/lobby-http.test.ts && tsx src/ratings.test.ts && tsx src/effort-detect.test.ts && tsx src/render-v4.test.ts && tsx src/build.test.ts && tsx src/deckbuild-v4.test.ts && tsx src/deck-parity.test.ts && tsx src/harness-logs.test.ts && tsx src/prompts.test.ts && tsx src/usage-upload.test.ts && tsx src/usage.test.ts && tsx src/security.test.ts && tsx src/card-data.test.ts && tsx src/card-overrides.test.ts && tsx src/stopped-event.test.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "ws": "^8.22.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/ws": "^8.5.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.0"
+  }
+}

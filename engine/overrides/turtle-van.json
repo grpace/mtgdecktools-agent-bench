@@ -1,0 +1,627 @@
+{
+  "card": "Turtle Van",
+  "title": "flagged unsupported by a false-positive Duration_ThisTurn swallow warning; the data plays as printed",
+  "status": "active",
+  "kind": "coverage",
+  "upstream_issue": null,
+  "marks_supported": true,
+  "applies_to": {
+    "server_version": "0.116.0",
+    "build_commit": "3f79456",
+    "card_data_sha256": "c4cfb737d0c0b1b135d3a353d71a95606f6ee147727bc11c3d16b82ece33da41",
+    "entry_sha256": "ccd56936288b0cfe8b8d8532c79a0313e059c20a15fe559d815ff79d719afd63"
+  },
+  "rules": {
+    "oracle": "Whenever this Vehicle attacks, put a +1/+1 counter on target creature that crewed it this turn. Then if that creature is a Mutant, Ninja, or Turtle, double the number of +1/+1 counters on it.\nCrew 1 (Tap any number of creatures you control with total power 1 or more: This Vehicle becomes an artifact creature until end of turn.)",
+    "cr": [
+      "702.122a",
+      "702.122c",
+      "508.1m",
+      "603.2",
+      "608.2c",
+      "122.6"
+    ],
+    "actual": "The coverage report lists the card as unsupported with one gap, `Swallow:Duration_ThisTurn` (\"Whenever this Vehicle attacks, put a +1/+1 counter on target creature that crewed it this turn. Then if that creature is a Mutant, Ninja, or…\"): it claims the parser dropped the clause's \"this turn\".",
+    "expected": "Whenever Turtle Van attacks, its controller puts a +1/+1 counter on target creature that crewed it during this turn (CR 702.122c); then, if that creature is a Mutant, Ninja or Turtle, the number of +1/+1 counters on it is doubled (putting as many as it already has, per the card's ruling). A creature that crewed it on an earlier turn is not a legal target.",
+    "diagnosis": "False positive. The \"this turn\" is part of the target filter `FilterProp::CrewedThisTurn { relation: CrewedSource }`, which reads `crew_history_this_turn` (types/game_state.rs:23170-23178; recorded when the crew cost is paid, cleared at turn start, game/turns.rs:1677). The Duration_ThisTurn detector (parser/swallow_check.rs:5367, `detect_duration_this_turn`) lists the turn-history `FilterProp` carriers it accepts (parser/swallow_check.rs:5668-5680), and `CrewedThisTurn` is not among them, although it is turn-scoped by construction; the suffix list has \"saddled it this turn\" (parser/swallow_check.rs:5476) but not \"crewed it this turn\". game/coverage.rs:8316 then turns the `SwallowedClause` into a `Swallow:Duration_ThisTurn` gap, which marks the card unsupported.",
+    "suggested_fix": "Add `FilterProp::CrewedThisTurn { .. }` to the `FilterProp` arm of `detect_duration_this_turn` (parser/swallow_check.rs, next to `AttackedThisTurn`/`BlockedThisTurn`), or add \"crewed it this turn\" to `QUANTITY_CONTEXT_SUFFIXES` beside \"saddled it this turn\" (CR 702.122c is the crew counterpart of CR 702.171c). Regression test: Turtle Van parses with no `SwallowedClause` and stays supported in the coverage report.",
+    "override_note": "Nothing is patched: the test ops pin what the sandbox games verified: the attack trigger, its target filter (a creature that crewed this Vehicle this turn), the doubling sub-ability on that same target gated on Mutant, Ninja or Turtle, and the Crew 1 keyword. The cases show a Turtle crewer getting two counters, a Ninja crewer (Karai) two, a Grizzly Bears crewer one, a Turtle that already had a counter going to four, a creature that crewed it two turns earlier not being a legal target (only this turn's crewer is), and with two crewers the condition reading the chosen target."
+  },
+  "patch": [
+    {
+      "op": "test",
+      "path": "/triggers/0/mode",
+      "value": "Attacks"
+    },
+    {
+      "op": "test",
+      "path": "/triggers/0/valid_card",
+      "value": {
+        "type": "SelfRef"
+      }
+    },
+    {
+      "op": "test",
+      "path": "/triggers/0/execute/effect",
+      "value": {
+        "type": "PutCounter",
+        "counter_type": "P1P1",
+        "count": {
+          "type": "Fixed",
+          "value": 1
+        },
+        "target": {
+          "type": "Typed",
+          "type_filters": [
+            "Creature"
+          ],
+          "controller": null,
+          "properties": [
+            {
+              "type": "CrewedThisTurn",
+              "relation": "CrewedSource"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "op": "test",
+      "path": "/triggers/0/execute/sub_ability/effect",
+      "value": {
+        "type": "MultiplyCounter",
+        "counter_type": "P1P1",
+        "multiplier": 2,
+        "target": {
+          "type": "ParentTarget"
+        }
+      }
+    },
+    {
+      "op": "test",
+      "path": "/triggers/0/execute/sub_ability/condition",
+      "value": {
+        "type": "TargetMatchesFilter",
+        "filter": {
+          "type": "Or",
+          "filters": [
+            {
+              "type": "Typed",
+              "type_filters": [
+                {
+                  "Subtype": "Mutant"
+                }
+              ],
+              "controller": null,
+              "properties": []
+            },
+            {
+              "type": "Typed",
+              "type_filters": [
+                {
+                  "Subtype": "Ninja"
+                }
+              ],
+              "controller": null,
+              "properties": []
+            },
+            {
+              "type": "Typed",
+              "type_filters": [
+                {
+                  "Subtype": "Turtle"
+                }
+              ],
+              "controller": null,
+              "properties": []
+            }
+          ]
+        },
+        "use_lki": false
+      }
+    },
+    {
+      "op": "test",
+      "path": "/keywords",
+      "value": [
+        {
+          "Crew": {
+            "power": 1,
+            "once_per_turn": null
+          }
+        }
+      ]
+    },
+    {
+      "op": "test",
+      "path": "/parse_warnings/0/detector",
+      "value": "Duration_ThisTurn"
+    }
+  ],
+  "tests": [
+    {
+      "name": "crewed by a Turtle: a +1/+1 counter, then doubled to two (Turtle Van's ruling)",
+      "setup": [
+        {
+          "card": "Turtle Van",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Horned Turtle",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "crew": {
+            "card": "Turtle Van",
+            "with": [
+              {
+                "card": "Horned Turtle",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "attack": [
+            {
+              "card": "Turtle Van",
+              "owner": 0
+            }
+          ]
+        },
+        {
+          "resolve": true
+        }
+      ],
+      "answers": {
+        "targets": [
+          {
+            "card": "Horned Turtle",
+            "owner": 0,
+            "zone": "Battlefield"
+          }
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Horned Turtle",
+              "owner": 0,
+              "zone": "Battlefield",
+              "counters": {
+                "P1P1": 2
+              },
+              "tapped": true
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "zone": "Battlefield",
+              "counters": {},
+              "tapped": false
+            },
+            {
+              "card": "Turtle Van",
+              "owner": 0,
+              "zone": "Battlefield",
+              "tapped": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "crewed by a Ninja (Karai): two counters",
+      "setup": [
+        {
+          "card": "Turtle Van",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Karai, Future of the Foot",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "crew": {
+            "card": "Turtle Van",
+            "with": [
+              {
+                "card": "Karai, Future of the Foot",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "attack": [
+            {
+              "card": "Turtle Van",
+              "owner": 0
+            }
+          ]
+        },
+        {
+          "resolve": true
+        }
+      ],
+      "answers": {
+        "targets": [
+          {
+            "card": "Karai, Future of the Foot",
+            "owner": 0,
+            "zone": "Battlefield"
+          }
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Karai, Future of the Foot",
+              "owner": 0,
+              "zone": "Battlefield",
+              "counters": {
+                "P1P1": 2
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "crewed by a creature that isn't a Mutant, Ninja or Turtle: one counter, not doubled",
+      "setup": [
+        {
+          "card": "Turtle Van",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "crew": {
+            "card": "Turtle Van",
+            "with": [
+              {
+                "card": "Grizzly Bears",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "attack": [
+            {
+              "card": "Turtle Van",
+              "owner": 0
+            }
+          ]
+        },
+        {
+          "resolve": true
+        }
+      ],
+      "answers": {
+        "targets": [
+          {
+            "card": "Grizzly Bears",
+            "owner": 0,
+            "zone": "Battlefield"
+          }
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "zone": "Battlefield",
+              "counters": {
+                "P1P1": 1
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "a Turtle that already has a +1/+1 counter: 1 + 1 = 2, doubled to 4",
+      "setup": [
+        {
+          "card": "Turtle Van",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Horned Turtle",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false,
+          "counters": {
+            "P1P1": 1
+          }
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "crew": {
+            "card": "Turtle Van",
+            "with": [
+              {
+                "card": "Horned Turtle",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "attack": [
+            {
+              "card": "Turtle Van",
+              "owner": 0
+            }
+          ]
+        },
+        {
+          "resolve": true
+        }
+      ],
+      "answers": {
+        "targets": [
+          {
+            "card": "Horned Turtle",
+            "owner": 0,
+            "zone": "Battlefield"
+          }
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Horned Turtle",
+              "owner": 0,
+              "zone": "Battlefield",
+              "counters": {
+                "P1P1": 4
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "\"crewed it this turn\": the Turtle crewed it two turns ago, the Bears crewed it this turn, so only the Bears can be the target",
+      "setup": [
+        {
+          "card": "Turtle Van",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Horned Turtle",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "crew": {
+            "card": "Turtle Van",
+            "with": [
+              {
+                "card": "Horned Turtle",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "advance": {
+            "phase": "PreCombatMain",
+            "active": 0
+          }
+        },
+        {
+          "crew": {
+            "card": "Turtle Van",
+            "with": [
+              {
+                "card": "Grizzly Bears",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "attack": [
+            {
+              "card": "Turtle Van",
+              "owner": 0
+            }
+          ]
+        },
+        {
+          "resolve": true
+        }
+      ],
+      "answers": {},
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "zone": "Battlefield",
+              "counters": {
+                "P1P1": 1
+              }
+            },
+            {
+              "card": "Horned Turtle",
+              "owner": 0,
+              "zone": "Battlefield",
+              "counters": {},
+              "tapped": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "crewed by a Turtle and a non-Turtle together, the trigger targets the non-Turtle: one counter on it, none on the Turtle (the condition checks the target)",
+      "setup": [
+        {
+          "card": "Turtle Van",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Horned Turtle",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "crew": {
+            "card": "Turtle Van",
+            "with": [
+              {
+                "card": "Horned Turtle",
+                "owner": 0,
+                "zone": "Battlefield"
+              },
+              {
+                "card": "Grizzly Bears",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "attack": [
+            {
+              "card": "Turtle Van",
+              "owner": 0
+            }
+          ]
+        },
+        {
+          "resolve": true
+        }
+      ],
+      "answers": {
+        "targets": [
+          {
+            "card": "Grizzly Bears",
+            "owner": 0,
+            "zone": "Battlefield"
+          }
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "zone": "Battlefield",
+              "counters": {
+                "P1P1": 1
+              }
+            },
+            {
+              "card": "Horned Turtle",
+              "owner": 0,
+              "zone": "Battlefield",
+              "counters": {}
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "history": [
+    {
+      "date": "2026-10-23",
+      "status": "active",
+      "note": "Written against Oracle text and CR 702.122a/c and the card's ruling; tested on 0.116.0 (3f79456): all cases play as printed on the upstream data."
+    }
+  ]
+}

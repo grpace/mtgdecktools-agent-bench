@@ -1,0 +1,50 @@
+# Self-host the Agent Bench on your own machine: the pinned phase-rs rules engine + the Director.
+#
+#   docker compose -f deploy/compose.local.yaml up --build      (or: podman compose …, or: npm run bench -- up)
+#
+# On first start the Director generates an admin token, saves it to .bench/admin-token (gitignored,
+# readable only by you) and logs where it is (never the token itself). The Director listens on 127.0.0.1:${BENCH_PORT:-8787}.
+# Event logs live in the `runs` volume; `npm run bench -- pull <event>` copies them into runs/.
+#
+# PHASE_IMAGE defaults to the build pinned in engine/phase.lock.json (`npm run bench -- up` passes it
+# from the lock file; scripts/upgrade-phase.sh keeps this default in sync).
+name: mtgdt-bench
+services:
+  phase-server:
+    image: ${PHASE_IMAGE:-ghcr.io/phase-rs/phase-server@sha256:81f2fd69cbabd3451de696b1cc466ea632e0f42b16deb7541917d9edc78755ec}
+    restart: unless-stopped
+    volumes:
+      - phase-data:/var/lib/phase-server
+  director:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    image: mtgdt-director:local
+    restart: unless-stopped
+    # Runs as the image's default user, root: the Director writes the admin token into ../.bench, a bind mount owned by
+    # you (with rootless Podman, root in the container is you). The hosted stack runs it as uid 999 (compose.yaml).
+    security_opt: ["no-new-privileges:true"]
+    depends_on:
+      - phase-server
+    ports:
+      - "127.0.0.1:${BENCH_PORT:-8787}:8787"
+    environment:
+      PHASE_SERVER_URL: ws://phase-server:9374/ws
+      PUBLIC_URL: ${PUBLIC_URL:-http://127.0.0.1:${BENCH_PORT:-8787}}
+      DIRECTOR_TAG: ${DIRECTOR_TAG:-local}
+      # Generated on first start if missing. Set ADMIN_TOKEN to use your own instead.
+      ADMIN_TOKEN_FILE: /app/.bench/admin-token
+      ADMIN_TOKEN_HOST_PATH: .bench/admin-token
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-}
+      # Optional: accept result bundles locally (one `name:token` per line). Off when the file is absent.
+      SUBMIT_TOKENS_FILE: /app/.bench/submit-tokens
+      SITE_DATA_DIR: /app/site-data
+    volumes:
+      - phase-data:/phase-data:ro
+      - runs:/app/runs
+      - cache:/app/cache
+      - ../.bench:/app/.bench:z
+volumes:
+  phase-data:
+  runs:
+  cache:

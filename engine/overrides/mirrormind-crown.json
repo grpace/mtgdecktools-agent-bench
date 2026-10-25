@@ -1,0 +1,580 @@
+{
+  "card": "Mirrormind Crown",
+  "title": "the token-copy replacement is parsed as an unimplemented spell ability, so it never applies",
+  "status": "active",
+  "kind": "parser",
+  "upstream_issue": "https://github.com/phase-rs/phase/issues/7736",
+  "marks_supported": true,
+  "applies_to": {
+    "server_version": "0.116.0",
+    "build_commit": "3f79456",
+    "card_data_sha256": "c4cfb737d0c0b1b135d3a353d71a95606f6ee147727bc11c3d16b82ece33da41",
+    "entry_sha256": "621125541e5362b0ae6377f6b0c39b925eed37709ff9e0aa69b481f6c420de58"
+  },
+  "rules": {
+    "oracle": "As long as this Equipment is attached to a creature, the first time you would create one or more tokens each turn, you may instead create that many tokens that are copies of equipped creature.\nEquip {2}",
+    "cr": [
+      "614.1a",
+      "614.5",
+      "614.6",
+      "616.1",
+      "707.2",
+      "301.5"
+    ],
+    "actual": "The first line is an `Unimplemented` (\"as_long_as_gate\") spell ability on a permanent, which does nothing: tokens are always created normally, with or without the Crown attached to a creature.",
+    "expected": "While the Crown is attached to a creature, the first time in a turn (any player's turn) that you would create one or more tokens, you may create that many token copies of the equipped creature instead (a replacement effect, CR 614.1a; copies take its copiable values, CR 707.2). Only that first creation of the turn can be replaced: later creations that turn are normal, and so is the first one if you decline or if the Crown wasn't attached to a creature at the time; the window doesn't reopen when it becomes attached later that turn.",
+    "diagnosis": "The \"As long as this Equipment is attached to a creature,\" prefix sends the line down the static/spell \"as long as\" path, which has no rule for a gated replacement, so it becomes `Effect::Unimplemented { name: \"as_long_as_gate\" }` instead of the CreateToken replacement Moonlit Meditation gets for the same body (\"The first time you would create one or more tokens each turn, you may instead create that many tokens that are copies of enchanted permanent.\").",
+    "suggested_fix": "In the replacement parser, strip an \"As long as this Equipment is attached to a creature,\" prefix, parse the rest with the existing Moonlit Meditation rule (`ReplacementEvent::CreateToken`, `ReplacementMode::Optional`, `token_owner_scope: You`, `condition: FirstTokenCreationEachTurn`, execute `CopyTokenOf { target: AttachedTo, count: EventContextAmount }`), and wrap the condition as `And[FirstTokenCreationEachTurn, OnlyIfQuantity { ObjectCount(Typed Creature [EquippedBy]) >= 1 }]` (or a dedicated `SourceAttachedToCreature` replacement condition, mirroring the StaticCondition of that name). \"copies of equipped creature\" maps to `AttachedTo` as \"enchanted permanent\" does. Integration test: Crown equipped, Raise the Alarm twice in one turn: two token copies of the equipped creature, then two Soldiers.",
+    "override_note": "The patch removes the unimplemented ability and adds Moonlit Meditation's tested CreateToken replacement (optional, \"that many\" = the event's token count, copies of the permanent the source is attached to, only for tokens you would create) with its condition FirstTokenCreationEachTurn ANDed with \"a creature equipped by this Equipment exists\" (OnlyIfQuantity over Typed Creature EquippedBy, which matches nothing while the Equipment is unattached, CR 301.5). FirstTokenCreationEachTurn is per player and closed by the first token you create in the turn, whatever happened to it, so a declined replacement, a creation while the Crown was unattached, and the second creation in a turn all leave tokens normal, which is the Oracle's \"the first time ... each turn\": it doesn't mean the first time the Crown is attached. The replacement applies once to the event (CR 614.5), and the window opens again on every turn, including opponents' turns. The Equip ability is unchanged."
+  },
+  "patch": [
+    {
+      "op": "test",
+      "path": "/abilities/0/effect/name",
+      "value": "as_long_as_gate"
+    },
+    {
+      "op": "test",
+      "path": "/replacements",
+      "value": []
+    },
+    {
+      "op": "remove",
+      "path": "/abilities/0"
+    },
+    {
+      "op": "add",
+      "path": "/replacements/-",
+      "value": {
+        "event": "CreateToken",
+        "execute": {
+          "kind": "Spell",
+          "effect": {
+            "type": "CopyTokenOf",
+            "target": {
+              "type": "AttachedTo"
+            },
+            "owner": {
+              "type": "Controller"
+            },
+            "enters_attacking": false,
+            "tapped": false,
+            "count": {
+              "type": "Ref",
+              "qty": {
+                "type": "EventContextAmount"
+              }
+            }
+          },
+          "cost": null,
+          "sub_ability": null,
+          "duration": null,
+          "description": null,
+          "target_prompt": null,
+          "condition": null,
+          "optional_targeting": false,
+          "optional": false,
+          "forward_result": false
+        },
+        "mode": {
+          "type": "Optional",
+          "decline": null
+        },
+        "valid_card": null,
+        "description": "As long as ~ is attached to a creature, the first time you would create one or more tokens each turn, you may instead create that many tokens that are copies of equipped creature.",
+        "condition": {
+          "type": "And",
+          "conditions": [
+            {
+              "type": "FirstTokenCreationEachTurn"
+            },
+            {
+              "type": "OnlyIfQuantity",
+              "lhs": {
+                "type": "Ref",
+                "qty": {
+                  "type": "ObjectCount",
+                  "filter": {
+                    "type": "Typed",
+                    "type_filters": [
+                      "Creature"
+                    ],
+                    "controller": null,
+                    "properties": [
+                      {
+                        "type": "EquippedBy"
+                      }
+                    ]
+                  }
+                }
+              },
+              "comparator": "GE",
+              "rhs": {
+                "type": "Fixed",
+                "value": 1
+              }
+            }
+          ]
+        },
+        "token_owner_scope": "You"
+      }
+    }
+  ],
+  "tests": [
+    {
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "name": "equipped, the turn's first token creation (three Goblins), accept: three token copies of the equipped creature instead (CR 614.1a, 707.2)",
+      "setup": [
+        {
+          "card": "Mirrormind Crown",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Craw Wurm",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Hordeling Outburst",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "answers": {
+        "optional": [
+          true
+        ]
+      },
+      "steps": [
+        {
+          "activate": {
+            "card": "Mirrormind Crown",
+            "text": "Equip",
+            "targets": [
+              {
+                "card": "Craw Wurm",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "cast": {
+            "card": "Hordeling Outburst"
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Craw Wurm",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 4
+            }
+          ],
+          "zones": [
+            {
+              "card": "Goblin",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 0
+            }
+          ]
+        },
+        "bug": {
+          "objects": [
+            {
+              "card": "Craw Wurm",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1
+            }
+          ],
+          "zones": [
+            {
+              "card": "Goblin",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "name": "only the first token creation each turn: the second one that turn makes normal tokens",
+      "setup": [
+        {
+          "card": "Mirrormind Crown",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Craw Wurm",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Raise the Alarm",
+          "owner": 0,
+          "zone": "Hand",
+          "count": 2
+        }
+      ],
+      "answers": {
+        "optional": [
+          true,
+          true
+        ]
+      },
+      "steps": [
+        {
+          "activate": {
+            "card": "Mirrormind Crown",
+            "text": "Equip",
+            "targets": [
+              {
+                "card": "Craw Wurm",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "cast": {
+            "card": "Raise the Alarm"
+          }
+        },
+        {
+          "cast": {
+            "card": "Raise the Alarm"
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Craw Wurm",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 3
+            }
+          ],
+          "zones": [
+            {
+              "card": "Soldier",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 2
+            }
+          ]
+        },
+        "bug": {
+          "objects": [
+            {
+              "card": "Craw Wurm",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1
+            }
+          ],
+          "zones": [
+            {
+              "card": "Soldier",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 4
+            }
+          ]
+        }
+      }
+    },
+    {
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "name": "the window is each turn, also an opponent's turn: the first creation there is replaced again",
+      "setup": [
+        {
+          "card": "Mirrormind Crown",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Craw Wurm",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Raise the Alarm",
+          "owner": 0,
+          "zone": "Hand",
+          "count": 2
+        }
+      ],
+      "answers": {
+        "optional": [
+          true,
+          true
+        ]
+      },
+      "steps": [
+        {
+          "activate": {
+            "card": "Mirrormind Crown",
+            "text": "Equip",
+            "targets": [
+              {
+                "card": "Craw Wurm",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "cast": {
+            "card": "Raise the Alarm"
+          }
+        },
+        {
+          "advance": {
+            "phase": "PreCombatMain",
+            "active": 1
+          }
+        },
+        {
+          "cast": {
+            "card": "Raise the Alarm"
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Craw Wurm",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 5
+            }
+          ],
+          "zones": [
+            {
+              "card": "Soldier",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 0
+            }
+          ]
+        },
+        "bug": {
+          "objects": [
+            {
+              "card": "Craw Wurm",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1
+            }
+          ],
+          "zones": [
+            {
+              "card": "Soldier",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 4
+            }
+          ]
+        }
+      }
+    },
+    {
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "name": "decline (\"you may\"): normal tokens, and the turn's first creation is used up, so a second one isn't offered the copies",
+      "setup": [
+        {
+          "card": "Mirrormind Crown",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Craw Wurm",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Raise the Alarm",
+          "owner": 0,
+          "zone": "Hand",
+          "count": 2
+        }
+      ],
+      "answers": {
+        "optional": [
+          false,
+          true
+        ]
+      },
+      "steps": [
+        {
+          "activate": {
+            "card": "Mirrormind Crown",
+            "text": "Equip",
+            "targets": [
+              {
+                "card": "Craw Wurm",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "cast": {
+            "card": "Raise the Alarm"
+          }
+        },
+        {
+          "cast": {
+            "card": "Raise the Alarm"
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Craw Wurm",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1
+            }
+          ],
+          "zones": [
+            {
+              "card": "Soldier",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 4
+            }
+          ]
+        }
+      }
+    },
+    {
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "name": "not attached to a creature: normal tokens, and equipping it later that turn doesn't reopen the first-time window",
+      "setup": [
+        {
+          "card": "Mirrormind Crown",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Craw Wurm",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Raise the Alarm",
+          "owner": 0,
+          "zone": "Hand",
+          "count": 2
+        }
+      ],
+      "answers": {
+        "optional": [
+          true,
+          true
+        ]
+      },
+      "steps": [
+        {
+          "cast": {
+            "card": "Raise the Alarm"
+          }
+        },
+        {
+          "activate": {
+            "card": "Mirrormind Crown",
+            "text": "Equip",
+            "targets": [
+              {
+                "card": "Craw Wurm",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "cast": {
+            "card": "Raise the Alarm"
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Craw Wurm",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1
+            }
+          ],
+          "zones": [
+            {
+              "card": "Soldier",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 4
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "history": [
+    {
+      "date": "2026-10-23",
+      "status": "active",
+      "note": "Written against Oracle text and CR 614.1a, 614.5, 707.2 and 301.5; tested on 0.116.0 (3f79456)."
+    }
+  ]
+}

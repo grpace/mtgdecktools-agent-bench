@@ -1,0 +1,7 @@
+{
+ "_comment": "The hosted Director's lobby configuration (docs/LOBBY.md §2.5, §6). Shipped in the image and applied at every start (LOBBY_CONFIG + LOBBY_CONFIG_APPLY=always in deploy/compose.yaml): change it with a commit and a deploy, not by hand. featured: the queue that always shows, even empty: the main condition (Set Context · Manual Mana) of the newest featured set, the first in sets/rotation.json (owner, 2026-10-24: FRA by default; the other featured sets stay joinable and show once someone waits, CI checks this). schedules: none at launch (LOBBY.md §2.5).",
+ "featured": [
+  "fra-primer-manual"
+ ],
+ "schedules": []
+}

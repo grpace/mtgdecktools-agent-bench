@@ -1,0 +1,532 @@
+{
+  "card": "Earth Rumble Wrestlers",
+  "title": "the trample and +1/+0 condition is unrecognized, so it is always on",
+  "status": "active",
+  "kind": "parser",
+  "upstream_issue": null,
+  "marks_supported": true,
+  "applies_to": {
+    "server_version": "0.116.0",
+    "build_commit": "3f79456",
+    "card_data_sha256": "c4cfb737d0c0b1b135d3a353d71a95606f6ee147727bc11c3d16b82ece33da41",
+    "entry_sha256": "c7847ad7c75f974178ffe10f4aacab3e3bb1ff45fed56b4f6cdbc4ac5641b3ba"
+  },
+  "rules": {
+    "oracle": "Reach\nThis creature gets +1/+0 and has trample as long as you control a land creature or a land entered the battlefield under your control this turn.",
+    "cr": [
+      "611.3a",
+      "613.1",
+      "608.2i",
+      "205.2a",
+      "110.2"
+    ],
+    "actual": "Earth Rumble Wrestlers is always a 4/4 with reach and trample: the static ability's condition is StaticCondition::Unrecognized, which the layer system evaluates as true.",
+    "expected": "A 3/4 with reach. It gets +1/+0 and trample only while its controller controls a land creature (a permanent that is both a land and a creature; an opponent's doesn't count) or while at least one land has entered the battlefield under its controller's control this turn (an entry still counts after that land leaves; it stops counting when the turn ends). The static ability is re-checked continuously (CR 611.3a).",
+    "diagnosis": "The condition text \"you control a land creature or a land entered the battlefield under your control this turn\" is a disjunction of two complete conditions. parse_static_condition hands it to parse_inner_condition, but the connective path (parse_condition_connective) only splits when its left leaf stops right before \" or \". Apparently the \"you control a/an <type>\" leaf reads \"a land creature or a land\" as one or-joined type phrase and leaves \"entered the battlefield under your control this turn\" unconsumed, so no leaf or connective consumes the whole text, and the static is emitted with condition Unrecognized. layers.rs evaluates Unrecognized as true, so the bonus is permanent.",
+    "suggested_fix": "In parser/oracle_nom/condition.rs, make the \"you control a/an <type>\" leaf yield before an \" or \" whose right side parses as a complete condition (or have parse_condition_connective retry the left leaf on the text before each \" or \"/\" and \" occurrence until both sides parse completely), so the text produces StaticCondition::Or { IsPresent(Typed [Land, Creature], controller You, InZone Battlefield), QuantityComparison(Ref BattlefieldEntriesThisTurn { player: Controller, filter: Typed [Land] }) GE 1 }. The right side already parses on its own through parse_entered_this_turn (the shape Zimone, All-Questioning gets). Add a parser test for Earth Rumble Wrestlers asserting that Or, and an integration test: a 3/4 with no land creature and no land entry this turn, 4/4 trample after its controller plays a land, and 3/4 again on the next turn.",
+    "override_note": "The patch replaces only the Unrecognized condition with the Or of two shapes the engine already runs: IsPresent with Typed [Land, Creature] controlled by You on the battlefield (Doctor Doom's \"you control an artifact creature\"), and QuantityComparison over BattlefieldEntriesThisTurn { player: Controller, filter: Typed [Land] } GE 1 (Zimone, All-Questioning; Shoreline Scout in a static). A land creature is an object that has both card types (CR 205.2a), and \"you control\" means the static's controller (CR 110.2). BattlefieldEntriesThisTurn reads the per-turn entry ledger, which keys on the controller the land entered under and keeps the entry after the land leaves (CR 608.2i), and is cleared at the start of each turn. Static abilities are re-evaluated continuously in layers (CR 611.3a, 613.1), so the bonus appears and disappears as the condition changes. The modifications (+1/+0, trample) and reach are unchanged."
+  },
+  "patch": [
+    {
+      "op": "test",
+      "path": "/static_abilities/0/condition",
+      "value": {
+        "type": "Unrecognized",
+        "text": "you control a land creature or a land entered the battlefield under your control this turn"
+      }
+    },
+    {
+      "op": "test",
+      "path": "/static_abilities/0/affected",
+      "value": {
+        "type": "SelfRef"
+      }
+    },
+    {
+      "op": "replace",
+      "path": "/static_abilities/0/condition",
+      "value": {
+        "type": "Or",
+        "conditions": [
+          {
+            "type": "IsPresent",
+            "filter": {
+              "type": "Typed",
+              "type_filters": [
+                "Land",
+                "Creature"
+              ],
+              "controller": "You",
+              "properties": [
+                {
+                  "type": "InZone",
+                  "zone": "Battlefield"
+                }
+              ]
+            }
+          },
+          {
+            "type": "QuantityComparison",
+            "lhs": {
+              "type": "Ref",
+              "qty": {
+                "type": "BattlefieldEntriesThisTurn",
+                "player": {
+                  "type": "Controller"
+                },
+                "filter": {
+                  "type": "Typed",
+                  "type_filters": [
+                    "Land"
+                  ],
+                  "controller": null,
+                  "properties": []
+                }
+              }
+            },
+            "comparator": "GE",
+            "rhs": {
+              "type": "Fixed",
+              "value": 1
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "tests": [
+    {
+      "name": "no land creature and no land entered this turn: 3/4 reach, no trample",
+      "setup": [
+        {
+          "card": "Earth Rumble Wrestlers",
+          "owner": 0,
+          "zone": "Battlefield"
+        }
+      ],
+      "steps": [],
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Earth Rumble Wrestlers",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 3,
+              "toughness": 4,
+              "keywords": [
+                "Reach"
+              ],
+              "no_keywords": [
+                "Trample"
+              ]
+            }
+          ]
+        },
+        "bug": {
+          "objects": [
+            {
+              "card": "Earth Rumble Wrestlers",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 4,
+              "toughness": 4,
+              "keywords": [
+                "Reach",
+                "Trample"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "a land creature you control (on a later turn, no land entered): 4/4 reach, trample",
+      "setup": [
+        {
+          "card": "Earth Rumble Wrestlers",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Dryad Arbor",
+          "owner": 0,
+          "zone": "Battlefield"
+        }
+      ],
+      "steps": [
+        {
+          "advance": {
+            "phase": "PreCombatMain",
+            "active": 1
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Earth Rumble Wrestlers",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 4,
+              "toughness": 4,
+              "keywords": [
+                "Reach",
+                "Trample"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "only an opponent controls a land creature: 3/4, no trample",
+      "setup": [
+        {
+          "card": "Earth Rumble Wrestlers",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Dryad Arbor",
+          "owner": 1,
+          "zone": "Battlefield"
+        }
+      ],
+      "steps": [
+        {
+          "advance": {
+            "phase": "PreCombatMain",
+            "active": 1
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Earth Rumble Wrestlers",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 3,
+              "toughness": 4,
+              "keywords": [
+                "Reach"
+              ],
+              "no_keywords": [
+                "Trample"
+              ]
+            }
+          ]
+        },
+        "bug": {
+          "objects": [
+            {
+              "card": "Earth Rumble Wrestlers",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 4,
+              "toughness": 4,
+              "keywords": [
+                "Reach",
+                "Trample"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "you play a land: 4/4 reach, trample for the rest of the turn",
+      "setup": [
+        {
+          "card": "Earth Rumble Wrestlers",
+          "owner": 0,
+          "zone": "Battlefield"
+        }
+      ],
+      "steps": [
+        {
+          "advance": {
+            "phase": "PreCombatMain",
+            "active": 1
+          }
+        },
+        {
+          "advance": {
+            "phase": "PreCombatMain",
+            "active": 0
+          }
+        },
+        {
+          "debug": "MoveToZone",
+          "object": {
+            "card": "Mountain",
+            "owner": 0,
+            "zone": "Hand"
+          },
+          "data": {
+            "to_zone": "Battlefield",
+            "simulate": true
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Earth Rumble Wrestlers",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 4,
+              "toughness": 4,
+              "keywords": [
+                "Reach",
+                "Trample"
+              ]
+            }
+          ],
+          "zones": [
+            {
+              "card": "Mountain",
+              "owner": 0,
+              "zone": "Battlefield"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "the land entered this turn and then left: still 4/4 trample (CR 608.2i look-back)",
+      "setup": [
+        {
+          "card": "Earth Rumble Wrestlers",
+          "owner": 0,
+          "zone": "Battlefield"
+        }
+      ],
+      "steps": [
+        {
+          "advance": {
+            "phase": "PreCombatMain",
+            "active": 1
+          }
+        },
+        {
+          "advance": {
+            "phase": "PreCombatMain",
+            "active": 0
+          }
+        },
+        {
+          "debug": "MoveToZone",
+          "object": {
+            "card": "Mountain",
+            "owner": 0,
+            "zone": "Hand"
+          },
+          "data": {
+            "to_zone": "Battlefield",
+            "simulate": true
+          }
+        },
+        {
+          "debug": "MoveToZone",
+          "object": {
+            "card": "Mountain",
+            "owner": 0,
+            "zone": "Battlefield"
+          },
+          "data": {
+            "to_zone": "Graveyard",
+            "simulate": true
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Earth Rumble Wrestlers",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 4,
+              "toughness": 4,
+              "keywords": [
+                "Reach",
+                "Trample"
+              ]
+            }
+          ],
+          "zones": [
+            {
+              "card": "Mountain",
+              "owner": 0,
+              "zone": "Graveyard"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "the land entered on your previous turn: no longer counts on the next turn",
+      "setup": [
+        {
+          "card": "Earth Rumble Wrestlers",
+          "owner": 0,
+          "zone": "Battlefield"
+        }
+      ],
+      "steps": [
+        {
+          "advance": {
+            "phase": "PreCombatMain",
+            "active": 1
+          }
+        },
+        {
+          "advance": {
+            "phase": "PreCombatMain",
+            "active": 0
+          }
+        },
+        {
+          "debug": "MoveToZone",
+          "object": {
+            "card": "Mountain",
+            "owner": 0,
+            "zone": "Hand"
+          },
+          "data": {
+            "to_zone": "Battlefield",
+            "simulate": true
+          }
+        },
+        {
+          "advance": {
+            "phase": "PreCombatMain",
+            "active": 1
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Earth Rumble Wrestlers",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 3,
+              "toughness": 4,
+              "keywords": [
+                "Reach"
+              ],
+              "no_keywords": [
+                "Trample"
+              ]
+            }
+          ],
+          "zones": [
+            {
+              "card": "Mountain",
+              "owner": 0,
+              "zone": "Battlefield"
+            }
+          ]
+        },
+        "bug": {
+          "objects": [
+            {
+              "card": "Earth Rumble Wrestlers",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 4,
+              "toughness": 4,
+              "keywords": [
+                "Reach",
+                "Trample"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "a land entered under an opponent's control: 3/4, no trample",
+      "setup": [
+        {
+          "card": "Earth Rumble Wrestlers",
+          "owner": 0,
+          "zone": "Battlefield"
+        }
+      ],
+      "steps": [
+        {
+          "advance": {
+            "phase": "PreCombatMain",
+            "active": 1
+          }
+        },
+        {
+          "debug": "CreateCard",
+          "data": {
+            "card_name": "Forest",
+            "owner": 1,
+            "zone": "Battlefield",
+            "count": 1,
+            "run_etb": true
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Earth Rumble Wrestlers",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 3,
+              "toughness": 4,
+              "keywords": [
+                "Reach"
+              ],
+              "no_keywords": [
+                "Trample"
+              ]
+            }
+          ],
+          "zones": [
+            {
+              "card": "Forest",
+              "owner": 1,
+              "zone": "Battlefield"
+            }
+          ]
+        },
+        "bug": {
+          "objects": [
+            {
+              "card": "Earth Rumble Wrestlers",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 4,
+              "toughness": 4,
+              "keywords": [
+                "Reach",
+                "Trample"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "history": [
+    {
+      "date": "2026-10-23",
+      "status": "active",
+      "note": "Written against Oracle text and CR 611.3a, 613.1, 608.2i, 205.2a and 110.2; tested on phase-rs 0.116.0 (3f79456): upstream is a 4/4 trampler in every case, the override gives 3/4 without trample unless you control a land creature or a land entered under your control this turn."
+    }
+  ]
+}

@@ -1,0 +1,365 @@
+{
+  "card": "Blinkmoth Nexus",
+  "title": "the coverage report flags the Blinkmoth subtype as a parser misfire; the card plays as printed",
+  "status": "active",
+  "kind": "coverage",
+  "upstream_issue": null,
+  "marks_supported": true,
+  "applies_to": {
+    "server_version": "0.116.0",
+    "build_commit": "3f79456",
+    "card_data_sha256": "c4cfb737d0c0b1b135d3a353d71a95606f6ee147727bc11c3d16b82ece33da41",
+    "entry_sha256": "455787ed68e246fc8186b7103d6a01152ebc38d8b5628843ff9a6eda341fbf0c"
+  },
+  "rules": {
+    "oracle": "{T}: Add {C}.\n{1}: This land becomes a 1/1 Blinkmoth artifact creature with flying until end of turn. It's still a land.\n{1}, {T}: Target Blinkmoth creature gets +1/+1 until end of turn.",
+    "cr": [
+      "205.3m",
+      "205.1b",
+      "305.7",
+      "611.2a",
+      "613.1d",
+      "613.1f",
+      "702.9b"
+    ],
+    "actual": "phase-rs's coverage report lists the card as unsupported with the gap `ParserMisfire:InvalidSubtype(Blinkmoth)`.",
+    "expected": "{1}: until end of turn it becomes a 1/1 Blinkmoth artifact creature with flying that is still a land (CR 305.7, 611.2a). {1}, {T}: target Blinkmoth creature (CR 205.3m) gets +1/+1 until end of turn.",
+    "diagnosis": "`coverage::check_subtype_lexicon` (game/coverage.rs:8125) flags every `AddSubtype` whose value isn't in `collect_valid_subtypes` (game/coverage.rs:7919), and that lexicon is built only from the subtypes printed on card type lines. No card prints Blinkmoth on its type line (it only appears in become effects and in Blinkmoth Nexus's own pump), so the real creature type Blinkmoth (CR 205.3m; it is in the engine's own crates/engine/data/oracle-subtypes.json) is reported as a parser misfire. The parsed abilities are exactly the Oracle text, and the sandbox games show them working.",
+    "suggested_fix": "Build the coverage lexicon from the full CR 205.3 subtype list the engine already ships (crates/engine/data/oracle-subtypes.json, via database::subtype_vocab) in addition to printed type lines, so a real subtype that only appears in rules text (Blinkmoth; probably others like it) isn't a ParserMisfire. Keep flagging tokens that aren't subtypes at all (\"Gets\", \"Until\"), which is what the check is for.",
+    "override_note": "Nothing is patched: the test ops pin the animation's modifications (1/1, flying, artifact and creature types, Blinkmoth subtype; the separate \"still a land\" step keeps the land type) and the pump's Blinkmoth-creature target filter, as verified. The sandbox games show it as printed: animated it's an artifact (Shatter can target it), still a land (Stone Rain can), a 1/1 flier that attacks for 1; the next turn it's only a land; the pump has no target until a Blinkmoth creature exists (a Grizzly Bears isn't one) and then makes the Nexus 2/2."
+  },
+  "patch": [
+    {
+      "op": "test",
+      "path": "/abilities/1/effect/static_abilities/0/modifications",
+      "value": [
+        {
+          "type": "SetPower",
+          "value": 1
+        },
+        {
+          "type": "SetToughness",
+          "value": 1
+        },
+        {
+          "type": "AddKeyword",
+          "keyword": "Flying"
+        },
+        {
+          "type": "AddType",
+          "core_type": "Artifact"
+        },
+        {
+          "type": "AddType",
+          "core_type": "Creature"
+        },
+        {
+          "type": "RemoveAllSubtypes",
+          "set": "Creature"
+        },
+        {
+          "type": "AddSubtype",
+          "subtype": "Blinkmoth"
+        }
+      ]
+    },
+    {
+      "op": "test",
+      "path": "/abilities/1/sub_ability/effect/static_abilities/0/modifications",
+      "value": [
+        {
+          "type": "AddType",
+          "core_type": "Land"
+        }
+      ]
+    },
+    {
+      "op": "test",
+      "path": "/abilities/2/effect/target",
+      "value": {
+        "type": "Typed",
+        "type_filters": [
+          "Creature",
+          {
+            "Subtype": "Blinkmoth"
+          }
+        ],
+        "controller": null,
+        "properties": []
+      }
+    }
+  ],
+  "tests": [
+    {
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "name": "animated: a 1/1 flying artifact creature that is still a land, and it can attack (CR 305.7, 611.2a)",
+      "setup": [
+        {
+          "card": "Blinkmoth Nexus",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Shatter",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Stone Rain",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "steps": [
+        {
+          "offered": {
+            "label": "an artifact before animating",
+            "cast": {
+              "card": "Shatter"
+            }
+          }
+        },
+        {
+          "activate": {
+            "card": "Blinkmoth Nexus",
+            "text": "becomes"
+          }
+        },
+        {
+          "offered": {
+            "label": "an artifact once animated",
+            "cast": {
+              "card": "Shatter"
+            }
+          }
+        },
+        {
+          "offered": {
+            "label": "still a land once animated",
+            "cast": {
+              "card": "Stone Rain"
+            }
+          }
+        },
+        {
+          "attack": [
+            {
+              "card": "Blinkmoth Nexus",
+              "owner": 0,
+              "zone": "Battlefield"
+            }
+          ]
+        },
+        {
+          "advance": {
+            "phase": "End",
+            "active": 0
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            19
+          ],
+          "objects": [
+            {
+              "card": "Blinkmoth Nexus",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 1,
+              "toughness": 1,
+              "keywords": [
+                "Flying"
+              ]
+            }
+          ],
+          "offered": {
+            "an artifact before animating": false,
+            "an artifact once animated": true,
+            "still a land once animated": true
+          }
+        }
+      }
+    },
+    {
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "name": "until end of turn: on the next turn it is only a land again",
+      "setup": [
+        {
+          "card": "Blinkmoth Nexus",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Shatter",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Raging Goblin",
+          "owner": 0,
+          "zone": "Battlefield"
+        }
+      ],
+      "steps": [
+        {
+          "activate": {
+            "card": "Blinkmoth Nexus",
+            "text": "becomes"
+          }
+        },
+        {
+          "advance": {
+            "phase": "PreCombatMain",
+            "active": 1
+          }
+        },
+        {
+          "offered": {
+            "label": "an artifact on the next turn",
+            "cast": {
+              "card": "Shatter"
+            }
+          }
+        },
+        {
+          "offered": {
+            "label": "a Blinkmoth creature to pump on the next turn",
+            "activate": {
+              "card": "Blinkmoth Nexus",
+              "text": "Target Blinkmoth"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Blinkmoth Nexus",
+              "owner": 0,
+              "zone": "Battlefield",
+              "no_keywords": [
+                "Flying"
+              ]
+            }
+          ],
+          "offered": {
+            "an artifact on the next turn": false,
+            "a Blinkmoth creature to pump on the next turn": false
+          }
+        }
+      }
+    },
+    {
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "name": "the pump targets only a Blinkmoth creature: none while the Nexus is a land (a Grizzly Bears doesn't qualify), then the animated Nexus pumps itself to 2/2 (CR 205.3m)",
+      "setup": [
+        {
+          "card": "Blinkmoth Nexus",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Battlefield"
+        }
+      ],
+      "steps": [
+        {
+          "offered": {
+            "label": "pump with no Blinkmoth creature",
+            "activate": {
+              "card": "Blinkmoth Nexus",
+              "text": "Target Blinkmoth"
+            }
+          }
+        },
+        {
+          "activate": {
+            "card": "Blinkmoth Nexus",
+            "text": "becomes"
+          }
+        },
+        {
+          "offered": {
+            "label": "pump with an animated Nexus",
+            "activate": {
+              "card": "Blinkmoth Nexus",
+              "text": "Target Blinkmoth"
+            }
+          }
+        },
+        {
+          "activate": {
+            "card": "Blinkmoth Nexus",
+            "text": "Target Blinkmoth",
+            "targets": [
+              {
+                "card": "Blinkmoth Nexus",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Blinkmoth Nexus",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 2,
+              "toughness": 2,
+              "tapped": true
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 2,
+              "toughness": 2
+            }
+          ],
+          "offered": {
+            "pump with no Blinkmoth creature": false,
+            "pump with an animated Nexus": true
+          }
+        }
+      }
+    }
+  ],
+  "history": [
+    {
+      "date": "2026-10-23",
+      "status": "active",
+      "note": "Coverage override: verified in sandbox games on 0.116.0 (3f79456) against Oracle text and CR 205.3m, 305.7 and 611.2a; upstream data already plays as printed."
+    }
+  ]
+}

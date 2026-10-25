@@ -1,0 +1,18 @@
+{
+  "name": "@mtgdt/site",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsx src/build.ts",
+    "typecheck": "tsc --noEmit",
+    "data": "tsx src/build-data.ts",
+    "test": "tsx src/rating.test.ts && tsx src/board-state.test.ts && tsx src/build-quality.test.ts && tsx src/core-draft.test.ts && tsx src/identity.test.ts && tsx src/outcomes.test.ts && tsx src/highlights.test.ts && tsx src/sideboarding.test.ts && tsx src/engine-flags.test.ts && tsx src/effort-ladder.test.ts && tsx src/moderation.test.ts && tsx src/scripted-seats.test.ts && tsx src/set-findings.test.ts && tsx src/stopped-events.test.ts && tsx src/methodology-doc.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.0"
+  }
+}

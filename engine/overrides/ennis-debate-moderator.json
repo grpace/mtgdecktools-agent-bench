@@ -1,0 +1,554 @@
+{
+  "card": "Ennis, Debate Moderator",
+  "title": "the end-step +1/+1 counter's exile condition is unparsed, so Ennis never gets a counter",
+  "status": "active",
+  "kind": "parser",
+  "upstream_issue": null,
+  "marks_supported": true,
+  "applies_to": {
+    "server_version": "0.116.0",
+    "build_commit": "3f79456",
+    "card_data_sha256": "c4cfb737d0c0b1b135d3a353d71a95606f6ee147727bc11c3d16b82ece33da41",
+    "entry_sha256": "15bc5238cd200a91e9c30831b8d7c0c8b1a7c62e7f20ba933cfbce8f2d775fec"
+  },
+  "rules": {
+    "oracle": "When Ennis enters, exile up to one other target creature you control. Return that card to the battlefield under its owner's control at the beginning of the next end step.\nAt the beginning of your end step, if one or more cards were put into exile this turn, put a +1/+1 counter on Ennis.",
+    "cr": [
+      "603.4",
+      "513.1a",
+      "400.7",
+      "108.2",
+      "111.1",
+      "122.1",
+      "603.7"
+    ],
+    "actual": "The end-step trigger's effect is Unimplemented (\"unparsed_condition\") with no condition: it triggers at each of your end steps and does nothing, so Ennis never gets a +1/+1 counter.",
+    "expected": "At the beginning of your end step (not an opponent's), if one or more cards were put into exile from anywhere this turn, by any player or effect, Ennis's own ETB included, put a +1/+1 counter on Ennis. Tokens are not cards (CR 108.2, 111.1), so exiling only tokens doesn't count. The condition is an intervening if, checked when the ability triggers and again when it resolves (CR 603.4). The ETB blink is unchanged: the exiled creature returns at the beginning of the next end step.",
+    "diagnosis": "The intervening-if \"if one or more cards were put into exile this turn\" isn't recognized by the trigger-condition parser, so the whole clause, the +1/+1 counter included, becomes Unimplemented \"unparsed_condition\" and the trigger's condition stays null. The same quantity already parses for other destinations (\"cards were put into your graveyard from anywhere this turn\": ZoneChangeCountThisTurn { to: Graveyard, filter: NonToken }), but not \"put into exile\" without a from-zone.",
+    "suggested_fix": "Teach the intervening-if parser \"if one or more cards were put into exile this turn\" (and the \"N or more cards\" form) as TriggerCondition::QuantityComparison { lhs: Ref ZoneChangeCountThisTurn { from: None, to: Exile, filter: Typed [] + NonToken }, comparator: GE, rhs: Fixed 1 }, so Ennis's second trigger gets that condition and execute PutCounter { P1P1, Fixed 1, SelfRef }, like Katara, Bending Prodigy's end-step counter. Integration tests: Ennis exiling your creature with its ETB gives a counter at your end step; no exile gives none; exiling only a token gives none.",
+    "override_note": "The patch fills in the two parts the parser dropped with shapes the engine already runs: the effect PutCounter P1P1 1 on SelfRef (Katara, Bending Prodigy's end-step counter) and the trigger condition QuantityComparison over ZoneChangeCountThisTurn { to: Exile } GE 1 (Barrin, Tolarian Archmage uses the same quantity as a trigger condition; Fraying Sanity and others use the to-only form with the NonToken filter). The quantity counts this turn's zone-change records (one per move, from any zone, cleared at the start of each turn) whose destination is exile; NonToken drops tokens, which are not cards (CR 108.2, 111.1), and an exiled card is a new object but the record keeps it (CR 400.7). Trigger conditions are intervening ifs, checked on triggering and on resolution (CR 603.4). The upstream trigger mode (Phase End) and constraint (OnlyDuringYourTurn) already make it your end step only (CR 513.1a)."
+  },
+  "patch": [
+    {
+      "op": "test",
+      "path": "/triggers/1/execute/effect",
+      "value": {
+        "type": "Unimplemented",
+        "name": "unparsed_condition",
+        "description": "if one or more cards were put into exile this turn, put a +1/+1 counter on ~"
+      }
+    },
+    {
+      "op": "test",
+      "path": "/triggers/1/condition",
+      "value": null
+    },
+    {
+      "op": "test",
+      "path": "/triggers/1/phase",
+      "value": "End"
+    },
+    {
+      "op": "test",
+      "path": "/triggers/1/constraint",
+      "value": {
+        "type": "OnlyDuringYourTurn"
+      }
+    },
+    {
+      "op": "replace",
+      "path": "/triggers/1/execute/effect",
+      "value": {
+        "type": "PutCounter",
+        "counter_type": "P1P1",
+        "count": {
+          "type": "Fixed",
+          "value": 1
+        },
+        "target": {
+          "type": "SelfRef"
+        }
+      }
+    },
+    {
+      "op": "replace",
+      "path": "/triggers/1/condition",
+      "value": {
+        "type": "QuantityComparison",
+        "lhs": {
+          "type": "Ref",
+          "qty": {
+            "type": "ZoneChangeCountThisTurn",
+            "to": "Exile",
+            "filter": {
+              "type": "Typed",
+              "type_filters": [],
+              "controller": null,
+              "properties": [
+                {
+                  "type": "NonToken"
+                }
+              ]
+            }
+          }
+        },
+        "comparator": "GE",
+        "rhs": {
+          "type": "Fixed",
+          "value": 1
+        }
+      }
+    }
+  ],
+  "tests": [
+    {
+      "name": "Ennis exiles your creature: at your end step it returns and Ennis gets a +1/+1 counter",
+      "setup": [
+        {
+          "card": "Ennis, Debate Moderator",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Battlefield"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "cast": {
+            "card": "Ennis, Debate Moderator"
+          }
+        },
+        {
+          "advance": {
+            "phase": "End",
+            "active": 0
+          }
+        },
+        {
+          "resolve": true
+        }
+      ],
+      "answers": {
+        "targets": [
+          {
+            "card": "Grizzly Bears",
+            "owner": 0,
+            "zone": "Battlefield"
+          }
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "zones": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "zone": "Battlefield"
+            }
+          ],
+          "objects": [
+            {
+              "card": "Ennis, Debate Moderator",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 2,
+              "toughness": 2,
+              "counters": {
+                "P1P1": 1
+              }
+            }
+          ]
+        },
+        "bug": {
+          "zones": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "zone": "Battlefield"
+            }
+          ],
+          "objects": [
+            {
+              "card": "Ennis, Debate Moderator",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 1,
+              "toughness": 1,
+              "counters": {}
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "a card exiled by another spell this turn (Swords to Plowshares): +1/+1 counter at your end step",
+      "setup": [
+        {
+          "card": "Ennis, Debate Moderator",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 1,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Swords to Plowshares",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "cast": {
+            "card": "Swords to Plowshares",
+            "targets": [
+              {
+                "card": "Grizzly Bears",
+                "owner": 1,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "advance": {
+            "phase": "End",
+            "active": 0
+          }
+        },
+        {
+          "resolve": true
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            22
+          ],
+          "zones": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Exile"
+            }
+          ],
+          "objects": [
+            {
+              "card": "Ennis, Debate Moderator",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 2,
+              "toughness": 2,
+              "counters": {
+                "P1P1": 1
+              }
+            }
+          ]
+        },
+        "bug": {
+          "life": [
+            20,
+            22
+          ],
+          "objects": [
+            {
+              "card": "Ennis, Debate Moderator",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 1,
+              "toughness": 1,
+              "counters": {}
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "nothing exiled this turn: no counter (intervening if, CR 603.4)",
+      "setup": [
+        {
+          "card": "Ennis, Debate Moderator",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Battlefield"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "advance": {
+            "phase": "End",
+            "active": 0
+          }
+        },
+        {
+          "resolve": true
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "zones": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "zone": "Battlefield"
+            }
+          ],
+          "objects": [
+            {
+              "card": "Ennis, Debate Moderator",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 1,
+              "toughness": 1,
+              "counters": {}
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Ennis enters with no other creature to exile: nothing exiled, no counter",
+      "setup": [
+        {
+          "card": "Ennis, Debate Moderator",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "cast": {
+            "card": "Ennis, Debate Moderator"
+          }
+        },
+        {
+          "advance": {
+            "phase": "End",
+            "active": 0
+          }
+        },
+        {
+          "resolve": true
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Ennis, Debate Moderator",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 1,
+              "toughness": 1,
+              "counters": {}
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "only a token was exiled: tokens aren't cards, no counter",
+      "setup": [
+        {
+          "card": "Ennis, Debate Moderator",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Raise the Alarm",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Swords to Plowshares",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "cast": {
+            "card": "Raise the Alarm"
+          }
+        },
+        {
+          "cast": {
+            "card": "Swords to Plowshares",
+            "targets": [
+              {
+                "card": "Soldier",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "advance": {
+            "phase": "End",
+            "active": 0
+          }
+        },
+        {
+          "resolve": true
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "life": [
+            21,
+            20
+          ],
+          "objects": [
+            {
+              "card": "Ennis, Debate Moderator",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 1,
+              "toughness": 1,
+              "counters": {}
+            },
+            {
+              "card": "Soldier",
+              "owner": 0,
+              "count": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "a card exiled on the opponent's turn: no counter at their end step (only your end step) nor at your next one",
+      "setup": [
+        {
+          "card": "Ennis, Debate Moderator",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 1,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Swords to Plowshares",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 1
+      },
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "cast": {
+            "card": "Swords to Plowshares",
+            "targets": [
+              {
+                "card": "Grizzly Bears",
+                "owner": 1,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "advance": {
+            "phase": "End",
+            "active": 1
+          }
+        },
+        {
+          "resolve": true
+        },
+        {
+          "advance": {
+            "phase": "End",
+            "active": 0
+          }
+        },
+        {
+          "resolve": true
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            22
+          ],
+          "zones": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Exile"
+            }
+          ],
+          "objects": [
+            {
+              "card": "Ennis, Debate Moderator",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 1,
+              "toughness": 1,
+              "counters": {}
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "history": [
+    {
+      "date": "2026-10-23",
+      "status": "active",
+      "note": "Written against Oracle text and CR 603.4, 513.1a, 108.2 and 400.7; tested on phase-rs 0.116.0 (3f79456). Upstream never puts a counter on Ennis; with the override it gets one at your end step when a card was exiled this turn."
+    }
+  ]
+}

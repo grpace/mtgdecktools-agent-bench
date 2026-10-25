@@ -1,0 +1,301 @@
+{
+  "card": "Meteor Crater",
+  "title": "\"choose a color of a permanent you control\" is unparsed, so the land makes no usable mana",
+  "status": "active",
+  "kind": "parser",
+  "upstream_issue": null,
+  "marks_supported": true,
+  "applies_to": {
+    "server_version": "0.116.0",
+    "build_commit": "3f79456",
+    "card_data_sha256": "c4cfb737d0c0b1b135d3a353d71a95606f6ee147727bc11c3d16b82ece33da41",
+    "entry_sha256": "dd152bc7cc1fe2dfbdecb581054ff62939303078f608e05df3d61a1c94f10e55"
+  },
+  "rules": {
+    "oracle": "{T}: Choose a color of a permanent you control. Add one mana of that color.",
+    "cr": [
+      "605.1a",
+      "106.5",
+      "105.2c",
+      "106.1b",
+      "202.2"
+    ],
+    "actual": "The ability is a non-mana activated ability whose first step is `Unimplemented` (\"Choose a color of a permanent you control\") followed by `Mana { ChosenColor }`. No color is ever chosen, so it adds nothing: the Crater can't pay for a spell even when you control colored permanents.",
+    "expected": "A mana ability (CR 605.1a): tap to add one mana of a color that some permanent you control has; with a multicolored permanent you may choose any of its colors (CR 202.2). Colorless permanents and permanents an opponent controls give no color (CR 105.2c). If you control no colored permanent, no color can be chosen and the ability adds no mana (CR 106.5).",
+    "diagnosis": "The two-sentence \"Choose a color of a permanent you control. Add one mana of that color.\" isn't folded into a single mana production: the choice sentence becomes `Unimplemented { name: \"unparsed_verb_arguments\" }` and the second sentence a `ChosenColor` mana sub-ability that depends on a choice nothing makes. The one-sentence equivalent (\"Add one mana of any color among legendary permanents you control\", Plaza of Heroes; Mox Amber) already parses to `ManaProduction::AnyOneColorAmongPermanents`.",
+    "suggested_fix": "In the mana-ability parser, recognize \"Choose a color of a <permanent filter> you control. Add one mana of that color.\" as one mana ability with `ManaProduction::AnyOneColorAmongPermanents { count: Fixed(1), filter: Typed [Permanent] controller You }`, the production Mox Amber and Plaza of Heroes use, and set `is_mana_ability: true`. Its runtime (game/mana_abilities.rs, the AnyOneColorAmongPermanents arm) offers the distinct colors among matching permanents and produces nothing when there are none (CR 106.5). Integration test: with a red creature, Meteor Crater pays for Lightning Bolt; with only colorless permanents, it can't.",
+    "override_note": "The patch makes the ability a single mana ability producing AnyOneColorAmongPermanents with count 1 over permanents you control, the variant Mox Amber and Plaza of Heroes use (Plaza's filter minus the legendary requirement). \"Choose a color of a permanent you control. Add one mana of that color.\" is exactly \"add one mana of any color among permanents you control\": the choice is made as the mana ability resolves, it has no target and doesn't use the stack (CR 605.1a, 605.3b), and with no colored permanent there is no color to choose, so it adds nothing (CR 106.5). The cases check whether the engine offers each spell, which it does only when its cost can be paid; in the sandbox with the override, Lightning Bolt was also cast with the Crater and a red creature as the only sources (the Crater tapped, 3 damage), and couldn't be cast with no colored permanent."
+  },
+  "patch": [
+    {
+      "op": "test",
+      "path": "/abilities/0/effect",
+      "value": {
+        "type": "Unimplemented",
+        "name": "unparsed_verb_arguments",
+        "description": "Choose a color of a permanent you control"
+      }
+    },
+    {
+      "op": "test",
+      "path": "/abilities/0/sub_ability/effect/produced",
+      "value": {
+        "type": "ChosenColor",
+        "count": {
+          "type": "Fixed",
+          "value": 1
+        }
+      }
+    },
+    {
+      "op": "replace",
+      "path": "/abilities/0/effect",
+      "value": {
+        "type": "Mana",
+        "produced": {
+          "type": "AnyOneColorAmongPermanents",
+          "count": {
+            "type": "Fixed",
+            "value": 1
+          },
+          "filter": {
+            "type": "Typed",
+            "type_filters": [
+              "Permanent"
+            ],
+            "controller": "You",
+            "properties": []
+          }
+        }
+      }
+    },
+    {
+      "op": "replace",
+      "path": "/abilities/0/sub_ability",
+      "value": null
+    },
+    {
+      "op": "add",
+      "path": "/abilities/0/is_mana_ability",
+      "value": true
+    }
+  ],
+  "tests": [
+    {
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "name": "you control a red creature: the Crater makes red mana, so Lightning Bolt can be cast with it alone",
+      "setup": [
+        {
+          "card": "Meteor Crater",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Raging Goblin",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Lightning Bolt",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "steps": [
+        {
+          "offered": {
+            "label": "Lightning Bolt castable",
+            "cast": {
+              "card": "Lightning Bolt"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "offered": {
+            "Lightning Bolt castable": true
+          }
+        },
+        "bug": {
+          "offered": {
+            "Lightning Bolt castable": false
+          }
+        }
+      }
+    },
+    {
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "name": "a red and green permanent: choose either color (red for Lightning Bolt, green for Giant Growth), but not a color it doesn't have (Opt)",
+      "setup": [
+        {
+          "card": "Meteor Crater",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Burning-Tree Emissary",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Lightning Bolt",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Giant Growth",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Opt",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "steps": [
+        {
+          "offered": {
+            "label": "Lightning Bolt castable",
+            "cast": {
+              "card": "Lightning Bolt"
+            }
+          }
+        },
+        {
+          "offered": {
+            "label": "Giant Growth castable",
+            "cast": {
+              "card": "Giant Growth"
+            }
+          }
+        },
+        {
+          "offered": {
+            "label": "Opt castable",
+            "cast": {
+              "card": "Opt"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "offered": {
+            "Lightning Bolt castable": true,
+            "Giant Growth castable": true,
+            "Opt castable": false
+          }
+        },
+        "bug": {
+          "offered": {
+            "Lightning Bolt castable": false,
+            "Giant Growth castable": false,
+            "Opt castable": false
+          }
+        }
+      }
+    },
+    {
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "name": "only colorless permanents (an artifact creature, a land): no color to choose, the ability makes no mana (CR 105.2c, 106.5)",
+      "setup": [
+        {
+          "card": "Meteor Crater",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Ornithopter",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Wastes",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Lightning Bolt",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "steps": [
+        {
+          "offered": {
+            "label": "Lightning Bolt castable",
+            "cast": {
+              "card": "Lightning Bolt"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "offered": {
+            "Lightning Bolt castable": false
+          }
+        }
+      }
+    },
+    {
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "name": "a red creature an opponent controls doesn't count (\"a permanent you control\")",
+      "setup": [
+        {
+          "card": "Meteor Crater",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Raging Goblin",
+          "owner": 1,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Lightning Bolt",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "steps": [
+        {
+          "offered": {
+            "label": "Lightning Bolt castable",
+            "cast": {
+              "card": "Lightning Bolt"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "offered": {
+            "Lightning Bolt castable": false
+          }
+        }
+      }
+    }
+  ],
+  "history": [
+    {
+      "date": "2026-10-23",
+      "status": "active",
+      "note": "Written against Oracle text and CR 605.1a, 106.5 and 105.2c; tested on 0.116.0 (3f79456)."
+    }
+  ]
+}

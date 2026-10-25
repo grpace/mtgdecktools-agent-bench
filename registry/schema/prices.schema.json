@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/grpace/mtgdecktools-agent-bench/registry/schema/prices.schema.json",
+  "title": "MTG Deck Tools Agent Benchmark: model list prices",
+  "description": "API list prices per model (USD per 1M tokens) for cost estimates. See registry/README.md, Prices.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["currency", "unit", "prices"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "_comment": { "type": "string" },
+    "currency": { "const": "USD" },
+    "unit": { "const": "per_million_tokens" },
+    "prices": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["model", "from", "input", "output", "cache_read", "cache_write", "source", "checked"],
+        "properties": {
+          "model": { "description": "A model id in registry/models.json.", "type": "string", "pattern": "^[a-z0-9][a-z0-9.-]{1,79}$" },
+          "from": { "description": "First day this price applies (inclusive).", "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+          "until": { "description": "First day it no longer applies (exclusive).", "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+          "input": { "type": "number", "minimum": 0 },
+          "output": { "type": "number", "minimum": 0 },
+          "cache_read": { "type": ["number", "null"], "minimum": 0 },
+          "cache_write": { "type": ["number", "null"], "minimum": 0 },
+          "cache_write_1h": { "description": "A 1-hour cache write, where the provider prices it apart from the default write (Claude Code writes 1-hour entries). Absent: every write pays cache_write.", "type": ["number", "null"], "minimum": 0 },
+          "long_context": {
+            "description": "Higher prices for a request whose prompt (input + cache reads + cache writes) is over `above` tokens; the whole request pays them. Leave out when the provider lists one price at every size.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["above", "input", "output", "cache_read", "cache_write"],
+            "properties": {
+              "above": { "type": "integer", "minimum": 1 },
+              "input": { "type": "number", "minimum": 0 },
+              "output": { "type": "number", "minimum": 0 },
+              "cache_read": { "type": ["number", "null"], "minimum": 0 },
+              "cache_write": { "type": ["number", "null"], "minimum": 0 },
+              "cache_write_1h": { "type": ["number", "null"], "minimum": 0 }
+            }
+          },
+          "source": { "description": "The provider's official pricing page.", "type": "string", "pattern": "^https://" },
+          "checked": { "description": "The day the price was read on that page.", "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+          "note": { "type": "string", "maxLength": 300 }
+        }
+      }
+    }
+  }
+}

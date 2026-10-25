@@ -1,0 +1,692 @@
+{
+  "card": "Ms. Marvel, Kamala Khan",
+  "title": "the Embiggen Fist trigger is demoted to an unimplemented ability because the granted text names Ms. Marvel",
+  "status": "active",
+  "kind": "parser",
+  "upstream_issue": null,
+  "marks_supported": true,
+  "applies_to": {
+    "server_version": "0.116.0",
+    "build_commit": "3f79456",
+    "card_data_sha256": "c4cfb737d0c0b1b135d3a353d71a95606f6ee147727bc11c3d16b82ece33da41",
+    "entry_sha256": "0656c971316f3f9fba6f4a3e217a7b43fea23c4d43bc33110e5cec718ca6f821"
+  },
+  "rules": {
+    "oracle": "Reach, vigilance\nYou have no maximum hand size.\nEmbiggen Fist — Whenever you cast a spell that targets a creature you control, draw a card. Until end of turn, Ms. Marvel gains \"Ms. Marvel's base power is equal to the number of cards in your hand.\"",
+    "cr": [
+      "201.5",
+      "603.2",
+      "611.3a",
+      "613.4b",
+      "613.4c",
+      "514.2",
+      "402.2"
+    ],
+    "actual": "Casting a spell that targets a creature you control does nothing: no card is drawn and Ms. Marvel keeps her printed 1/4. The whole line is a single `Unimplemented granter_reference_unreached` ability; reach, vigilance and \"no maximum hand size\" work.",
+    "expected": "Whenever you cast a spell that targets a creature you control, the trigger resolves before the spell (CR 603.3, 405.5): you draw a card, and until end of turn Ms. Marvel has an ability that sets her base power to the number of cards in your hand. It is a continuous effect from a static ability, so her power keeps tracking your hand size for the rest of the turn (CR 611.3a), in layer 7b (CR 613.4b), with pump effects and counters applied on top (CR 613.4c). At cleanup the granted ability ends (CR 514.2) and she is a 1/4 again.",
+    "diagnosis": "The parser builds the trigger (SpellCast with a `Targets` creature-you-control filter, Draw, then a GenericEffect grant), but the granted static names its granter (\"Ms. Marvel's base power\"), so the parser masks the name as a granter reference. `granter_reference_unreached` (parser/oracle.rs:10033, applied by `demote_definitions` at parser/oracle.rs:9957, the guard added in #9423) then counts more granter references in the tree than the granter-symbol walk (`granter_symbols::node_fields`, types/ability_visit.rs:1199) reaches, and replaces the whole trigger with `Unimplemented granter_reference_unreached`. Here the granter and the object that gains the ability are the same permanent (\"Ms. Marvel gains ...\"), so there is no other object for the reference to bind to.",
+    "suggested_fix": "When a \"<this object> gains \"<ability>\"\" grant targets the source itself, lower the source's name inside the granted text to the self reference (`SelfRef` / `Source`), as for any printed ability (CR 201.5: an object's name in its own ability text means that object), instead of a granter reference; the `granter_reference_unreached` guard then has nothing to refuse. The resulting shape is a `SpellCast` trigger (`valid_card: Typed { properties: [Targets(Typed Creature, controller You)] }`, `valid_target: Controller`, as Mockingbird, Ace Agent parses) executing `Draw 1` with a sequential sibling `GenericEffect { duration: UntilEndOfTurn, static_abilities: [Continuous { affected: SelfRef, modifications: [GrantStaticAbility(Continuous { affected: SelfRef, modifications: [SetPowerDynamic(HandSize { player: Controller })] })] }] }`. Regression test: cast a pump spell on Ms. Marvel with 7 other cards in hand and check the draw and the 8 + pump power, then that her power follows the hand size and resets at cleanup.",
+    "override_note": "The patch replaces the unimplemented ability with that trigger, assembled from shapes the engine already runs: the SpellCast head of Mockingbird, Ace Agent, the self-targeted GenericEffect grant until end of turn of the manlands (Lavaclaw Reaches) and Chimeric Mass (which also grants a static ability), and `SetPowerDynamic` (layer 7b base power, like Aettir and Priwen) of `HandSize { Controller }` (like Body of Knowledge). The power must come from a granted static ability, not a one-shot `SetPowerDynamic` modification: a resolved one-shot effect would lock in the hand size at resolution, while \"base power is equal to the number of cards in your hand\" is a static ability whose value is checked continuously (CR 611.3a, 604.1). The tests show the draw, her power following the hand down and up during the turn, the +1/+1 counter and pump layered on top (CR 613.4c), the end at cleanup (CR 514.2), no cleanup discard (no maximum hand size, CR 402.2), and no trigger for a spell that targets only an opponent's creature. Reach and vigilance are untouched."
+  },
+  "patch": [
+    {
+      "op": "test",
+      "path": "/abilities/0/effect/name",
+      "value": "granter_reference_unreached"
+    },
+    {
+      "op": "test",
+      "path": "/triggers",
+      "value": []
+    },
+    {
+      "op": "test",
+      "path": "/abilities/0/description",
+      "value": "Whenever you cast a spell that targets a creature you control, draw a card. Until end of turn, ~ gains \"~'s base power is equal to the number of cards in your hand.\""
+    },
+    {
+      "op": "remove",
+      "path": "/abilities/0"
+    },
+    {
+      "op": "add",
+      "path": "/triggers/-",
+      "value": {
+        "mode": "SpellCast",
+        "execute": {
+          "kind": "Spell",
+          "effect": {
+            "type": "Draw",
+            "count": {
+              "type": "Fixed",
+              "value": 1
+            },
+            "target": {
+              "type": "Controller"
+            }
+          },
+          "cost": null,
+          "sub_ability": {
+            "kind": "Spell",
+            "effect": {
+              "type": "GenericEffect",
+              "static_abilities": [
+                {
+                  "mode": "Continuous",
+                  "affected": {
+                    "type": "SelfRef"
+                  },
+                  "modifications": [
+                    {
+                      "type": "GrantStaticAbility",
+                      "definition": {
+                        "mode": "Continuous",
+                        "affected": {
+                          "type": "SelfRef"
+                        },
+                        "modifications": [
+                          {
+                            "type": "SetPowerDynamic",
+                            "value": {
+                              "type": "Ref",
+                              "qty": {
+                                "type": "HandSize",
+                                "player": {
+                                  "type": "Controller"
+                                }
+                              }
+                            }
+                          }
+                        ],
+                        "condition": null,
+                        "affected_zone": null,
+                        "effect_zone": null,
+                        "active_zones": [],
+                        "characteristic_defining": false,
+                        "description": "~'s base power is equal to the number of cards in your hand."
+                      }
+                    }
+                  ],
+                  "condition": null,
+                  "affected_zone": null,
+                  "effect_zone": null,
+                  "active_zones": [],
+                  "characteristic_defining": false,
+                  "description": "gain \"~'s base power is equal to the number of cards in your hand.\""
+                }
+              ],
+              "duration": "UntilEndOfTurn",
+              "target": null
+            },
+            "cost": null,
+            "sub_ability": null,
+            "duration": "UntilEndOfTurn",
+            "description": null,
+            "target_prompt": null,
+            "condition": null,
+            "optional_targeting": false,
+            "optional": false,
+            "forward_result": false,
+            "sub_link": "SequentialSibling"
+          },
+          "duration": null,
+          "description": null,
+          "target_prompt": null,
+          "condition": null,
+          "optional_targeting": false,
+          "optional": false,
+          "forward_result": false
+        },
+        "valid_card": {
+          "type": "Typed",
+          "type_filters": [],
+          "controller": null,
+          "properties": [
+            {
+              "type": "Targets",
+              "filter": {
+                "type": "Typed",
+                "type_filters": [
+                  "Creature"
+                ],
+                "controller": "You",
+                "properties": []
+              }
+            }
+          ]
+        },
+        "origin": null,
+        "destination": null,
+        "trigger_zones": [
+          "Battlefield"
+        ],
+        "phase": null,
+        "optional": false,
+        "damage_kind": "Any",
+        "secondary": false,
+        "valid_target": {
+          "type": "Controller"
+        },
+        "valid_source": null,
+        "description": "Whenever you cast a spell that targets a creature you control, draw a card. Until end of turn, ~ gains \"~'s base power is equal to the number of cards in your hand.\"",
+        "constraint": null,
+        "condition": null,
+        "batched": false
+      }
+    }
+  ],
+  "tests": [
+    {
+      "name": "a spell targets Ms. Marvel: draw a card, her base power becomes the hand size (8), Giant Growth adds +3/+3 on top (CR 613.4b, 613.4c)",
+      "setup": [
+        {
+          "card": "Ms. Marvel, Kamala Khan",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Giant Growth",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "cast": {
+            "card": "Giant Growth",
+            "targets": [
+              {
+                "card": "Ms. Marvel, Kamala Khan",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "hand": [
+            8,
+            null
+          ],
+          "objects": [
+            {
+              "card": "Ms. Marvel, Kamala Khan",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 11,
+              "toughness": 7,
+              "keywords": [
+                "Reach",
+                "Vigilance"
+              ]
+            }
+          ]
+        },
+        "bug": {
+          "hand": [
+            7,
+            null
+          ],
+          "objects": [
+            {
+              "card": "Ms. Marvel, Kamala Khan",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 4,
+              "toughness": 7
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "a spell targets another creature you control; the hand then shrinks (Shock, two cards leave): her power follows it down to 6",
+      "setup": [
+        {
+          "card": "Ms. Marvel, Kamala Khan",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Giant Growth",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Shock",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "cast": {
+            "card": "Giant Growth",
+            "targets": [
+              {
+                "card": "Grizzly Bears",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "cast": {
+            "card": "Shock",
+            "targets": [
+              {
+                "player": 1
+              }
+            ]
+          }
+        },
+        {
+          "debug": "MoveToZone",
+          "object": {
+            "card": "Mountain",
+            "owner": 0,
+            "zone": "Hand"
+          },
+          "data": {
+            "to_zone": "Graveyard",
+            "simulate": false
+          }
+        },
+        {
+          "debug": "MoveToZone",
+          "object": {
+            "card": "Mountain",
+            "owner": 0,
+            "zone": "Hand"
+          },
+          "data": {
+            "to_zone": "Graveyard",
+            "simulate": false
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            18
+          ],
+          "hand": [
+            6,
+            null
+          ],
+          "objects": [
+            {
+              "card": "Ms. Marvel, Kamala Khan",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 6,
+              "toughness": 4
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 5,
+              "toughness": 5
+            }
+          ]
+        },
+        "bug": {
+          "life": [
+            20,
+            18
+          ],
+          "hand": [
+            5,
+            null
+          ],
+          "objects": [
+            {
+              "card": "Ms. Marvel, Kamala Khan",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 1,
+              "toughness": 4
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "the hand grows later in the turn (two more draws): her power follows it up to 10",
+      "setup": [
+        {
+          "card": "Ms. Marvel, Kamala Khan",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Giant Growth",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "cast": {
+            "card": "Giant Growth",
+            "targets": [
+              {
+                "card": "Grizzly Bears",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "debug": "DrawCards",
+          "data": {
+            "player_id": 0,
+            "count": 2
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "hand": [
+            10,
+            null
+          ],
+          "objects": [
+            {
+              "card": "Ms. Marvel, Kamala Khan",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 10,
+              "toughness": 4
+            }
+          ]
+        },
+        "bug": {
+          "hand": [
+            9,
+            null
+          ],
+          "objects": [
+            {
+              "card": "Ms. Marvel, Kamala Khan",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 1,
+              "toughness": 4
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "until end of turn: on the next turn she is a 1/4 again, and no cleanup discard with 11 cards in hand (no maximum hand size, CR 402.2, 514.1)",
+      "setup": [
+        {
+          "card": "Ms. Marvel, Kamala Khan",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Giant Growth",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Mountain",
+          "owner": 0,
+          "zone": "Hand",
+          "count": 3
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "cast": {
+            "card": "Giant Growth",
+            "targets": [
+              {
+                "card": "Ms. Marvel, Kamala Khan",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        },
+        {
+          "advance": {
+            "phase": "Upkeep",
+            "active": 1
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "hand": [
+            11,
+            null
+          ],
+          "objects": [
+            {
+              "card": "Ms. Marvel, Kamala Khan",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 1,
+              "toughness": 4,
+              "keywords": [
+                "Reach",
+                "Vigilance"
+              ]
+            }
+          ]
+        },
+        "bug": {
+          "hand": [
+            10,
+            null
+          ],
+          "objects": [
+            {
+              "card": "Ms. Marvel, Kamala Khan",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 1,
+              "toughness": 4
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "a +1/+1 counter still applies on top of the set base power (CR 613.4b, 613.4c)",
+      "setup": [
+        {
+          "card": "Ms. Marvel, Kamala Khan",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false,
+          "counters": {
+            "P1P1": 1
+          }
+        },
+        {
+          "card": "Giant Growth",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "cast": {
+            "card": "Giant Growth",
+            "targets": [
+              {
+                "card": "Ms. Marvel, Kamala Khan",
+                "owner": 0,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "hand": [
+            8,
+            null
+          ],
+          "objects": [
+            {
+              "card": "Ms. Marvel, Kamala Khan",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 12,
+              "toughness": 8
+            }
+          ]
+        },
+        "bug": {
+          "hand": [
+            7,
+            null
+          ],
+          "objects": [
+            {
+              "card": "Ms. Marvel, Kamala Khan",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 5,
+              "toughness": 8
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "a spell that targets only an opponent's creature: no trigger, no draw",
+      "setup": [
+        {
+          "card": "Ms. Marvel, Kamala Khan",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Shock",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 1,
+          "zone": "Battlefield"
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "cast": {
+            "card": "Shock",
+            "targets": [
+              {
+                "card": "Grizzly Bears",
+                "owner": 1,
+                "zone": "Battlefield"
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "hand": [
+            7,
+            null
+          ],
+          "zones": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 1,
+              "zone": "Graveyard"
+            }
+          ],
+          "objects": [
+            {
+              "card": "Ms. Marvel, Kamala Khan",
+              "owner": 0,
+              "zone": "Battlefield",
+              "power": 1,
+              "toughness": 4
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "history": [
+    {
+      "date": "2026-10-23",
+      "status": "active",
+      "note": "Written against Oracle text and CR 201.5, 603.2, 611.3a, 613.4b/c, 514.2, 402.2; tested on 0.116.0 (3f79456)."
+    }
+  ]
+}

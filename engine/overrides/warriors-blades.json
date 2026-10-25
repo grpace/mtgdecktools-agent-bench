@@ -1,0 +1,1001 @@
+{
+  "card": "Warrior's Blades",
+  "title": "the equip discount for +1/+1 counters on the target is dropped, so equip always costs {3}",
+  "status": "active",
+  "kind": "parser",
+  "upstream_issue": null,
+  "marks_supported": true,
+  "applies_to": {
+    "server_version": "0.116.0",
+    "build_commit": "3f79456",
+    "card_data_sha256": "c4cfb737d0c0b1b135d3a353d71a95606f6ee147727bc11c3d16b82ece33da41",
+    "entry_sha256": "2e3434a2a4a18bc23c1c6128cde2e50a00d7966481c1e2795e506e97fd7bb318"
+  },
+  "rules": {
+    "oracle": "When this Equipment enters, it deals 3 damage to any target and you gain 3 life.\nEquipped creature gets +2/+1.\nEquip {3}. This ability costs {1} less to activate for each +1/+1 counter on the creature it targets.",
+    "cr": [
+      "702.6a",
+      "602.2b",
+      "601.2c",
+      "601.2f",
+      "122.1a"
+    ],
+    "actual": "Equip always costs {3}: the second sentence of the equip line is dropped, so +1/+1 counters on the target give no discount.",
+    "expected": "The equip cost is determined after its target is chosen (CR 602.2b, 601.2c, 601.2f): {3} minus {1} for each +1/+1 counter on the creature it targets, never below {0} (generic mana can't be reduced below zero, CR 601.2f). Only +1/+1 counters on that creature count; counters on other creatures, on the creature it is currently attached to, or other kinds of counters don't.",
+    "diagnosis": "The equip line is parsed into the Attach ability with cost {3}, but the trailing \"This ability costs {1} less to activate for each +1/+1 counter on the creature it targets.\" is swallowed (the dynamic quantity \"+1/+1 counter on the creature it targets\" isn't recognized), so no cost_reduction is attached. The same sentence with \"each color of the creature it targets\" (Dragonfire Blade) already produces cost_reduction with a Target-scoped count.",
+    "suggested_fix": "In the activated-ability self cost-reduction parser (the path that builds AbilityDefinition.cost_reduction for Dragonfire Blade's \"costs {1} less to activate for each color of the creature it targets\"), accept \"for each <counter> counter on the creature it targets\" and emit cost_reduction {amount_per: 1, count: Ref(CountersOn{scope: Target, counter_type: <counter>})}. The runtime already classifies CountersOn{scope: Target} as target-dependent (quantity_ref_reads_target_object) and applies it at committed-target cost settlement.",
+    "override_note": "The patch adds cost_reduction {amount_per: 1, count: CountersOn{scope: Target, counter_type: P1P1}} to the equip ability, Dragonfire Blade's shape with the count Oblivion's Hunger uses for +1/+1 counters on a target. The engine treats a Target-scoped count as target-dependent and locks the cost when the target is committed, which is the order CR 602.2b and 601.2c/601.2f require (targets first, then the total cost), and the reduction only reduces generic mana, so it can't go below {0}. The cost is paid when it is determined, so counters added or removed afterward don't change it. Tested on 0.116.0: {3}/{2}/{1}/{0}/{0} for 0/1/2/3/5 counters, the count follows the chosen target, -1/-1 counters don't count, and re-equipping reads the new target. Also checked by hand (not expressible as a test, since upstream can't activate it): with no mana at all, equip onto a creature with three +1/+1 counters is offered and resolves."
+  },
+  "patch": [
+    {
+      "op": "test",
+      "path": "/abilities/0/ability_tag",
+      "value": {
+        "type": "Equip"
+      }
+    },
+    {
+      "op": "test",
+      "path": "/abilities/0/effect/type",
+      "value": "Attach"
+    },
+    {
+      "op": "test",
+      "path": "/abilities/0/cost",
+      "value": {
+        "type": "Mana",
+        "cost": {
+          "type": "Cost",
+          "shards": [],
+          "generic": 3
+        }
+      }
+    },
+    {
+      "op": "test",
+      "path": "/abilities/0/description",
+      "value": "Equip {3}. This ability costs {1} less to activate for each +1/+1 counter on the creature it targets."
+    },
+    {
+      "op": "add",
+      "path": "/abilities/0/cost_reduction",
+      "value": {
+        "amount_per": 1,
+        "count": {
+          "type": "Ref",
+          "qty": {
+            "type": "CountersOn",
+            "scope": {
+              "type": "Target"
+            },
+            "counter_type": "P1P1"
+          }
+        }
+      }
+    }
+  ],
+  "tests": [
+    {
+      "name": "no +1/+1 counters on the target: equip costs {3}",
+      "setup": [
+        {
+          "card": "Warrior's Blades",
+          "owner": 0,
+          "zone": "Battlefield",
+          "run_etb": false
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Plains",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Island",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Swamp",
+          "owner": 0,
+          "zone": "Battlefield"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "activate": {
+            "card": "Warrior's Blades",
+            "targets": [
+              {
+                "card": "Grizzly Bears",
+                "owner": 0
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Plains",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1,
+              "tapped": true
+            },
+            {
+              "card": "Island",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1,
+              "tapped": true
+            },
+            {
+              "card": "Swamp",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1,
+              "tapped": true
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "power": 4,
+              "toughness": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "one +1/+1 counter on the target: equip costs {2}",
+      "setup": [
+        {
+          "card": "Warrior's Blades",
+          "owner": 0,
+          "zone": "Battlefield",
+          "run_etb": false
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Battlefield",
+          "counters": {
+            "P1P1": 1
+          }
+        },
+        {
+          "card": "Plains",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Island",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Swamp",
+          "owner": 0,
+          "zone": "Battlefield"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "activate": {
+            "card": "Warrior's Blades",
+            "targets": [
+              {
+                "card": "Grizzly Bears",
+                "owner": 0
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Plains",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1,
+              "tapped": true
+            },
+            {
+              "card": "Island",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1,
+              "tapped": true
+            },
+            {
+              "card": "Swamp",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1,
+              "tapped": false
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "power": 5,
+              "toughness": 4
+            }
+          ]
+        },
+        "bug": {
+          "objects": [
+            {
+              "card": "Plains",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1,
+              "tapped": true
+            },
+            {
+              "card": "Island",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1,
+              "tapped": true
+            },
+            {
+              "card": "Swamp",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1,
+              "tapped": true
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "power": 5,
+              "toughness": 4
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "two +1/+1 counters on the target: equip costs {1}",
+      "setup": [
+        {
+          "card": "Warrior's Blades",
+          "owner": 0,
+          "zone": "Battlefield",
+          "run_etb": false
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Battlefield",
+          "counters": {
+            "P1P1": 2
+          }
+        },
+        {
+          "card": "Plains",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Island",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Swamp",
+          "owner": 0,
+          "zone": "Battlefield"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "activate": {
+            "card": "Warrior's Blades",
+            "targets": [
+              {
+                "card": "Grizzly Bears",
+                "owner": 0
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Plains",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1,
+              "tapped": true
+            },
+            {
+              "card": "Island",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1,
+              "tapped": false
+            },
+            {
+              "card": "Swamp",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1,
+              "tapped": false
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "power": 6,
+              "toughness": 5
+            }
+          ]
+        },
+        "bug": {
+          "objects": [
+            {
+              "card": "Plains",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1,
+              "tapped": true
+            },
+            {
+              "card": "Island",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1,
+              "tapped": true
+            },
+            {
+              "card": "Swamp",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1,
+              "tapped": true
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "power": 6,
+              "toughness": 5
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "three +1/+1 counters on the target: equip costs {0}",
+      "setup": [
+        {
+          "card": "Warrior's Blades",
+          "owner": 0,
+          "zone": "Battlefield",
+          "run_etb": false
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Battlefield",
+          "counters": {
+            "P1P1": 3
+          }
+        },
+        {
+          "card": "Plains",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Island",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Swamp",
+          "owner": 0,
+          "zone": "Battlefield"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "activate": {
+            "card": "Warrior's Blades",
+            "targets": [
+              {
+                "card": "Grizzly Bears",
+                "owner": 0
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Plains",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1,
+              "tapped": false
+            },
+            {
+              "card": "Island",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1,
+              "tapped": false
+            },
+            {
+              "card": "Swamp",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1,
+              "tapped": false
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "power": 7,
+              "toughness": 6
+            }
+          ]
+        },
+        "bug": {
+          "objects": [
+            {
+              "card": "Plains",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1,
+              "tapped": true
+            },
+            {
+              "card": "Island",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1,
+              "tapped": true
+            },
+            {
+              "card": "Swamp",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1,
+              "tapped": true
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "power": 7,
+              "toughness": 6
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "five +1/+1 counters: the reduction stops at {0} (CR 601.2f)",
+      "setup": [
+        {
+          "card": "Warrior's Blades",
+          "owner": 0,
+          "zone": "Battlefield",
+          "run_etb": false
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Battlefield",
+          "counters": {
+            "P1P1": 5
+          }
+        },
+        {
+          "card": "Plains",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Island",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Swamp",
+          "owner": 0,
+          "zone": "Battlefield"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "activate": {
+            "card": "Warrior's Blades",
+            "targets": [
+              {
+                "card": "Grizzly Bears",
+                "owner": 0
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Plains",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1,
+              "tapped": false
+            },
+            {
+              "card": "Island",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1,
+              "tapped": false
+            },
+            {
+              "card": "Swamp",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1,
+              "tapped": false
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "power": 9,
+              "toughness": 8
+            }
+          ]
+        },
+        "bug": {
+          "objects": [
+            {
+              "card": "Plains",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1,
+              "tapped": true
+            },
+            {
+              "card": "Island",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1,
+              "tapped": true
+            },
+            {
+              "card": "Swamp",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1,
+              "tapped": true
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "power": 9,
+              "toughness": 8
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "the discount counts the targeted creature's counters, not another creature's (CR 601.2c, 601.2f)",
+      "setup": [
+        {
+          "card": "Warrior's Blades",
+          "owner": 0,
+          "zone": "Battlefield",
+          "run_etb": false
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Battlefield",
+          "counters": {
+            "P1P1": 3
+          }
+        },
+        {
+          "card": "Centaur Courser",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Plains",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Island",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Swamp",
+          "owner": 0,
+          "zone": "Battlefield"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "activate": {
+            "card": "Warrior's Blades",
+            "targets": [
+              {
+                "card": "Centaur Courser",
+                "owner": 0
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Plains",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1,
+              "tapped": true
+            },
+            {
+              "card": "Island",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1,
+              "tapped": true
+            },
+            {
+              "card": "Swamp",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1,
+              "tapped": true
+            },
+            {
+              "card": "Centaur Courser",
+              "owner": 0,
+              "power": 5,
+              "toughness": 4
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "only +1/+1 counters count: two -1/-1 counters give no discount",
+      "setup": [
+        {
+          "card": "Warrior's Blades",
+          "owner": 0,
+          "zone": "Battlefield",
+          "run_etb": false
+        },
+        {
+          "card": "Centaur Courser",
+          "owner": 0,
+          "zone": "Battlefield",
+          "counters": {
+            "M1M1": 2
+          }
+        },
+        {
+          "card": "Plains",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Island",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Swamp",
+          "owner": 0,
+          "zone": "Battlefield"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "activate": {
+            "card": "Warrior's Blades",
+            "targets": [
+              {
+                "card": "Centaur Courser",
+                "owner": 0
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Plains",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1,
+              "tapped": true
+            },
+            {
+              "card": "Island",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1,
+              "tapped": true
+            },
+            {
+              "card": "Swamp",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1,
+              "tapped": true
+            },
+            {
+              "card": "Centaur Courser",
+              "owner": 0,
+              "power": 3,
+              "toughness": 2
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "moving the Equipment: the cost reads the new target, not the creature it is attached to",
+      "setup": [
+        {
+          "card": "Warrior's Blades",
+          "owner": 0,
+          "zone": "Battlefield",
+          "run_etb": false
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Centaur Courser",
+          "owner": 0,
+          "zone": "Battlefield",
+          "counters": {
+            "P1P1": 2
+          }
+        },
+        {
+          "card": "Plains",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Plains",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Plains",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Island",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Swamp",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Swamp",
+          "owner": 0,
+          "zone": "Battlefield"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "activate": {
+            "card": "Warrior's Blades",
+            "targets": [
+              {
+                "card": "Grizzly Bears",
+                "owner": 0
+              }
+            ]
+          }
+        },
+        {
+          "activate": {
+            "card": "Warrior's Blades",
+            "targets": [
+              {
+                "card": "Centaur Courser",
+                "owner": 0
+              }
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "objects": [
+            {
+              "card": "Plains",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 3,
+              "tapped": true
+            },
+            {
+              "card": "Island",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1,
+              "tapped": true
+            },
+            {
+              "card": "Swamp",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 2,
+              "tapped": false
+            },
+            {
+              "card": "Centaur Courser",
+              "owner": 0,
+              "power": 7,
+              "toughness": 6
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "power": 2,
+              "toughness": 2
+            }
+          ]
+        },
+        "bug": {
+          "objects": [
+            {
+              "card": "Plains",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 3,
+              "tapped": true
+            },
+            {
+              "card": "Island",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1,
+              "tapped": true
+            },
+            {
+              "card": "Swamp",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 2,
+              "tapped": true
+            },
+            {
+              "card": "Centaur Courser",
+              "owner": 0,
+              "power": 7,
+              "toughness": 6
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "enters: 3 damage to any target and you gain 3 life (unchanged)",
+      "setup": [
+        {
+          "card": "Warrior's Blades",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "cast": {
+            "card": "Warrior's Blades"
+          }
+        },
+        {
+          "resolve": true
+        }
+      ],
+      "answers": {
+        "targets": [
+          {
+            "player": 1
+          }
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "life": [
+            23,
+            17
+          ],
+          "zones": [
+            {
+              "card": "Warrior's Blades",
+              "owner": 0,
+              "zone": "Battlefield"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "history": [
+    {
+      "date": "2026-10-23",
+      "status": "active",
+      "note": "Written against Oracle text and CR 602.2b/601.2c/601.2f; tested on 0.116.0 (3f79456): upstream equip always costs {3}; with the override the discount reads the +1/+1 counters on the chosen target, down to {0}."
+    }
+  ]
+}

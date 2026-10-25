@@ -1,0 +1,50 @@
+{
+ "set": "TDM",
+ "format": "PremierDraft",
+ "generator": "analysis/draft_eval/build_eval.py",
+ "generated_at": "2026-10-22T05:07:55Z",
+ "source": "17Lands public game data (game_data_public.TDM.PremierDraft.csv.gz)",
+ "license_note": "Derived from 17Lands public datasets (17lands.com, CC BY 4.0 per the 17Lands public datasets page). Per-card and per-archetype aggregates computed by this project; not a 17Lands product and not endorsed by 17Lands. Credit 17Lands when you reuse it.",
+ "requires": {
+  "archetypes_generated_at": "2026-10-22T05:06:36Z"
+ },
+ "definitions": {
+  "winners": "decks (draft_id, build_index; 38-45 cards) with >= 6 recorded game wins",
+  "quantiles": "p10, p25, p50, p75, p90",
+  "two_minus": "non-land cards with mana value <= 2",
+  "five_plus": "non-land cards with mana value >= 5",
+  "src_primary": "lands producing the pair color more non-land cards need (hard pips)",
+  "src_secondary": "lands producing the other pair color",
+  "src_splash": "lands producing the scarcest splash color (decks with a splash only)",
+  "quality": "mean archetype value of the non-land cards (see analysis/draft_eval/build_eval.py)"
+ },
+ "scoring": {
+  "baseline_win_rate": 0.5502,
+  "splash_delta": -0.0117,
+  "archetype_weight": 1.0,
+  "replacement_quantile": 0.1,
+  "quality_ref": 0.5548,
+  "slope_logit_per_pp": 0.115,
+  "pair_base_logit_per_pp": 0.0876,
+  "validation": {
+   "auc_model": 0.5499,
+   "auc_quality": 0.5176,
+   "auc_overall_gih": 0.5369,
+   "deck_pearson": 0.1724,
+   "deck_spearman": 0.1855,
+   "calibration_max_abs_err": 0.0407,
+   "slope_adj_se": 0.0244,
+   "games_eval": 11652
+  },
+  "verdict": "validated"
+ },
+ "pairs": {
+  "WU": {"decks":55,"lands":[16.0,16.0,17.0,17.0,17.0],"nonland":[23.0,23.0,23.0,24.0,24.0],"creatures":[11.0,12.5,14.0,15.5,17.0],"two_minus":[7.0,8.0,10.0,11.5,12.6],"five_plus":[4.0,5.0,6.0,7.0,8.0],"avg_mv":[2.87,2.938,3.167,3.417,3.609],"src_primary":[8.0,8.0,9.0,9.0,9.0],"src_secondary":[6.4,7.0,8.0,8.0,9.0],"src_splash":[1.1,2.0,3.0,3.0,4.0],"splash_share":0.582,"quality":[0.562,0.564,0.567,0.571,0.575],"replacement":0.5224,"all_decks":{"decks":474,"lands":[16.0,17.0,17.0,17.0,17.0],"quality":[0.552,0.558,0.563,0.568,0.573]}},
+  "WB": {"decks":326,"lands":[16.0,16.0,17.0,17.0,17.0],"nonland":[23.0,23.0,23.0,24.0,24.0],"creatures":[13.0,15.0,16.0,17.0,18.0],"two_minus":[7.0,8.0,10.0,11.0,13.0],"five_plus":[2.0,3.0,4.0,5.0,6.0],"avg_mv":[2.708,2.87,3.043,3.261,3.435],"src_primary":[8.0,8.0,8.0,9.0,10.0],"src_secondary":[7.0,7.0,8.0,8.0,9.0],"src_splash":[2.0,2.0,3.0,3.0,4.0],"splash_share":0.626,"quality":[0.545,0.55,0.553,0.557,0.561],"replacement":0.5138,"all_decks":{"decks":2763,"lands":[16.0,16.0,17.0,17.0,17.0],"quality":[0.542,0.546,0.55,0.555,0.559]}},
+  "WR": {"decks":1597,"lands":[16.0,16.0,16.0,17.0,17.0],"nonland":[23.0,23.0,24.0,24.0,24.0],"creatures":[13.0,15.0,16.0,17.0,18.0],"two_minus":[9.0,11.0,13.0,14.0,16.0],"five_plus":[1.0,2.0,4.0,5.0,6.0],"avg_mv":[2.478,2.652,2.87,3.083,3.261],"src_primary":[8.0,8.0,8.0,9.0,9.0],"src_secondary":[7.0,7.0,8.0,8.0,9.0],"src_splash":[1.0,2.0,3.0,3.0,4.0],"splash_share":0.45,"quality":[0.541,0.545,0.549,0.553,0.556],"replacement":0.5118,"all_decks":{"decks":11099,"lands":[16.0,16.0,16.0,17.0,17.0],"quality":[0.539,0.542,0.546,0.551,0.554]}},
+  "WG": {"decks":51,"lands":[16.0,16.0,17.0,17.0,17.0],"nonland":[23.0,23.0,23.0,24.0,24.0],"creatures":[14.0,15.0,16.0,17.0,18.0],"two_minus":[8.0,9.0,11.0,12.0,14.0],"five_plus":[2.0,3.0,4.0,6.0,8.0],"avg_mv":[2.583,2.783,3.043,3.304,3.565],"src_primary":[8.0,8.0,9.0,9.0,9.0],"src_secondary":[6.0,7.0,8.0,8.0,9.0],"src_splash":[1.0,2.0,3.0,3.0,4.0],"splash_share":0.647,"quality":[0.554,0.556,0.561,0.566,0.57],"replacement":0.5207,"all_decks":{"decks":432,"lands":[16.0,16.0,17.0,17.0,17.0],"quality":[0.551,0.555,0.559,0.563,0.566]}},
+  "UR": {"decks":276,"lands":[16.0,17.0,17.0,17.0,17.0],"nonland":[23.0,23.0,23.0,23.0,24.0],"creatures":[10.0,12.0,13.0,14.0,16.0],"two_minus":[7.0,8.0,10.0,11.0,12.0],"five_plus":[3.0,5.0,6.0,7.0,9.0],"avg_mv":[2.851,3.042,3.261,3.435,3.652],"src_primary":[7.0,8.0,8.0,9.0,9.0],"src_secondary":[6.0,7.0,8.0,8.0,9.0],"src_splash":[1.0,2.0,3.0,4.0,4.0],"splash_share":0.783,"quality":[0.558,0.564,0.568,0.572,0.576],"replacement":0.5307,"all_decks":{"decks":2557,"lands":[16.0,17.0,17.0,17.0,17.0],"quality":[0.554,0.559,0.564,0.569,0.573]}},
+  "UG": {"decks":519,"lands":[16.0,17.0,17.0,17.0,17.0],"nonland":[23.0,23.0,23.0,23.0,24.0],"creatures":[11.0,13.0,14.0,15.0,17.0],"two_minus":[7.0,8.0,10.0,11.0,12.0],"five_plus":[3.0,4.0,6.0,7.0,8.0],"avg_mv":[2.826,3.0,3.217,3.435,3.609],"src_primary":[7.0,7.0,8.0,9.0,9.0],"src_secondary":[6.0,7.0,8.0,8.0,9.0],"src_splash":[1.0,2.0,3.0,3.0,4.0],"splash_share":0.85,"quality":[0.564,0.568,0.571,0.575,0.579],"replacement":0.5255,"all_decks":{"decks":4975,"lands":[16.0,17.0,17.0,17.0,17.0],"quality":[0.561,0.565,0.569,0.573,0.576]}},
+  "BG": {"decks":350,"lands":[16.0,16.0,17.0,17.0,17.0],"nonland":[23.0,23.0,23.0,24.0,24.0],"creatures":[14.0,14.25,16.0,17.0,18.0],"two_minus":[7.0,8.0,10.0,11.0,12.0],"five_plus":[1.0,2.0,3.0,5.0,6.0],"avg_mv":[2.625,2.792,3.0,3.174,3.391],"src_primary":[7.0,8.0,8.0,9.0,10.0],"src_secondary":[7.0,7.0,8.0,8.0,9.0],"src_splash":[2.0,2.0,3.0,4.0,4.0],"splash_share":0.606,"quality":[0.552,0.555,0.559,0.562,0.566],"replacement":0.5221,"all_decks":{"decks":3260,"lands":[16.0,17.0,17.0,17.0,17.0],"quality":[0.549,0.552,0.557,0.56,0.564]}}
+ }
+}

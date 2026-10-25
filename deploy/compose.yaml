@@ -1,0 +1,321 @@
+# Agent Bench stack: phase-rs rules engine + Director + Hub (results service) + its Postgres.
+# Deployed on Coolify (gr3g-server). The director image is built on the host by deploy/deploy.sh
+# (pull_policy: never); the hub runs from the same image with another command.
+# PHASE_IMAGE is pinned by digest from engine/phase.lock.json; Postgres by digest too (Dependabot proposes updates).
+#
+# Least privilege (OPS-1): the Director and Hub run as the image's `app` user (uid 999) with no capabilities;
+# deploy/deploy.sh hands their volumes to that user once. Coolify adds `env_file: .env` (every variable below,
+# secrets included) to every service, so phase-server, a third-party image, is started with only its own defaults.
+#
+# Containment (SEC-11): read-only root file systems (each service writes only its volumes and a small /tmp), memory and
+# process limits (override with *_MEM_LIMIT / *_PIDS_LIMIT), every capability dropped except what an entrypoint needs,
+# and two networks besides the default one: `engine` (the Director and phase-server) and `db` (the Hub and Postgres;
+# internal, no way out). phase-server and Postgres are not on the default network, so the Hub can't reach the engine and
+# the Director can't reach the database. phase-server keeps outbound access: it downloads card data on its first start.
+#
+# Coolify's project network (LAUNCH-CHECKLIST H-8): Coolify also attaches every container to the service's own network
+# (the service uuid; Traefik reaches the Director and Hub there), so every container shares one network after all, and
+# the service names resolve on it (from the Hub, `hub-db` resolves to its project-network address). So phase-server and
+# Postgres listen only on their private network: each looks up its own alias on that network at start
+# (`phase-server-engine` exists only on `engine`, `hub-db-internal` only on `db`) and binds that address
+# (phase-server --bind, Postgres listen_addresses); the Director and the Hub connect through those aliases. Postgres also
+# gets its own pg_hba.conf (-c hba_file, so it applies to the existing data volume too): the hub role on the hub
+# database from the `db` subnet with scram-sha-256, the local socket (healthcheck, nightly pg_dump, restores, all via
+# docker exec) as before, every other host rejected. Both refuse to start when the alias doesn't resolve (fail closed).
+# The subnets are not pinned: they are read from the network at start, so redeploys keep the existing networks and
+# parallel CI stacks can't collide (the host's Docker address pool is all of 10.0.0.0/8).
+#
+# Card data (docs/CARD-OVERRIDES.md "Running It in Production"): `card-data`, from the Director image, stages the pinned
+# upstream card data and booster data in the phase-data volume (kept when the volume already holds the pinned files,
+# else downloaded and checked against deps/manifest.json), applies the card overrides (engine/overrides/, JavaScript port
+# of scripts/card_overrides.py, byte-identical) and then idles; it is healthy once staged. phase-server waits for it and
+# starts with --no-data-download, so a card-data.json it can't load stops it instead of being silently replaced by
+# upstream's. The Director records the hash of that file in every event_start (provenance.card_data).
+#
+# Logs and disk (LAUNCH-CHECKLIST H-3, H-4): every container's log is capped at 5 × 20 MB. phase-server logs at `warn`
+# (PHASE_RUST_LOG; `info` writes a line per game action, about 300 MB a day under load) and never to files (its
+# PHASE_LOG_DIR, which keeps a log per game, stays unset). The Director gzips an event's log once the Hub has accepted it
+# (COMPRESS_HANDED_OFF). scripts/ops-check.sh --server watches disk, volume sizes and log sizes.
+#
+# Backups: the server's nightly job tars every docker volume. A tar of a live Postgres data directory is
+# only crash-consistent, so hub-db also gets a nightly logical dump into the hub-pgdump volume (Coolify
+# scheduled task on the hub-db container, see packages/hub/README.md "Backups"), which the volume backup
+# then picks up. Bundles (hub-data/bundles) are immutable files: the volume tar is enough.
+services:
+  phase-server:
+    image: ${PHASE_IMAGE:-ghcr.io/phase-rs/phase-server@sha256:81f2fd69cbabd3451de696b1cc466ea632e0f42b16deb7541917d9edc78755ec}
+    restart: unless-stopped
+    # `env -i`: none of Coolify's .env (our secrets, and PUBLIC_URL, which phase-server would read) reaches the engine;
+    # only the image's own defaults (CI checks this list against the pinned image). TYPESAFE_API_URL: the upstream of
+    # its /jev/systemone relay (api.typesafe.ai by default); nothing here uses the relay, so it points at a closed port.
+    entrypoint: ["env", "-i", "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", "PORT=9374", "PHASE_DATA_DIR=/var/lib/phase-server", "RUST_LOG=${PHASE_RUST_LOG:-warn}", "TYPESAFE_API_URL=http://127.0.0.1:9", "phase-server-entrypoint"]
+    # The card data is staged by `card-data` (overrides applied): never download a replacement. Listens only on its
+    # `engine` address (H-8; see the top), not on Coolify's project network; started by the entrypoint as `phase` (gosu).
+    command:
+      - sh
+      - -c
+      - |
+        set -eu
+        addr=""
+        for _ in 1 2 3 4 5 6 7 8 9 10; do
+          addr="$$(getent ahostsv4 phase-server-engine | awk 'NR == 1 { print $$1 }')"
+          [ -n "$$addr" ] && break
+          sleep 1
+        done
+        [ -n "$$addr" ] || { echo "phase-server-engine does not resolve (not on the engine network?): refusing to start" >&2; exit 1; }
+        exec phase-server --no-data-download --bind "$$addr"
+    depends_on:
+      card-data:
+        condition: service_healthy
+    # The image's own check (on the engine address it binds) every 5 s instead of 30 s, so the Director (which waits for
+    # it) starts soon after a restart.
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://phase-server-engine:9374/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    # Container logs are capped (H-4): 5 files of 20 MB each, rotated by the Docker engine.
+    logging:
+      driver: json-file
+      options:
+        max-size: 20m
+        max-file: "5"
+    # Its entrypoint starts as root only to chown the data dir, then drops to its user `phase` (uid 999) with gosu.
+    cap_drop: [ALL]
+    cap_add: [CHOWN, SETUID, SETGID]
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    tmpfs: ["/tmp:size=64m"]
+    mem_limit: ${PHASE_MEM_LIMIT:-6g}
+    pids_limit: ${PHASE_PIDS_LIMIT:-512}
+    networks:
+      engine:
+        aliases: [phase-server-engine]
+    volumes:
+      - phase-data:/var/lib/phase-server
+  card-data:
+    image: mtgdt-director:${DIRECTOR_TAG:-local}
+    pull_policy: never
+    restart: unless-stopped
+    user: "999:999"
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    tmpfs: ["/tmp:size=64m"]
+    # It holds the 100 MB card data in memory twice while it splices the overrides in.
+    mem_limit: ${CARD_DATA_MEM_LIMIT:-1g}
+    pids_limit: ${CARD_DATA_PIDS_LIMIT:-64}
+    # Outbound only (a fresh volume downloads the pinned data). `env -i`: none of Coolify's .env secrets reach it.
+    networks: [default]
+    entrypoint: ["env", "-i", "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", "HOME=/tmp", "NODE_ENV=production"]
+    command: ["sh", "-c", "rm -f /tmp/card-data-staged && node --import tsx packages/director/src/stage-card-data.ts --data /phase-data --marker /tmp/card-data-staged && exec sleep infinity"]
+    healthcheck:
+      test: ["CMD", "test", "-s", "/tmp/card-data-staged"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      # A fresh volume downloads about 145 MB first.
+      start_period: 600s
+    logging:
+      driver: json-file
+      options:
+        max-size: 20m
+        max-file: "5"
+    volumes:
+      - phase-data:/phase-data
+  director:
+    image: mtgdt-director:${DIRECTOR_TAG:-local}
+    pull_policy: never
+    restart: unless-stopped
+    user: "999:999"
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    # Writes only its volumes (runs, cache, the report export in /app/var) and /tmp (tsx's compile cache).
+    read_only: true
+    tmpfs: ["/tmp:size=256m"]
+    mem_limit: ${DIRECTOR_MEM_LIMIT:-3g}
+    pids_limit: ${DIRECTOR_PIDS_LIMIT:-256}
+    networks: [default, engine]
+    # SIGTERM: the Director stops admitting, checkpoints live events and exits (well under a second); they resume
+    # at the next start (packages/director/src/durable.ts). phase-server keeps their games for 120 s.
+    stop_grace_period: 30s
+    # Started once phase-server answers, so resumed games re-attach at once (game.ts also retries for about 105 s).
+    depends_on:
+      phase-server:
+        condition: service_healthy
+    # Container logs are capped (H-4): 5 files of 20 MB each, rotated by the Docker engine.
+    logging:
+      driver: json-file
+      options:
+        max-size: 20m
+        max-file: "5"
+    environment:
+      # The engine-only alias: `phase-server` may resolve to its address on Coolify's project network, where it doesn't listen.
+      PHASE_SERVER_URL: ws://phase-server-engine:9374/ws
+      PUBLIC_URL: ${PUBLIC_URL:-https://agent-bench.dev.greg.tech}
+      ADMIN_TOKEN: ${ADMIN_TOKEN}
+      # Community submissions (POST /api/submissions): comma-separated name:token pairs. Empty = off.
+      SUBMIT_TOKENS: ${SUBMIT_TOKENS:-}
+      # A directory the app user may write (the export swaps in a sibling temp directory).
+      SITE_DATA_DIR: /app/var/site-data
+      # Same salt as the Hub, so a contributor gets the same opaque key in both exports.
+      MTGDT_CONTRIBUTOR_SALT: ${MTGDT_CONTRIBUTOR_SALT}
+      TRUST_PROXY: "1"
+      # Hand-off of finished events to the Hub (POST /api/internal/events, packages/director/src/hub-handoff.ts).
+      # Empty HUB_SERVICE_TOKEN: no hand-off. Unsent events are retried at every Director start.
+      HUB_URL: http://hub:8787
+      HUB_SERVICE_TOKEN: ${HUB_SERVICE_TOKEN:-}
+      # Hosted play (docs/ARCHITECTURE.md §5): contributors create events with a Hub token (play scope), checked
+      # with the hub over HUB_URL. Per-contributor quotas come from the hub (HUB_PLAY_*); these are the worker's limits.
+      MAX_CONCURRENT_GAMES: ${MAX_CONCURRENT_GAMES:-30}
+      MAX_QUEUE: ${MAX_QUEUE:-50}
+      EVENT_MAX_HOURS: ${EVENT_MAX_HOURS:-8}
+      QUEUE_MAX_WAIT_HOURS: ${QUEUE_MAX_WAIT_HOURS:-4}
+      # Public spectator stream: live game information 90 s behind the table (docs/SPECTATING.md; SPEC-3). Never 0
+      # on the hosted stack: an agent with web tools could otherwise watch its own game live.
+      SPECTATE_DELAY_S: ${SPECTATE_DELAY_S:-90}
+      # Gzip an event's events.jsonl once the Hub has accepted it (72 MB → 6 MB for a best-of-3 table; log-files.ts).
+      COMPRESS_HANDED_OFF: "1"
+      # The lobby's featured queues and schedules (docs/LOBBY.md §2.5): the committed deploy/lobby.json, applied at every
+      # start, so what runs is what the repository says (change it with a commit and a deploy).
+      LOBBY_CONFIG: /app/deploy/lobby.json
+      LOBBY_CONFIG_APPLY: always
+    volumes:
+      - phase-data:/phase-data:ro
+      - director-runs:/app/runs
+      - director-cache:/app/cache
+      - director-export:/app/var
+  hub-db:
+    image: docker.io/library/postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+    restart: unless-stopped
+    # The entrypoint starts as root to fix the data directory's owner, then runs Postgres as `postgres` (su-exec).
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETUID, SETGID]
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    tmpfs: ["/tmp:size=64m", "/var/run/postgresql:size=16m"]
+    mem_limit: ${HUB_DB_MEM_LIMIT:-1g}
+    pids_limit: ${HUB_DB_PIDS_LIMIT:-256}
+    networks:
+      db:
+        aliases: [hub-db-internal]
+    # H-8 (see the top): listen only on the `db` address, and a pg_hba.conf that admits the hub role from the `db` subnet
+    # (scram-sha-256) and the local socket, and rejects everything else. Written to /tmp (tmpfs) by root at every start,
+    # then the image's entrypoint runs Postgres as `postgres`. The subnet is the kernel route of the `db` address.
+    command:
+      - sh
+      - -c
+      - |
+        set -eu
+        addr=""
+        for _ in 1 2 3 4 5 6 7 8 9 10; do
+          addr="$$(getent hosts hub-db-internal | awk '$$1 ~ /^[0-9.]+$$/ { print $$1; exit }')"
+          [ -n "$$addr" ] && break
+          sleep 1
+        done
+        [ -n "$$addr" ] || { echo "hub-db-internal does not resolve (not on the db network?): refusing to start" >&2; exit 1; }
+        net="$$(ip -4 route show scope link | awk -v a="$$addr" '{ for (i = 1; i < NF; i++) if ($$i == "src" && $$(i + 1) == a) { print $$1; exit } }')"
+        case "$$net" in */*) ;; *) echo "no subnet for $$addr on the db network: refusing to start" >&2; exit 1 ;; esac
+        printf '%s\n' \
+          '# Written at start by deploy/compose.yaml (hub-db command); LAUNCH-CHECKLIST H-8.' \
+          'local all all trust' \
+          "host hub hub $$net scram-sha-256" \
+          'host all all 0.0.0.0/0 reject' \
+          'host all all ::/0 reject' > /tmp/pg_hba.conf
+        chmod 644 /tmp/pg_hba.conf
+        echo "hub-db: listening on $$addr; pg_hba admits hub@hub from $$net (scram-sha-256), rejects other hosts"
+        exec docker-entrypoint.sh postgres -c hba_file=/tmp/pg_hba.conf -c listen_addresses="$$addr" -c password_encryption=scram-sha-256
+    environment:
+      POSTGRES_USER: hub
+      POSTGRES_PASSWORD: ${HUB_DB_PASSWORD}
+      POSTGRES_DB: hub
+    volumes:
+      - hub-pgdata:/var/lib/postgresql/data
+      - hub-pgdump:/dumps
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hub -d hub"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    # Container logs are capped (H-4): 5 files of 20 MB each, rotated by the Docker engine.
+    logging:
+      driver: json-file
+      options:
+        max-size: 20m
+        max-file: "5"
+  hub:
+    image: mtgdt-director:${DIRECTOR_TAG:-local}
+    pull_policy: never
+    restart: unless-stopped
+    user: "999:999"
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    command: ["node", "--import", "tsx", "packages/hub/src/main.ts"]
+    # Writes only /hub-data and /tmp (tsx's compile cache).
+    read_only: true
+    tmpfs: ["/tmp:size=256m"]
+    mem_limit: ${HUB_MEM_LIMIT:-2g}
+    pids_limit: ${HUB_PIDS_LIMIT:-256}
+    networks: [default, db]
+    depends_on:
+      hub-db:
+        condition: service_healthy
+    # Container logs are capped (H-4): 5 files of 20 MB each, rotated by the Docker engine.
+    logging:
+      driver: json-file
+      options:
+        max-size: 20m
+        max-file: "5"
+    environment:
+      # The db-only alias: `hub-db` may resolve to its address on Coolify's project network, where it doesn't listen.
+      DATABASE_URL: postgres://hub:${HUB_DB_PASSWORD}@hub-db-internal:5432/hub
+      HUB_DATA_DIR: /hub-data
+      HUB_PUBLIC_URL: ${HUB_PUBLIC_URL:-https://agent-bench-hub.dev.greg.tech}
+      # Takedowns, erasure, privacy requests and reports (docs/legal; terms.ts).
+      MTGDT_CONTACT_URL: ${MTGDT_CONTACT_URL:-mailto:magic@greg.tech}
+      # Admin API (review queue, exclude/takedown, full export). The CLI works without it: docker exec … npm run hub.
+      HUB_ADMIN_TOKEN: ${HUB_ADMIN_TOKEN}
+      # Official hosted Directors that may hand finished events to POST /api/internal/events (label verified).
+      HUB_SERVICE_TOKENS: worker-1:${HUB_SERVICE_TOKEN}
+      # Pack regeneration and card details: the engine's own booster sheets and card data (phase-server
+      # volume) and the Director's cached unsupported-card list, all read-only.
+      HUB_ENGINE_DATA_DIR: /phase-data
+      HUB_UNSUPPORTED_CARDS: /director-cache/unsupported-cards.json
+      HUB_CORS_ORIGIN: "*"
+      # Traefik is the only way in: per-client rate limits (sign-in, account) key on its X-Forwarded-For hop.
+      HUB_TRUST_PROXY: "1"
+      # Self-serve contributor tokens (GitHub sign-in, web + device flow; packages/hub/README.md). The OAuth App's id and
+      # secret are set in Coolify's environment UI (preferred; deploy.sh never overwrites them) or passed by deploy.sh
+      # from ~/.config/mtgdt/github-oauth-client-{id,secret}. Unset: sign-in is off with a clear message.
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+      HUB_SESSION_SECRET: ${HUB_SESSION_SECRET}
+      # Salt for the opaque contributor keys in the public export (the rating's contributor dimension).
+      MTGDT_CONTRIBUTOR_SALT: ${MTGDT_CONTRIBUTOR_SALT}
+      # Default hosted-play quotas per contributor (owner decision 2026-10-22; raise one with `hub contributor quota <handle>`):
+      # Private Tables 1 at a time and 6 a day; the lobby, counted separately, 2 tables at a time and 12 a day. The
+      # Director's admission control (MAX_CONCURRENT_GAMES, the queue) still protects capacity for everyone.
+      HUB_PLAY_CONCURRENT: ${HUB_PLAY_CONCURRENT:-1}
+      HUB_PLAY_DAILY: ${HUB_PLAY_DAILY:-6}
+      HUB_LOBBY_CONCURRENT: ${HUB_LOBBY_CONCURRENT:-2}
+      HUB_LOBBY_DAILY: ${HUB_LOBBY_DAILY:-12}
+      # GitHub accounts younger than this can't sign in (throwaway accounts would multiply the quotas).
+      HUB_GITHUB_MIN_ACCOUNT_DAYS: ${HUB_GITHUB_MIN_ACCOUNT_DAYS:-30}
+    volumes:
+      - hub-data:/hub-data
+      - phase-data:/phase-data:ro
+      - director-cache:/director-cache:ro
+networks:
+  default: {}
+  engine: {}
+  db:
+    internal: true
+volumes:
+  phase-data:
+  director-runs:
+  director-cache:
+  director-export:
+  hub-pgdata:
+  hub-pgdump:
+  hub-data:

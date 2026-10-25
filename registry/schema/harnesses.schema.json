@@ -1,0 +1,386 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/grpace/mtgdecktools-agent-bench/registry/schema/harnesses.schema.json",
+  "title": "MTG Deck Tools Agent Benchmark: harness registry",
+  "description": "Canonical harness ids, display names, aliases, how each reports its version and model ids, and its effort flag. See registry/README.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "harnesses"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "harnesses": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "display",
+          "vendor",
+          "kind",
+          "status",
+          "aliases",
+          "cli",
+          "docs",
+          "model_flag",
+          "effort",
+          "reports",
+          "helper_models",
+          "effort_defaults",
+          "effort_detection",
+          "seated"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{0,39}$"
+          },
+          "display": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "vendor": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "kind": {
+            "description": "agent: an LLM harness; test: a scripted player, never rated.",
+            "enum": [
+              "agent",
+              "test"
+            ]
+          },
+          "status": {
+            "description": "tested: a full event has completed with it.",
+            "enum": [
+              "tested",
+              "untested"
+            ]
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 40
+            },
+            "uniqueItems": true
+          },
+          "cli": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "docs": {
+            "type": "string",
+            "pattern": "^https://"
+          },
+          "model_flag": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "hosted": {
+            "description": "The harness's own model service (OpenCode Zen): model ids under its prefix are the underlying registry model, served by the harness vendor, and a free_suffix marks a free variant. Resolution strips both and flags the seat as hosted (and free).",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "prefix",
+              "display",
+              "source"
+            ],
+            "properties": {
+              "prefix": {
+                "type": "string",
+                "pattern": "^[a-z0-9.-]+/$"
+              },
+              "free_suffix": {
+                "type": "string",
+                "pattern": "^-[a-z0-9-]+$"
+              },
+              "display": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 60
+              },
+              "source": {
+                "type": "string",
+                "pattern": "^https://"
+              }
+            }
+          },
+          "effort": {
+            "description": "null: the harness has no effort setting, so seats record \"default\".",
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "flag",
+                  "values"
+                ],
+                "properties": {
+                  "flag": {
+                    "type": "string"
+                  },
+                  "values": {
+                    "description": "Harness value → canonical effort.",
+                    "type": "object",
+                    "additionalProperties": {
+                      "enum": [
+                        "none",
+                        "minimal",
+                        "low",
+                        "medium",
+                        "high",
+                        "xhigh",
+                        "max",
+                        "ultra",
+                        "default"
+                      ]
+                    }
+                  },
+                  "args": {
+                    "description": "The effort flag as arguments, with {effort} for the harness's word for the level.",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "model_template": {
+                    "description": "Puts the level into the model string instead: {model} and {effort} (OpenCode \"{model}#{effort}\").",
+                    "type": "string"
+                  },
+                  "name_suffix": {
+                    "description": "The level is part of every model name: the suffix after the model id, with {effort} for the level (Antigravity \"-{effort}\": gemini-4-argon-high). Any registry model followed by it resolves to that model at that level, for this harness and wrapper pairs running it.",
+                    "type": "string",
+                    "pattern": "\\{effort\\}"
+                  },
+                  "fast_suffix": {
+                    "description": "A suffix for fast serving mode on model names (Cursor \"-fast\"): stripped when resolving and recorded as fast; not part of the identity.",
+                    "type": "string",
+                    "pattern": "^[-_.a-z0-9]+$"
+                  }
+                }
+              }
+            ]
+          },
+          "reports": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "format",
+              "version",
+              "model"
+            ],
+            "properties": {
+              "format": {
+                "description": "The usage extractor (packages/director/src/usage.ts).",
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              },
+              "model": {
+                "type": "string"
+              }
+            }
+          },
+          "helper_models": {
+            "description": "Model ids (or prefix globs ending in *) the harness runs for its own side tasks. Ignored when picking a seat's primary model from usage, unless nothing else ran.",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9.-]+\\*?$"
+            },
+            "uniqueItems": true
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 400
+          },
+          "effort_defaults": {
+            "description": "Documented default effort when none is set, per model and harness version range (inclusive since, exclusive until; omit both when it holds for every version).",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "models",
+                "level",
+                "source"
+              ],
+              "properties": {
+                "models": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9.-]+\\*?$"
+                  }
+                },
+                "level": {
+                  "enum": [
+                    "none",
+                    "minimal",
+                    "low",
+                    "medium",
+                    "high",
+                    "xhigh",
+                    "max",
+                    "ultra"
+                  ]
+                },
+                "since": {
+                  "type": "string",
+                  "pattern": "^\\d+(\\.\\d+)*"
+                },
+                "until": {
+                  "type": "string",
+                  "pattern": "^\\d+(\\.\\d+)*"
+                },
+                "source": {
+                  "type": "string",
+                  "pattern": "^https://"
+                },
+                "note": {
+                  "type": "string",
+                  "maxLength": 400
+                }
+              }
+            }
+          },
+          "effort_detection": {
+            "description": "Where the harness records the effort it used, and whether that has been checked on real files.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "where",
+              "status"
+            ],
+            "properties": {
+              "where": {
+                "type": "string"
+              },
+              "status": {
+                "enum": [
+                  "tested",
+                  "untested",
+                  "not-reported"
+                ]
+              },
+              "tested_version": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string",
+                "pattern": "^https://"
+              }
+            }
+          },
+          "seated": {
+            "description": "headless: the bench CLI can launch it; by-hand: a person seats it in the app (a declared level counts as set explicitly, verification Self-Reported); test: the scripted player.",
+            "enum": [
+              "headless",
+              "by-hand",
+              "test"
+            ]
+          }
+        }
+      }
+    },
+    "launchers": {
+      "description": "Apps that start harness sessions without being a harness (T3 Code). A seat declares launcher:harness (t3-code:claude-code); it ranks as the harness, and the launcher is recorded in its details.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "display",
+          "vendor",
+          "aliases",
+          "docs",
+          "launches",
+          "logs"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{0,39}$"
+          },
+          "display": {
+            "type": "string",
+            "minLength": 1
+          },
+          "vendor": {
+            "type": "string",
+            "minLength": 1
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "docs": {
+            "type": "string"
+          },
+          "launches": {
+            "description": "The harness ids it can start.",
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]{0,39}$"
+            },
+            "uniqueItems": true
+          },
+          "logs": {
+            "description": "Where it records the model and effort each session opened with (a fallback after the harness's own record).",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "where",
+              "status"
+            ],
+            "properties": {
+              "where": {
+                "type": "string"
+              },
+              "status": {
+                "enum": [
+                  "tested",
+                  "untested"
+                ]
+              },
+              "tested_version": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string"
+              }
+            }
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

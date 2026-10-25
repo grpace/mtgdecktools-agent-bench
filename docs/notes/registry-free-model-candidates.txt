@@ -1,0 +1,23 @@
+Free models in OpenCode: what the registry lists, and a proposal
+
+registry/models.json lists no free models today (no Zen "opencode/..." ids; every listed model is a paid Anthropic,
+OpenAI or Google model).
+
+Official source: https://opencode.ai/docs/zen/ (read 2026-10-22). It lists 13 models at $0. Every one is marked
+free "for a limited time", and their data terms differ:
+  zero-retention, not used for training: GLM-5.3-Flash Free (opencode/glm-5.3-flash-free),
+    DeepSeek V4.1 Flash Free (opencode/deepseek-v4.1-flash-free), LongCat 2.5 Preview Free (opencode/longcat-2.5-preview-free)
+  not used for training, kept 30 days: Beam Free (opencode/beam-free)
+  may be used to improve the model during the free period: Big Pickle, Flint 40B Free, Exo Free, MiMo-V2.6-Flash Free,
+    MiMo-V2.5 Free
+  NVIDIA trial terms (logged for security and product improvement): Nemotron 3 Ultra Free, Nemotron 3.5 Lightning
+    Free, Nemotron 3.5 Super VL Free
+  no model-specific terms: Jev 1.13 Free
+
+Recommendation: add none yet. A leaderboard row needs a model that stays the same and stays available; a free tier
+"for a limited time" can be withdrawn or swapped behind the same name, and the registry rule is official sources only.
+When a free model is offered without a time limit and has its own provider model page (a stable id, a release date),
+list it as its own model with provider "opencode-zen" (prefix "opencode/"), launch key "opencode", efforts only where
+the Zen page documents variants, no price entry (cost $0, shown as "Free"), and a note with the data terms. The first
+candidates would be the zero-retention ones above (GLM-5.3-Flash, DeepSeek V4.1 Flash, LongCat 2.5 Preview).
+Until then they play only on your own table with --unlisted-model (unrated).

@@ -1,0 +1,718 @@
+{
+  "card": "Page, Loose Leaf",
+  "title": "the Grandeur cost is split at the comma in the card's name, so it can never be activated",
+  "status": "active",
+  "kind": "parser",
+  "upstream_issue": "https://github.com/phase-rs/phase/issues/9600",
+  "marks_supported": true,
+  "applies_to": {
+    "server_version": "0.116.0",
+    "build_commit": "3f79456",
+    "card_data_sha256": "c4cfb737d0c0b1b135d3a353d71a95606f6ee147727bc11c3d16b82ece33da41",
+    "entry_sha256": "ff88588d3dd22b8c6406dfa7ab6a97b5ec130d355955ec933f453f7f342dbf4d"
+  },
+  "rules": {
+    "oracle": "{T}: Add {C}.\nGrandeur — Discard another card named Page, Loose Leaf: Reveal cards from the top of your library until you reveal an instant or sorcery card. Put that card into your hand and the rest on the bottom of your library in a random order.",
+    "cr": [
+      "207.2c",
+      "602.2",
+      "601.2h",
+      "701.9a",
+      "701.20a",
+      "201.2"
+    ],
+    "actual": "The Grandeur ability is never offered: its cost is Composite[Discard a card named \"page\", Unimplemented \"Loose Leaf\"]. No card is named \"page\" (names are compared whole), and the Unimplemented cost leg can't be paid.",
+    "expected": "Any time you have priority, you may discard another card named Page, Loose Leaf from your hand to activate the ability (Page doesn't tap and may already be tapped). On resolution you reveal cards from the top of your library until an instant or sorcery card is revealed; that card goes to your hand and all other revealed cards go to the bottom of your library in a random order. If no instant or sorcery is revealed, all revealed cards go to the bottom. The {T}: Add {C} mana ability is unaffected.",
+    "diagnosis": "The cost parser splits the cost text at commas into a Composite, and the comma inside the card name \"Page, Loose Leaf\" is read as a separator between two costs: \"Discard another card named Page\" (Discard with filter Named \"page\") and \"Loose Leaf\" (Unimplemented). The same split is on every Grandeur card whose name contains a comma (Baru, Fist of Krosa; Korlash, Heir to Blackblade; Linessa, Zephyr Mage; Oriss, Samite Guardian; Skoa, Embermage). Tarox Bladewing, with no comma, parses as a single Discard cost.",
+    "suggested_fix": "Before splitting an activated ability's cost on commas, replace the card's own name with ~ (or match \"card named <full card name>\" as one token): \"Discard another card named Page, Loose Leaf\" should produce a single AbilityCost::Discard { count: 1, filter: Typed [Card] + Named \"page, loose leaf\", random: false, self_ref: false }, the shape Tarox Bladewing already gets. A parser test over the six comma-named Grandeur cards should assert no Unimplemented cost leg, and an integration test should activate Page's Grandeur ability by discarding a second Page.",
+    "override_note": "The patch replaces the Composite cost with the single Discard cost Tarox Bladewing uses for Grandeur, filtered to the full name \"page, loose leaf\" (names compare whole and case-insensitively, game/filter.rs card_names_match). Grandeur is an ability word with no rules meaning (CR 207.2c). \"Another\" holds because the discard is paid from the hand (CR 701.9a) while the source is on the battlefield, and the eligible-card search also excludes the source itself (game/casting.rs find_eligible_discard_targets_for_ability); the cost is paid during activation (CR 602.2, 601.2h). The RevealUntil effect (Or[Instant, Sorcery] to hand, the rest to the library bottom in a random order) and the mana ability are unchanged. The cases activate it by discarding the other Page (a Shock in hand stays): the reveal goes past a creature and a land to the instant or sorcery, which goes to hand, and the revealed cards are the last ones left after drawing the library down (the bottom); two extra Pages give two activations; a library with no instant or sorcery keeps every card and nothing goes to hand; with no other Page in hand the ability isn't offered; and the mana ability still pays for a spell."
+  },
+  "patch": [
+    {
+      "op": "test",
+      "path": "/abilities/1/cost",
+      "value": {
+        "type": "Composite",
+        "costs": [
+          {
+            "type": "Discard",
+            "count": {
+              "type": "Fixed",
+              "value": 1
+            },
+            "filter": {
+              "type": "Typed",
+              "type_filters": [
+                "Card"
+              ],
+              "controller": null,
+              "properties": [
+                {
+                  "type": "Named",
+                  "name": "page"
+                }
+              ]
+            },
+            "random": false,
+            "self_ref": false
+          },
+          {
+            "type": "Unimplemented",
+            "description": "Loose Leaf"
+          }
+        ]
+      }
+    },
+    {
+      "op": "test",
+      "path": "/abilities/1/effect/type",
+      "value": "RevealUntil"
+    },
+    {
+      "op": "replace",
+      "path": "/abilities/1/cost",
+      "value": {
+        "type": "Discard",
+        "count": {
+          "type": "Fixed",
+          "value": 1
+        },
+        "filter": {
+          "type": "Typed",
+          "type_filters": [
+            "Card"
+          ],
+          "controller": null,
+          "properties": [
+            {
+              "type": "Named",
+              "name": "page, loose leaf"
+            }
+          ]
+        },
+        "random": false,
+        "self_ref": false
+      }
+    }
+  ],
+  "tests": [
+    {
+      "name": "Grandeur: discard the other Page, reveal until an instant: it goes to hand, the rest to the bottom",
+      "setup": [
+        {
+          "card": "Page, Loose Leaf",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Page, Loose Leaf",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Shock",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Opt",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "steps": [
+        {
+          "debug": "MoveToZone",
+          "object": {
+            "card": "Opt",
+            "owner": 0,
+            "zone": "Hand"
+          },
+          "data": {
+            "to_zone": "Library",
+            "library_position": {
+              "type": "Top"
+            }
+          }
+        },
+        {
+          "debug": "MoveToZone",
+          "object": {
+            "card": "Grizzly Bears",
+            "owner": 0,
+            "zone": "Hand"
+          },
+          "data": {
+            "to_zone": "Library",
+            "library_position": {
+              "type": "Top"
+            }
+          }
+        },
+        {
+          "activate": {
+            "card": "Page, Loose Leaf",
+            "text": "Grandeur",
+            "if_offered": true,
+            "label": "grandeur"
+          }
+        },
+        {
+          "debug": "DrawCards",
+          "data": {
+            "player_id": 0,
+            "count": 33
+          }
+        }
+      ],
+      "answers": {
+        "select": [
+          {
+            "card": "Page, Loose Leaf",
+            "owner": 0,
+            "zone": "Hand"
+          }
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "zones": [
+            {
+              "card": "Page, Loose Leaf",
+              "owner": 0,
+              "zone": "Battlefield"
+            },
+            {
+              "card": "Page, Loose Leaf",
+              "owner": 0,
+              "zone": "Graveyard"
+            },
+            {
+              "card": "Opt",
+              "owner": 0,
+              "zone": "Hand"
+            },
+            {
+              "card": "Shock",
+              "owner": 0,
+              "zone": "Hand"
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "zone": "Hand",
+              "count": 0
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "zone": "Graveyard",
+              "count": 0
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "zone": "Exile",
+              "count": 0
+            }
+          ],
+          "objects": [
+            {
+              "card": "Page, Loose Leaf",
+              "owner": 0,
+              "zone": "Battlefield",
+              "tapped": false
+            }
+          ],
+          "library": [
+            1,
+            null
+          ],
+          "offered": {
+            "grandeur": true
+          }
+        },
+        "bug": {
+          "offered": {
+            "grandeur": false
+          },
+          "zones": [
+            {
+              "card": "Page, Loose Leaf",
+              "owner": 0,
+              "zone": "Hand"
+            },
+            {
+              "card": "Page, Loose Leaf",
+              "owner": 0,
+              "zone": "Graveyard",
+              "count": 0
+            }
+          ],
+          "library": [
+            2,
+            null
+          ]
+        }
+      }
+    },
+    {
+      "name": "Grandeur with a sorcery deeper in the library: reveals past the creature, sorcery to hand",
+      "setup": [
+        {
+          "card": "Page, Loose Leaf",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Page, Loose Leaf",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Divination",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Forest",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "steps": [
+        {
+          "debug": "MoveToZone",
+          "object": {
+            "card": "Divination",
+            "owner": 0,
+            "zone": "Hand"
+          },
+          "data": {
+            "to_zone": "Library",
+            "library_position": {
+              "type": "Top"
+            }
+          }
+        },
+        {
+          "debug": "MoveToZone",
+          "object": {
+            "card": "Grizzly Bears",
+            "owner": 0,
+            "zone": "Hand"
+          },
+          "data": {
+            "to_zone": "Library",
+            "library_position": {
+              "type": "Top"
+            }
+          }
+        },
+        {
+          "debug": "MoveToZone",
+          "object": {
+            "card": "Forest",
+            "owner": 0,
+            "zone": "Hand"
+          },
+          "data": {
+            "to_zone": "Library",
+            "library_position": {
+              "type": "Top"
+            }
+          }
+        },
+        {
+          "activate": {
+            "card": "Page, Loose Leaf",
+            "text": "Grandeur",
+            "if_offered": true,
+            "label": "grandeur"
+          }
+        },
+        {
+          "debug": "DrawCards",
+          "data": {
+            "player_id": 0,
+            "count": 33
+          }
+        }
+      ],
+      "answers": {
+        "select": [
+          {
+            "card": "Page, Loose Leaf",
+            "owner": 0,
+            "zone": "Hand"
+          }
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "zones": [
+            {
+              "card": "Page, Loose Leaf",
+              "owner": 0,
+              "zone": "Graveyard"
+            },
+            {
+              "card": "Divination",
+              "owner": 0,
+              "zone": "Hand"
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "zone": "Hand",
+              "count": 0
+            },
+            {
+              "card": "Forest",
+              "owner": 0,
+              "zone": "Hand",
+              "count": 0
+            }
+          ],
+          "library": [
+            2,
+            null
+          ],
+          "offered": {
+            "grandeur": true
+          }
+        },
+        "bug": {
+          "offered": {
+            "grandeur": false
+          },
+          "zones": [
+            {
+              "card": "Page, Loose Leaf",
+              "owner": 0,
+              "zone": "Hand"
+            },
+            {
+              "card": "Page, Loose Leaf",
+              "owner": 0,
+              "zone": "Graveyard",
+              "count": 0
+            }
+          ],
+          "library": [
+            3,
+            null
+          ]
+        }
+      }
+    },
+    {
+      "name": "two other Pages in hand: two activations, each discards one Page",
+      "setup": [
+        {
+          "card": "Page, Loose Leaf",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Page, Loose Leaf",
+          "owner": 0,
+          "zone": "Hand",
+          "count": 2
+        },
+        {
+          "card": "Lightning Bolt",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Opt",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "steps": [
+        {
+          "debug": "MoveToZone",
+          "object": {
+            "card": "Lightning Bolt",
+            "owner": 0,
+            "zone": "Hand"
+          },
+          "data": {
+            "to_zone": "Library",
+            "library_position": {
+              "type": "Top"
+            }
+          }
+        },
+        {
+          "debug": "MoveToZone",
+          "object": {
+            "card": "Opt",
+            "owner": 0,
+            "zone": "Hand"
+          },
+          "data": {
+            "to_zone": "Library",
+            "library_position": {
+              "type": "Top"
+            }
+          }
+        },
+        {
+          "activate": {
+            "card": "Page, Loose Leaf",
+            "text": "Grandeur",
+            "if_offered": true,
+            "label": "grandeur"
+          }
+        },
+        {
+          "activate": {
+            "card": "Page, Loose Leaf",
+            "text": "Grandeur",
+            "if_offered": true,
+            "label": "grandeur"
+          }
+        }
+      ],
+      "answers": {
+        "select": [
+          {
+            "card": "Page, Loose Leaf",
+            "owner": 0,
+            "zone": "Hand"
+          }
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "zones": [
+            {
+              "card": "Page, Loose Leaf",
+              "owner": 0,
+              "zone": "Battlefield"
+            },
+            {
+              "card": "Page, Loose Leaf",
+              "owner": 0,
+              "zone": "Graveyard",
+              "count": 2
+            },
+            {
+              "card": "Opt",
+              "owner": 0,
+              "zone": "Hand"
+            },
+            {
+              "card": "Lightning Bolt",
+              "owner": 0,
+              "zone": "Hand"
+            }
+          ],
+          "offered": {
+            "grandeur": true
+          }
+        },
+        "bug": {
+          "offered": {
+            "grandeur": false
+          },
+          "zones": [
+            {
+              "card": "Page, Loose Leaf",
+              "owner": 0,
+              "zone": "Hand",
+              "count": 2
+            },
+            {
+              "card": "Opt",
+              "owner": 0,
+              "zone": "Hand",
+              "count": 0
+            },
+            {
+              "card": "Lightning Bolt",
+              "owner": 0,
+              "zone": "Hand",
+              "count": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "no instant or sorcery in the library: every card is revealed and goes back, nothing to hand",
+      "setup": [
+        {
+          "card": "Page, Loose Leaf",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Page, Loose Leaf",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "steps": [
+        {
+          "activate": {
+            "card": "Page, Loose Leaf",
+            "text": "Grandeur",
+            "if_offered": true,
+            "label": "grandeur"
+          }
+        }
+      ],
+      "answers": {
+        "select": [
+          {
+            "card": "Page, Loose Leaf",
+            "owner": 0,
+            "zone": "Hand"
+          }
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "zones": [
+            {
+              "card": "Page, Loose Leaf",
+              "owner": 0,
+              "zone": "Graveyard"
+            }
+          ],
+          "hand": [
+            7,
+            null
+          ],
+          "library": [
+            33,
+            null
+          ],
+          "offered": {
+            "grandeur": true
+          }
+        },
+        "bug": {
+          "offered": {
+            "grandeur": false
+          },
+          "zones": [
+            {
+              "card": "Page, Loose Leaf",
+              "owner": 0,
+              "zone": "Hand"
+            }
+          ],
+          "hand": [
+            8,
+            null
+          ],
+          "library": [
+            33,
+            null
+          ]
+        }
+      }
+    },
+    {
+      "name": "no other Page in hand (only another card): Grandeur can't be activated",
+      "setup": [
+        {
+          "card": "Page, Loose Leaf",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Shock",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "steps": [
+        {
+          "offered": {
+            "label": "grandeur",
+            "activate": {
+              "card": "Page, Loose Leaf",
+              "text": "Grandeur"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "offered": {
+            "grandeur": false
+          }
+        }
+      }
+    },
+    {
+      "name": "mana ability: tap for {C} to cast a {1} artifact",
+      "setup": [
+        {
+          "card": "Page, Loose Leaf",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Sol Ring",
+          "owner": 0,
+          "zone": "Hand"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "cast": {
+            "card": "Sol Ring"
+          }
+        }
+      ],
+      "expect": {
+        "fixed": {
+          "zones": [
+            {
+              "card": "Sol Ring",
+              "owner": 0,
+              "zone": "Battlefield"
+            }
+          ],
+          "objects": [
+            {
+              "card": "Page, Loose Leaf",
+              "owner": 0,
+              "zone": "Battlefield",
+              "tapped": true
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "history": [
+    {
+      "date": "2026-10-23",
+      "status": "active",
+      "note": "Written against Oracle text and CR 207.2c, 602.2, 701.9a and 701.20a; tested on phase-rs 0.116.0 (3f79456). Upstream never offers the Grandeur ability; with the override it is activated by discarding another Page, Loose Leaf."
+    }
+  ]
+}

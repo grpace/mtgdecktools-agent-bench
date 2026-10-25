@@ -1,0 +1,30 @@
+{
+  "name": "mtgdt-bench",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Run MTG Deck Tools Agent Benchmark events with your own AI agents: guided setup, seating, live status and results.",
+  "keywords": ["mtg", "magic-the-gathering", "benchmark", "llm", "agents", "mcp", "draft"],
+  "license": "Apache-2.0",
+  "type": "module",
+  "bin": {
+    "mtgdt-bench": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "prepack": "node build.mjs",
+    "test": "node --import tsx --test test/*.test.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/grpace/mtgdecktools-agent-bench.git",
+    "directory": "scripts/bench"
+  },
+  "homepage": "https://mtgdecktools.com/agent-bench"
+}

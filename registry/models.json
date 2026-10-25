@@ -1,0 +1,803 @@
+{
+  "$schema": "./schema/models.schema.json",
+  "providers": {
+    "anthropic": {
+      "display": "Anthropic",
+      "prefixes": [
+        "anthropic/",
+        "anthropic.",
+        "us.anthropic.",
+        "eu.anthropic.",
+        "apac.anthropic.",
+        "global.anthropic."
+      ]
+    },
+    "openai": {
+      "display": "OpenAI",
+      "prefixes": [
+        "openai/"
+      ]
+    },
+    "google": {
+      "display": "Google",
+      "prefixes": [
+        "google/",
+        "models/"
+      ]
+    },
+    "xai": {
+      "display": "xAI",
+      "prefixes": [
+        "xai/"
+      ]
+    },
+    "moonshot": {
+      "display": "Moonshot AI",
+      "prefixes": [
+        "moonshotai/"
+      ]
+    },
+    "zai": {
+      "display": "Z.ai",
+      "prefixes": [
+        "zai/",
+        "zhipuai/"
+      ]
+    },
+    "deepseek": {
+      "display": "DeepSeek",
+      "prefixes": [
+        "deepseek/"
+      ]
+    },
+    "meta": {
+      "display": "Meta",
+      "prefixes": [
+        "meta/"
+      ]
+    },
+    "cursor": {
+      "display": "Cursor",
+      "prefixes": []
+    }
+  },
+  "effort_scale": [
+    {
+      "id": "none",
+      "display": "No Reasoning",
+      "rank": 0,
+      "aliases": [
+        "off",
+        "no-reasoning"
+      ]
+    },
+    {
+      "id": "minimal",
+      "display": "Minimal",
+      "rank": 1,
+      "aliases": []
+    },
+    {
+      "id": "low",
+      "display": "Low",
+      "rank": 2,
+      "aliases": []
+    },
+    {
+      "id": "medium",
+      "display": "Medium",
+      "rank": 3,
+      "aliases": [
+        "med",
+        "mid"
+      ]
+    },
+    {
+      "id": "high",
+      "display": "High",
+      "rank": 4,
+      "aliases": []
+    },
+    {
+      "id": "xhigh",
+      "display": "Extra High",
+      "rank": 5,
+      "aliases": [
+        "x-high",
+        "extra-high",
+        "extrahigh",
+        "very-high"
+      ]
+    },
+    {
+      "id": "max",
+      "display": "Max",
+      "rank": 6,
+      "aliases": [
+        "maximum"
+      ]
+    },
+    {
+      "id": "ultra",
+      "display": "Ultra",
+      "rank": null,
+      "aliases": []
+    },
+    {
+      "id": "default",
+      "display": "Default Effort",
+      "rank": null,
+      "aliases": [
+        "auto",
+        "standard",
+        "unset",
+        "harness-default"
+      ]
+    },
+    {
+      "id": "unknown",
+      "display": "Unknown Effort",
+      "rank": null,
+      "aliases": [
+        "dont-know",
+        "i-dont-know",
+        "not-sure",
+        "unsure"
+      ]
+    }
+  ],
+  "models": [
+    {
+      "id": "claude-fable-5-1",
+      "display": "Claude Fable 5.1",
+      "provider": "anthropic",
+      "family": "claude-fable",
+      "released": "2026-09-01",
+      "status": "active",
+      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
+      "aliases": [
+        "fable-5-1",
+        "fable 5.1"
+      ],
+      "floating_aliases": [
+        {
+          "alias": "fable",
+          "from": "2026-09-01"
+        }
+      ],
+      "snapshots": [],
+      "efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "default_effort": "high",
+      "launch": {
+        "claude-code": "claude-fable-5-1",
+        "opencode": "anthropic/claude-fable-5-1",
+        "cursor": "claude-fable-5-1-{effort}"
+      }
+    },
+    {
+      "id": "claude-opus-5-5",
+      "display": "Claude Opus 5.5",
+      "provider": "anthropic",
+      "family": "claude-opus",
+      "released": "2026-09-22",
+      "status": "active",
+      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
+      "aliases": [
+        "opus-5-5",
+        "opus 5.5"
+      ],
+      "floating_aliases": [
+        {
+          "alias": "opus",
+          "from": "2026-09-22"
+        }
+      ],
+      "snapshots": [],
+      "efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "default_effort": "medium",
+      "launch": {
+        "claude-code": "claude-opus-5-5",
+        "opencode": "anthropic/claude-opus-5-5",
+        "cursor": "claude-opus-5-5-{effort}"
+      }
+    },
+    {
+      "id": "claude-sonnet-5-5",
+      "display": "Claude Sonnet 5.5",
+      "provider": "anthropic",
+      "family": "claude-sonnet",
+      "released": "2026-09-28",
+      "status": "active",
+      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
+      "aliases": [
+        "sonnet-5-5",
+        "sonnet 5.5"
+      ],
+      "floating_aliases": [
+        {
+          "alias": "sonnet",
+          "from": "2026-09-28"
+        }
+      ],
+      "snapshots": [],
+      "efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "default_effort": "high",
+      "launch": {
+        "claude-code": "claude-sonnet-5-5",
+        "opencode": "anthropic/claude-sonnet-5-5",
+        "cursor": "claude-sonnet-5-5-{effort}"
+      }
+    },
+    {
+      "id": "claude-haiku-5-5",
+      "display": "Claude Haiku 5.5",
+      "provider": "anthropic",
+      "family": "claude-haiku",
+      "released": "2026-10-07",
+      "status": "active",
+      "source": "https://platform.claude.com/docs/en/about-claude/models/overview",
+      "aliases": [
+        "haiku-5-5",
+        "haiku 5.5"
+      ],
+      "floating_aliases": [
+        {
+          "alias": "haiku",
+          "from": "2026-10-07"
+        }
+      ],
+      "snapshots": [],
+      "efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "default_effort": "medium",
+      "launch": {
+        "claude-code": "claude-haiku-5-5",
+        "opencode": "anthropic/claude-haiku-5-5",
+        "cursor": "claude-haiku-5-5-thinking-{effort}"
+      }
+    },
+    {
+      "id": "gpt-6-astra",
+      "display": "GPT-6 Astra",
+      "provider": "openai",
+      "family": "gpt-6",
+      "released": "2026-09-03",
+      "status": "active",
+      "source": "https://developers.openai.com/api/docs/models",
+      "aliases": [],
+      "floating_aliases": [],
+      "snapshots": [],
+      "efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max",
+        "ultra"
+      ],
+      "launch": {
+        "codex": "gpt-6-astra",
+        "opencode": "openai/gpt-6-astra"
+      },
+      "notes": "ultra (Codex only) runs subagents on separate parts of a task in parallel; it is listed after max in Codex's model catalog (rust-v0.163.0), but the docs give no order, so it is its own unordered level."
+    },
+    {
+      "id": "gpt-6.1-sol",
+      "display": "GPT-6.1 Sol",
+      "provider": "openai",
+      "family": "gpt-6",
+      "released": "2026-09-29",
+      "status": "active",
+      "source": "https://developers.openai.com/api/docs/models",
+      "aliases": [],
+      "floating_aliases": [],
+      "snapshots": [],
+      "efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max",
+        "ultra"
+      ],
+      "launch": {
+        "codex": "gpt-6.1-sol",
+        "opencode": "openai/gpt-6.1-sol"
+      },
+      "notes": "ultra (Codex only) runs subagents on separate parts of a task in parallel; it is listed after max in Codex's model catalog (rust-v0.163.0), but the docs give no order, so it is its own unordered level.",
+      "default_effort": "medium"
+    },
+    {
+      "id": "gpt-6-luna",
+      "display": "GPT-6 Luna",
+      "provider": "openai",
+      "family": "gpt-6",
+      "released": "2026-09-22",
+      "status": "active",
+      "source": "https://developers.openai.com/api/docs/models",
+      "aliases": [],
+      "floating_aliases": [],
+      "snapshots": [],
+      "efforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "launch": {
+        "codex": "gpt-6-luna",
+        "opencode": "openai/gpt-6-luna"
+      },
+      "default_effort": "medium"
+    },
+    {
+      "id": "gpt-6-sol",
+      "display": "GPT-6 Sol",
+      "provider": "openai",
+      "family": "gpt-6",
+      "released": "2026-09-22",
+      "status": "active",
+      "source": "https://developers.openai.com/api/docs/models/gpt-6-sol",
+      "aliases": [],
+      "floating_aliases": [],
+      "snapshots": [],
+      "efforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "default_effort": "medium",
+      "launch": {
+        "opencode": "openai/gpt-6-sol"
+      },
+      "notes": "Superseded by GPT-6.1 Sol (the model page: \"See GPT-6.1 Sol for the newer Sol model\") but still listed. Unlike GPT-6.1 Sol it has effort none."
+    },
+    {
+      "id": "gpt-5.6-sol",
+      "display": "GPT-5.6 Sol",
+      "provider": "openai",
+      "family": "gpt-5",
+      "released": "2026-07-09",
+      "status": "active",
+      "source": "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
+      "aliases": [],
+      "floating_aliases": [
+        {
+          "alias": "gpt-5.6",
+          "from": "2026-07-09"
+        }
+      ],
+      "snapshots": [],
+      "efforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "default_effort": "medium",
+      "launch": {
+        "cursor": "gpt-5.6-sol-{effort}",
+        "opencode": "openai/gpt-5.6-sol"
+      },
+      "notes": "The API alias gpt-5.6 routes to GPT-5.6 Sol (model page). Released with Terra and Luna as the GPT-5.6 family (changelog, Jul 9, 2026)."
+    },
+    {
+      "id": "gpt-5.6-terra",
+      "display": "GPT-5.6 Terra",
+      "provider": "openai",
+      "family": "gpt-5",
+      "released": "2026-07-09",
+      "status": "active",
+      "source": "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
+      "aliases": [],
+      "floating_aliases": [],
+      "snapshots": [],
+      "efforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "default_effort": "medium",
+      "launch": {
+        "cursor": "gpt-5.6-terra-{effort}",
+        "opencode": "openai/gpt-5.6-terra"
+      }
+    },
+    {
+      "id": "gpt-5.6-luna",
+      "display": "GPT-5.6 Luna",
+      "provider": "openai",
+      "family": "gpt-5",
+      "released": "2026-07-09",
+      "status": "active",
+      "source": "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
+      "aliases": [],
+      "floating_aliases": [],
+      "snapshots": [],
+      "efforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "default_effort": "medium",
+      "launch": {
+        "cursor": "gpt-5.6-luna-{effort}",
+        "opencode": "openai/gpt-5.6-luna"
+      }
+    },
+    {
+      "id": "gpt-5.5",
+      "display": "GPT-5.5",
+      "provider": "openai",
+      "family": "gpt-5",
+      "released": "2026-04-24",
+      "status": "active",
+      "source": "https://developers.openai.com/api/docs/models/gpt-5.5",
+      "aliases": [],
+      "floating_aliases": [],
+      "snapshots": [
+        "gpt-5.5-2026-04-23"
+      ],
+      "efforts": [
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "default_effort": "medium",
+      "launch": {
+        "cursor": "gpt-5.5-{effort}",
+        "opencode": "openai/gpt-5.5"
+      },
+      "launch_effort_words": {
+        "cursor": {
+          "xhigh": "extra-high"
+        }
+      },
+      "notes": "Released Apr 24, 2026 (changelog); its snapshot is dated 2026-04-23. Cursor names its Extra High level gpt-5.5-extra-high."
+    },
+    {
+      "id": "gemini-4-argon",
+      "display": "Gemini 4 Argon",
+      "provider": "google",
+      "family": "gemini-4",
+      "released": "2026-10-13",
+      "status": "active",
+      "source": "https://ai.google.dev/gemini-api/docs/models",
+      "aliases": [],
+      "floating_aliases": [],
+      "snapshots": [],
+      "efforts": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "default_effort": "medium",
+      "launch": {
+        "opencode": "google/gemini-4-argon",
+        "cursor": "gemini-4-argon-{effort}",
+        "antigravity": "gemini-4-argon-{effort}"
+      }
+    },
+    {
+      "id": "gemini-3.8-flash",
+      "display": "Gemini 3.8 Flash",
+      "provider": "google",
+      "family": "gemini-3",
+      "released": "2026-09-02",
+      "status": "active",
+      "source": "https://ai.google.dev/gemini-api/docs/models",
+      "aliases": [],
+      "floating_aliases": [],
+      "snapshots": [],
+      "efforts": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "default_effort": "medium",
+      "launch": {
+        "gemini-cli": "gemini-3.8-flash",
+        "opencode": "google/gemini-3.8-flash",
+        "cursor": "gemini-3.8-flash-{effort}",
+        "antigravity": "gemini-3.8-flash-{effort}"
+      }
+    },
+    {
+      "id": "gemini-3.1-pro-preview",
+      "display": "Gemini 3.1 Pro (Preview)",
+      "provider": "google",
+      "family": "gemini-3",
+      "released": "2026-02-19",
+      "status": "preview",
+      "source": "https://ai.google.dev/gemini-api/docs/models",
+      "aliases": [],
+      "floating_aliases": [],
+      "snapshots": [],
+      "efforts": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "default_effort": "high",
+      "launch": {
+        "gemini-cli": "gemini-3.1-pro-preview",
+        "opencode": "google/gemini-3.1-pro-preview"
+      }
+    },
+    {
+      "id": "grok-4.7",
+      "display": "Grok 4.7",
+      "provider": "xai",
+      "family": "grok-4",
+      "released": "2026-09-21",
+      "status": "active",
+      "source": "https://docs.x.ai/developers/models/grok-4.7",
+      "aliases": [],
+      "floating_aliases": [],
+      "snapshots": [],
+      "efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "default_effort": "high",
+      "launch": {
+        "cursor": "grok-4.7-{effort}",
+        "opencode": "xai/grok-4.7"
+      },
+      "notes": "Release date from the announcement (x.ai/news/grok-4-7). Reasoning can't be turned off. Grok 4.7 Fast is only in Cursor and Grok Build (xAI pricing page); fast mode is recorded per seat, not part of the identity."
+    },
+    {
+      "id": "grok-4.6",
+      "display": "Grok 4.6",
+      "provider": "xai",
+      "family": "grok-4",
+      "released": "2026-08-12",
+      "status": "active",
+      "source": "https://docs.x.ai/developers/models/grok-4.6",
+      "aliases": [],
+      "floating_aliases": [],
+      "snapshots": [],
+      "efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh"
+      ],
+      "default_effort": "high",
+      "launch": {
+        "cursor": "cursor-grok-4.6-{effort}",
+        "opencode": "xai/grok-4.6"
+      },
+      "notes": "Release date from the announcement (x.ai/news/grok-4-6). Cursor names it cursor-grok-4.6-<level> and lists it under Cursor (\"jointly trained by Cursor and SpaceXAI\"); counted as the same model as xAI's grok-4.6."
+    },
+    {
+      "id": "grok-4.5",
+      "display": "Grok 4.5",
+      "provider": "xai",
+      "family": "grok-4",
+      "released": "2026-07-16",
+      "status": "active",
+      "source": "https://docs.x.ai/developers/models/grok-4.5",
+      "aliases": [
+        "grok-4.5-latest"
+      ],
+      "floating_aliases": [],
+      "snapshots": [],
+      "efforts": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "default_effort": "high",
+      "launch": {
+        "cursor": "cursor-grok-4.5-{effort}",
+        "opencode": "xai/grok-4.5"
+      },
+      "notes": "xAI's model page lists xhigh, but its reasoning guide says xhigh is treated as high on grok-4.5, so only low, medium and high are listed (Cursor offers the same three). Cursor names it cursor-grok-4.5-<level>."
+    },
+    {
+      "id": "kimi-k3",
+      "display": "Kimi K3",
+      "provider": "moonshot",
+      "family": "kimi",
+      "status": "active",
+      "source": "https://platform.kimi.ai/docs/guide/kimi-k3-quickstart",
+      "aliases": [],
+      "floating_aliases": [],
+      "snapshots": [],
+      "efforts": [
+        "low",
+        "high",
+        "max"
+      ],
+      "default_effort": "max",
+      "launch": {
+        "cursor": "kimi-k3-{effort}",
+        "opencode": "moonshotai/kimi-k3"
+      },
+      "notes": "No official page gives a release date (the K3 blog post is undated and Moonshot's docs have none), so it is left out. Thinking is always on; reasoning_effort low, high or max (default max)."
+    },
+    {
+      "id": "glm-5.3",
+      "display": "GLM-5.3",
+      "provider": "zai",
+      "family": "glm-5",
+      "released": "2026-08-18",
+      "status": "active",
+      "source": "https://docs.z.ai/guides/llm/glm-5.3",
+      "aliases": [
+        "glm-5p3"
+      ],
+      "floating_aliases": [],
+      "snapshots": [],
+      "efforts": [
+        "low",
+        "high",
+        "max"
+      ],
+      "default_effort": "max",
+      "launch": {
+        "opencode": "zai/glm-5.3"
+      },
+      "notes": "Release date from Z.ai's release notes. Reasoning can't be turned off; reasoning_effort low, high or max (default max). glm-5p3 is Cursor's id. Not in `cursor-agent models` (2026.10.19), so no Cursor CLI launch string."
+    },
+    {
+      "id": "glm-5.3-flash",
+      "display": "GLM-5.3-Flash",
+      "provider": "zai",
+      "family": "glm-5",
+      "released": "2026-08-26",
+      "status": "active",
+      "source": "https://docs.z.ai/guides/llm/glm-5.3-flash",
+      "aliases": [
+        "glm-5p3-flash"
+      ],
+      "floating_aliases": [],
+      "snapshots": [],
+      "efforts": [
+        "low",
+        "high",
+        "max"
+      ],
+      "default_effort": "max",
+      "launch": {
+        "opencode": "zai/glm-5.3-flash"
+      },
+      "notes": "Levels from the official model card (huggingface.co/zai-org/GLM-5.3-Flash); Z.ai's guide says its parameters match GLM-5.3. glm-5p3-flash is Cursor's id; OpenCode Zen's glm-5.3-flash-free is a hosted free variant of it."
+    },
+    {
+      "id": "deepseek-v4.1-flash",
+      "display": "DeepSeek-V4.1-Flash",
+      "provider": "deepseek",
+      "family": "deepseek-v4",
+      "released": "2026-09-10",
+      "status": "active",
+      "source": "https://api-docs.deepseek.com/news/news260910",
+      "aliases": [],
+      "floating_aliases": [
+        {
+          "alias": "deepseek-flash",
+          "from": "2026-09-10"
+        }
+      ],
+      "snapshots": [],
+      "efforts": [
+        "low",
+        "high",
+        "max"
+      ],
+      "default_effort": "high",
+      "launch": {
+        "opencode": "opencode/deepseek-v4.1-flash"
+      },
+      "notes": "The API id deepseek-flash routes to the current Flash model (a floating alias here); updated as DeepSeek-V4.1-Flash-1017 on 2026-10-17 under the same id. The API can also turn thinking off; no harness here offers that. OpenCode launch string is OpenCode Zen's pinned id."
+    },
+    {
+      "id": "composer-2.5",
+      "display": "Composer 2.5",
+      "provider": "cursor",
+      "family": "composer",
+      "released": "2026-05-18",
+      "status": "active",
+      "source": "https://cursor.com/docs/models",
+      "aliases": [],
+      "floating_aliases": [],
+      "snapshots": [],
+      "efforts": [],
+      "launch": {
+        "cursor": "composer-2.5"
+      },
+      "notes": "Cursor's own model, only available in Cursor; it has no effort setting. Release date from Cursor's blog (cursor.com/blog/composer-2-5)."
+    },
+    {
+      "id": "muse-wonder-1.0",
+      "display": "Muse Wonder",
+      "provider": "meta",
+      "family": "muse-wonder",
+      "released": "2026-10-12",
+      "status": "preview",
+      "source": "https://dev.meta.ai/docs/models",
+      "aliases": [],
+      "floating_aliases": [],
+      "snapshots": [],
+      "efforts": [
+        "minimal",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "launch": {
+        "cursor": "muse-wonder-1.0-{effort}",
+        "opencode": "meta/muse-wonder-1.0"
+      },
+      "notes": "Preview (Meta's models page). Release date from Meta's announcement (research.meta.ai/blog/introducing-muse-wonder). No default level is documented: omitted, the model reasons \"at a model-determined level\". Muse Wonder Full is only in Muse Code."
+    },
+    {
+      "id": "muse-spark-1.3",
+      "display": "Muse Spark 1.3",
+      "provider": "meta",
+      "family": "muse-spark",
+      "released": "2026-09-02",
+      "status": "active",
+      "source": "https://dev.meta.ai/docs/models",
+      "aliases": [],
+      "floating_aliases": [],
+      "snapshots": [],
+      "efforts": [
+        "minimal",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "launch": {
+        "cursor": "muse-spark-1.3-{effort}",
+        "opencode": "meta/muse-spark-1.3"
+      },
+      "notes": "Release date from Meta's announcement (research.meta.ai/blog/introducing-muse-spark-1-3). No default level is documented. muse-spark-1.3-contributor (cheaper, content may be used for training, no max) is a separate id and isn't listed."
+    }
+  ]
+}

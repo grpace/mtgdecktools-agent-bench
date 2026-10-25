@@ -1,0 +1,6 @@
+{
+  "$comment": "Admin bounties for contributor points (packages/hub/src/points.ts, docs/COMMUNITY.md \"Points and the Contributors Leaderboard\"). Computed bounties (first_games, provisional = Needs Games, new_set) come from the data; list a kind under `disable` to switch it off. Hand-set bounties match seats by set, model, harness, effort and table kind (all optional), from `from` to `until` (ISO dates, by when the Hub accepted the table), and add `bonus` points (at most 100) per seat that qualifies for bounties (finished, at least 2 rated games, harness logs). Changing this file rescores history at the next recompute (`npm run hub -- points recompute`).",
+  "version": 1,
+  "disable": [],
+  "bounties": []
+}

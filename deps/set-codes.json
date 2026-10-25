@@ -1,0 +1,39 @@
+{
+  "_comment": "Set-code mapping between phase-rs (the repo's set code: sets/<CODE>/, `--set <code>`, analysis/models/<CODE>.json) and each external source. Read by scripts/deps.py, scripts/build-17lands-ratings.py, analysis/draft_eval/config.py and scripts/export-mtgdt-primers.ts. Edit this file, never the scripts, when a code differs. See docs/UPGRADING.md.",
+  "17lands": {
+    "_rule": "The 17Lands code is the phase-rs code upper-cased unless `codes` says otherwise. Formats are tried in `formats` order: PremierDraft, then TradDraft only when a set has no PremierDraft file at all.",
+    "formats": ["PremierDraft", "TradDraft"],
+    "codes": {
+      "SPM": {
+        "17lands": null,
+        "reason": "Arena released Marvel's Spider-Man as Through the Omenpaths (17Lands code OM1) with different card names, and 17Lands has only PickTwoDraft data for it. Ratings can't be matched to the phase-rs card names, so SPM has no human stats."
+      }
+    },
+    "notes": {
+      "KHM": "17Lands has game data only (no draft data file), in the older format without main_colors: card win rates only (no ATA/ALSA, archetype ratings, deck norms or expert pick model).",
+      "KTK": "The 17Lands data is from the 2024 Arena release of Khans of Tarkir. Card names match the phase-rs KTK booster; Arena collation differs.",
+      "AFR": "Older file format (January 2024 re-export): draft skill buckets are match-based, so no expert pick model.",
+      "MID": "Data from 2021, re-exported by 17Lands in January 2024 (older format: no expert pick model).",
+      "STX": "Older file format without main_colors and with match-based draft skill buckets: card win rates and ATA only.",
+      "VOW": "Data from 2021, re-exported by 17Lands in January 2024 (older format: no expert pick model)."
+    },
+    "only_on_17lands": {
+      "_comment": "Codes with public 17Lands files but no phase-rs booster data (Arena-only products). `deps check` knows them so it doesn't report them as new sets.",
+      "HBG": "Alchemy Horizons: Baldur's Gate (Arena-only; the paper CLB booster is a different card pool).",
+      "OM1": "Through the Omenpaths (Arena version of SPM with different card names; PickTwoDraft only).",
+      "PIO": "Pioneer Masters (Arena-only).",
+      "SIR": "Shadows over Innistrad Remastered (Arena-only)."
+    },
+    "not_used": {
+      "_comment": "Kinds of 17Lands files we deliberately don't use.",
+      "alchemy": "Alchemy Y-sets (Y22SNC, Y24…): digital-only rebalanced cards with no phase-rs booster data; none had public files when probed on 2026-10-21.",
+      "other_formats": "QuickDraft, PickTwoDraft, Sealed and Cube files are ignored (bot or two-pick drafts; different pick behavior)."
+    }
+  },
+  "mtgdecktools": {
+    "_rule": "MTG Deck Tools set-context file names (Magic-Deck-Builder src/setContexts/<NAME>.ts) are the phase-rs code upper-cased unless `codes` maps them.",
+    "codes": {
+      "ATLA": "TLA"
+    }
+  }
+}

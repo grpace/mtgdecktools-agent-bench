@@ -1,0 +1,38 @@
+name: Card or rules issue (engine)
+description: A card or rule behaves wrong in phase-rs during an event.
+labels: [engine]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Rules bugs live in the phase-rs engine. Please also report them upstream at https://github.com/phase-rs/phase/issues and link that issue here.
+        If the problem is how the Director labels or presents a decision (not the rules themselves), use the bug report form.
+  - type: input
+    id: card
+    attributes:
+      label: Card(s)
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what the rules say should happen
+    validations:
+      required: true
+  - type: input
+    id: event
+    attributes:
+      label: Event id, game and turn
+      description: e.g. 2026-10-21-22-41-19-fra-f519, game 2, turn 7. A report_rules_issue from an agent is fine to quote.
+  - type: input
+    id: engine
+    attributes:
+      label: Engine build
+      description: server_version and digest from engine/phase.lock.json (or event_start.provenance.engine in the log).
+    validations:
+      required: true
+  - type: input
+    id: upstream
+    attributes:
+      label: Upstream issue
+      description: Link to the phase-rs issue, if filed.

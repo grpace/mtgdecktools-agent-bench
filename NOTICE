@@ -1,0 +1,77 @@
+MTG Deck Tools Agent Benchmark
+Copyright 2026 MTG Deck Tools
+
+The code in this repository is licensed under the Apache License, Version 2.0
+(see LICENSE), except where a file or directory says otherwise. The items
+below are third-party components or data with their own terms, or project
+content that the Apache License does not cover.
+
+-------------------------------------------------------------------------------
+phase-rs rules engine
+-------------------------------------------------------------------------------
+The rules engine is phase-rs (https://github.com/phase-rs/phase), licensed
+by its authors under MIT OR Apache-2.0. It isn't included in this repository.
+The Director talks to the unmodified upstream container image
+ghcr.io/phase-rs/phase-server, pinned by digest in engine/phase.lock.json.
+
+-------------------------------------------------------------------------------
+Card data
+-------------------------------------------------------------------------------
+Card text and booster data (card-data.json, draft-pools.json) are produced
+by phase-rs from MTGJSON data. They're downloaded at runtime and not stored
+in this repository. Card names and rules text are property of Wizards of the
+Coast. This repository contains no card images; the static report pages load
+card images from Scryfall (https://scryfall.com) in the viewer's browser.
+
+-------------------------------------------------------------------------------
+17Lands data
+-------------------------------------------------------------------------------
+sets/*/17lands.json, sets/*/17lands-archetypes.json, sets/*/ratings.tsv and
+the other per-set files in sets/ built by scripts/build-17lands-ratings.py or
+analysis/ (e.g. deck norms), plus analysis/models/ and analysis/results/,
+are derived from the 17Lands public datasets
+(https://www.17lands.com/public_datasets). 17Lands licenses them under
+Creative Commons Attribution 4.0 International (CC BY 4.0,
+https://creativecommons.org/licenses/by/4.0/) unless otherwise noted. Data
+from 17Lands (17lands.com). The files here are aggregates, modified from the
+originals, and are not produced or endorsed by 17Lands. See sets/README.md.
+The open dataset's human_reference table (docs/OPEN-DATA.md) redistributes
+the same per-card aggregates under the same license and credit.
+
+-------------------------------------------------------------------------------
+Open dataset (benchmark data)
+-------------------------------------------------------------------------------
+The open dataset the Hub publishes (event logs and tables under /data/open/,
+the nightly snapshot zips; docs/OPEN-DATA.md) is licensed under Creative
+Commons Attribution 4.0 International (CC BY 4.0,
+https://creativecommons.org/licenses/by/4.0/). Attribution: "MTG Deck Tools
+Agent Bench". It is not covered by the Apache License. The one exception is
+its human_reference table, which is 17Lands data (below): data from 17Lands
+(17lands.com), CC BY 4.0, per-card aggregates derived by this project from
+the 17Lands public datasets, not produced or endorsed by 17Lands. Card names
+and rules text in the event logs are property of Wizards of the Coast (below).
+
+-------------------------------------------------------------------------------
+MTG Deck Tools Set Contexts
+-------------------------------------------------------------------------------
+The Set Contexts (sets/*/primer.md, and the copies the Director fetches from
+https://www.mtgdecktools.com/agent-bench/set-contexts/) are written by
+MTG Deck Tools and dedicated to the public domain under CC0 1.0 Universal
+(https://creativecommons.org/publicdomain/zero/1.0/): anyone may copy, modify,
+redistribute and use them for any purpose, without asking permission and
+without attribution. They are not covered by the Apache License.
+
+-------------------------------------------------------------------------------
+Wizards of the Coast Fan Content Policy
+-------------------------------------------------------------------------------
+MTG Deck Tools Agent Benchmark is unofficial Fan Content permitted under the
+Fan Content Policy. Not approved/endorsed by Wizards. Portions of the
+materials used are property of Wizards of the Coast. (c) Wizards of the
+Coast LLC.
+
+-------------------------------------------------------------------------------
+npm dependencies
+-------------------------------------------------------------------------------
+Dependencies installed by npm (for example @modelcontextprotocol/sdk, ws,
+zod and tsx) are distributed under their own licenses. See each package in
+node_modules/.

@@ -1,0 +1,206 @@
+# CI: typecheck + unit tests on every push and pull request; the integration job (pinned phase-server,
+# a scripted smoke event, the Hub end-to-end test against Postgres) and the image job (build the Director/Hub
+# image from the real context, check its files, boot it as deploy/compose.yaml runs it) on pull requests and
+# main only, to keep Actions minutes modest while the repo is private. No LLM, no secrets, no deploys.
+name: CI
+
+# DISABLED while the repo is private (Actions minutes): only a manual run starts it. Meanwhile CI is
+# scripts/ci-local.sh (the same jobs). Re-enable at public launch: see docs/RELEASING.md ("Going public"):
+# uncomment push and pull_request below.
+# When enabled, only prose no test or build reads is skipped. Tests read prompts/*.md (the comparability hash),
+# sets/*/primer.md, docs/OPEN-DATA.md, docs/notes/ and docs/METHODOLOGY.md (hashed into every export and shipped in
+# the image), and `deps -- verify` covers analysis/, so a change to any of them runs CI.
+on:
+  # push:
+  #   branches-ignore: ['dependabot/**'] # tested by their pull request
+  #   paths-ignore: ['README.md', 'STATUS.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'CODE_OF_CONDUCT.md', 'LICENSE', 'NOTICE', 'docs/spikes/**', 'docs/LAUNCH-CHECKLIST.md']
+  # pull_request:
+  #   paths-ignore: ['README.md', 'STATUS.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'CODE_OF_CONDUCT.md', 'LICENSE', 'NOTICE', 'docs/spikes/**', 'docs/LAUNCH-CHECKLIST.md']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Typecheck and unit tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      phase_image: ${{ steps.lock.outputs.phase_image }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Pinned engine image (engine/phase.lock.json)
+        id: lock
+        run: echo "phase_image=$(node -p "const l=require('./engine/phase.lock.json'); l.image + '@' + l.digest")" >> "$GITHUB_OUTPUT"
+      - name: Compose files default to the pinned engine
+        run: |
+          digest="$(node -p "require('./engine/phase.lock.json').digest")"
+          for f in deploy/compose.yaml deploy/compose.local.yaml; do
+            grep -q "$digest" "$f" || { echo "::error file=$f::PHASE_IMAGE default is not the digest in engine/phase.lock.json"; exit 1; }
+          done
+      - name: Package versions match the repository version
+        run: |
+          node -e '
+            const root = require("./package.json").version;
+            const bad = ["packages/director", "packages/hub", "packages/registry", "packages/site", "scripts/bench"].map((p) => [p, require(`./${p}/package.json`).version]).filter(([, v]) => v !== root);
+            if (bad.length) { console.error(`::error::versions differ from ${root}: ${JSON.stringify(bad)}`); process.exit(1); }'
+      - run: npm run typecheck
+      # Model/harness registry: JSON Schema, unique names across models, resolver unit tests.
+      - run: npm test -w @mtgdt/registry
+      - run: npm test -w @mtgdt/director
+      - run: npm test -w @mtgdt/site
+      # Without a finished run the integrity tests skip; the integration job runs them against a smoke event.
+      - run: npm test -w @mtgdt/hub
+      - run: npm test --prefix scripts/bench
+      - name: CLI package builds and runs on plain node (mtgdt-bench)
+        run: |
+          node scripts/bench/build.mjs
+          node scripts/bench/dist/cli.js --version
+          node scripts/bench/dist/cli.js prompt setup > /dev/null
+          (cd scripts/bench && npm pack --dry-run --json --ignore-scripts | node -e 'const f=JSON.parse(require("fs").readFileSync(0,"utf8"))[0].files.map((x)=>x.path); for (const want of ["dist/cli.js","dist/random-agent.mjs","dist/prompts/join.md","dist/prompts/setup.md","dist/engine/phase.lock.json"]) if (!f.includes(want)) { console.error("missing " + want); process.exit(1); }')
+      - name: Derived data matches deps/manifest.json (npm run deps -- verify)
+        run: |
+          python3 -I -m py_compile scripts/deps.py scripts/build-17lands-ratings.py scripts/card_overrides.py
+          npm run deps -- verify
+      - name: Card overrides unit tests
+        run: python3 -I scripts/test_card_overrides.py
+      - name: Shell scripts parse
+        run: for f in scripts/*.sh scripts/bench/*.sh scripts/bench/test/*.sh deploy/*.sh packages/hub/test/*.sh; do [ -f "$f" ] && bash -n "$f"; done
+      - name: npm audit (production dependencies)
+        # Fails on real high/critical findings; retries and only warns when the npm audit service itself is down.
+        run: |
+          for attempt in 1 2 3; do
+            if npm audit --omit=dev --audit-level=high --json > audit.json 2> audit.err; then echo "audit clean"; exit 0; fi
+            if node -e "const r=require('./audit.json'); process.exit(r.metadata && r.metadata.vulnerabilities ? 0 : 1)" 2>/dev/null; then
+              node -e "const v=require('./audit.json').metadata.vulnerabilities; console.log(v); process.exit((v.high||0)+(v.critical||0) > 0 ? 1 : 0)" && exit 0 || exit 1
+            fi
+            echo "npm audit service error (attempt $attempt):"; tail -3 audit.err; sleep $((attempt * 20))
+          done
+          echo "::warning::npm audit service unavailable after 3 attempts; skipping (not a vulnerability finding)"
+
+  integration:
+    name: Smoke event and Hub e2e
+    needs: checks
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    services:
+      phase:
+        image: ${{ needs.checks.outputs.phase_image }}
+        ports: ['9374:9374']
+      postgres:
+        # The digest deploy/compose.yaml pins for hub-db.
+        image: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+        env:
+          POSTGRES_USER: hub
+          POSTGRES_PASSWORD: hub
+          POSTGRES_DB: hub
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U hub -d hub" --health-interval 5s --health-timeout 3s --health-retries 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Engine card data from the phase-server container
+        env:
+          PHASE_CONTAINER: ${{ job.services.phase.id }}
+        run: |
+          mkdir -p data
+          for _ in $(seq 1 120); do
+            docker exec "$PHASE_CONTAINER" sh -c 'test -s /var/lib/phase-server/draft-pools.json && test -s /var/lib/phase-server/card-data.json' && break
+            sleep 2
+          done
+          docker cp "$PHASE_CONTAINER:/var/lib/phase-server/card-data.json" data/
+          docker cp "$PHASE_CONTAINER:/var/lib/phase-server/draft-pools.json" data/
+          ls -la data
+      - name: Card overrides (scripted games on throwaway phase-servers; docs/CARD-OVERRIDES.md)
+        run: CONTAINER_ENGINE=docker npm run overrides -- test
+      - name: Lobby end to end, started in the background (3 contributors, 8 scripted seats, a Swiss event, Hub checks)
+        run: |
+          mkdir -p tmp
+          nohup packages/director/test/lobby-e2e.sh ws://127.0.0.1:9374/ws data 8970 > tmp/lobby-e2e.out 2>&1 &
+          echo $! > tmp/lobby-e2e.pid
+      - name: Smoke event (eight scripted agents, draft → build → 3-round Swiss, best of 3 with sideboarding)
+        id: smoke
+        run: |
+          set -o pipefail
+          mkdir -p tmp
+          scripts/smoke-event.sh ws://127.0.0.1:9374/ws data fra 8790 none | tee tmp/smoke.out
+          grep -q 'options without a readable label=0' tmp/smoke.out
+          echo "run=$(realpath "$(sed -n 's/^SMOKE OK: //p' tmp/smoke.out)")" >> "$GITHUB_OUTPUT"
+      - name: Hub unit tests with a database and the smoke run
+        env:
+          HUB_TEST_RUN: ${{ steps.smoke.outputs.run }}
+          # A separate database: these tests drop and recreate its schema; the e2e below uses "hub".
+          HUB_TEST_DATABASE_URL: postgres://hub:hub@127.0.0.1:5432/hubtest
+        run: |
+          node --input-type=module -e "import postgres from 'postgres'; const sql = postgres('postgres://hub:hub@127.0.0.1:5432/hub'); await sql.unsafe('create database hubtest'); await sql.end();"
+          npm test -w @mtgdt/hub
+      - name: Hub end-to-end (submissions, review, export, tampering, takedown)
+        env:
+          HUB_E2E_RUN: ${{ steps.smoke.outputs.run }}
+          HUB_E2E_DATABASE_URL: postgres://hub:hub@127.0.0.1:5432/hub
+        run: bash packages/hub/test/e2e.sh
+      - name: Lobby end-to-end result
+        run: |
+          pid="$(cat tmp/lobby-e2e.pid)"
+          for _ in $(seq 1 900); do kill -0 "$pid" 2>/dev/null || break; sleep 1; done
+          cat tmp/lobby-e2e.out
+          grep -q '^LOBBY E2E OK' tmp/lobby-e2e.out && grep -q 'every CLI confirmed its ready check' tmp/lobby-e2e.out
+      - name: Logs on failure
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: integration-logs
+          path: |
+            tmp/*.log
+            tmp/*.out
+            tmp/smoke-runs/
+            tmp/lobby-e2e/*.log
+            tmp/lobby-e2e.out
+          retention-days: 7
+          if-no-files-found: ignore
+
+  image:
+    name: Image builds and boots
+    # Runs next to the integration job (it needs nothing from the checks job), so it adds no wall time.
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      # docker build . (the .dockerignore allow-list applies), every file the code reads at run time is in the image,
+      # then deploy/compose.yaml up: Director and Hub healthy as this build, as uid 999, exports written.
+      - name: Build the image, check its files, boot the hosted stack from it (scripts/image-check.sh)
+        run: scripts/image-check.sh
+      - name: Logs on failure
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: image-check-logs
+          path: tmp/image-check/
+          retention-days: 7
+          if-no-files-found: ignore

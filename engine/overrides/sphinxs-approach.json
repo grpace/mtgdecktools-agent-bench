@@ -1,0 +1,828 @@
+{
+  "card": "Sphinx's Approach",
+  "title": "the four graveyard copies are never exiled and the search runs with any number of them",
+  "status": "active",
+  "kind": "parser",
+  "upstream_issue": null,
+  "marks_supported": true,
+  "applies_to": {
+    "server_version": "0.116.0",
+    "build_commit": "3f79456",
+    "card_data_sha256": "c4cfb737d0c0b1b135d3a353d71a95606f6ee147727bc11c3d16b82ece33da41",
+    "entry_sha256": "becc3b0d27518f06582de5ad53fad2c11a8ed288854566f6dd4ecbb340fde33a"
+  },
+  "rules": {
+    "oracle": "Draw two cards. Then you may exile this spell and four cards named Sphinx's Approach from your graveyard. If you do, search your library for a Sphinx creature card, put it onto the battlefield, then shuffle.\nA deck can have any number of cards named Sphinx's Approach.",
+    "cr": [
+      "608.2c",
+      "608.2d",
+      "101.3",
+      "701.23a",
+      "608.2n",
+      "400.7"
+    ],
+    "actual": "After drawing two, the caster is offered the \"may\" whatever their graveyard holds. Accepting exiles only the resolving spell: the four graveyard copies are never exiled (with six there, all six stay), and the Sphinx search still happens, even with zero to three other copies in the graveyard.",
+    "expected": "The option is one action: exile this spell and exactly four other cards named Sphinx's Approach from your graveyard (CR 608.2c, 608.2d). With fewer than four other copies in your graveyard the action can't be performed, so it isn't offered and there is no search (the Dragon's Approach ruling: you need to exile five cards, the resolving one plus four from your graveyard). With more than four, you choose exactly four. If you exile them, you search for a Sphinx creature card, put it onto the battlefield and shuffle (CR 701.23a; failing to find one is allowed, and the library is still shuffled). If you decline, only the two cards are drawn and the spell goes to the graveyard (CR 608.2n). Copies in an opponent's graveyard don't count.",
+    "diagnosis": "The parser splits \"exile this spell and four cards named Sphinx's Approach from your graveyard\" at \"and\": the first half becomes an optional ChangeZone SelfRef -> Exile, and the second half (\"four cards named Sphinx's Approach from your graveyard\") becomes Unimplemented{unrecognized_clause_head}, a no-op at runtime. Nothing ties the optional exile to the presence of four other copies, so the \"If you do\" search (gated on OptionalEffectPerformed) runs after exiling the spell alone.",
+    "suggested_fix": "In the imperative/zone-change parser, when an optional \"exile this spell and N cards named <name> from your graveyard\" splits at \"and\", keep the second conjunct as a ChangeZone Graveyard -> Exile over Typed{Card, controller You, [Named <name>, InZone Graveyard]} with multi_target {min N, max N} and target_choice_timing Resolution, chained as a ContinuationStep of the optional SelfRef exile; and gate the optional node with condition QuantityCheck(ObjectCount(<same filter>) >= N) so the \"may\" is only offered when the whole action can be performed. Alternatively, have optional_effect_is_infeasible (game/effects/mod.rs) treat an optional head whose ContinuationStep is a fixed-count ChangeZone with fewer legal candidates than its multi_target.min as infeasible, which would also fix the same latent gap for other \"you may exile N cards from your graveyard. If you do\" cards. Dragon's Approach (issue #8356) has the identical parse and the same fix.",
+    "override_note": "The patch gates the optional exile-this-spell node on QuantityCheck(ObjectCount(cards named Sphinx's Approach you own in your graveyard) >= 4), evaluated as that node resolves, so the resolving spell (still on the stack) isn't counted and only other copies in your own graveyard are. When the check fails the node and everything chained under it is skipped: no prompt, no exile, no search (CR 608.2c, 101.3). The Unimplemented clause becomes a mandatory ChangeZone Graveyard -> Exile of exactly four cards named Sphinx's Approach from your graveyard, chosen at resolution (multi_target 4..4), as the next step of the accepted exile; the existing OptionalEffectPerformed gates on the search and shuffle are unchanged. Exiling the spell and the four cards are applied one after the other within the same resolution, with no priority, state-based actions or triggers in between (CR 608.2c), so the order can't be observed. Once the spell is exiled it is no longer on the stack and isn't put into the graveyard (CR 608.2n)."
+  },
+  "patch": [
+    {
+      "op": "test",
+      "path": "/abilities/0/effect",
+      "value": {
+        "type": "Draw",
+        "count": {
+          "type": "Fixed",
+          "value": 2
+        },
+        "target": {
+          "type": "Controller"
+        }
+      }
+    },
+    {
+      "op": "test",
+      "path": "/abilities/0/sub_ability/effect/target",
+      "value": {
+        "type": "SelfRef"
+      }
+    },
+    {
+      "op": "test",
+      "path": "/abilities/0/sub_ability/effect/destination",
+      "value": "Exile"
+    },
+    {
+      "op": "test",
+      "path": "/abilities/0/sub_ability/optional",
+      "value": true
+    },
+    {
+      "op": "test",
+      "path": "/abilities/0/sub_ability/condition",
+      "value": null
+    },
+    {
+      "op": "replace",
+      "path": "/abilities/0/sub_ability/condition",
+      "value": {
+        "type": "QuantityCheck",
+        "lhs": {
+          "type": "Ref",
+          "qty": {
+            "type": "ObjectCount",
+            "filter": {
+              "type": "Typed",
+              "type_filters": [
+                "Card"
+              ],
+              "controller": "You",
+              "properties": [
+                {
+                  "type": "Named",
+                  "name": "Sphinx's Approach"
+                },
+                {
+                  "type": "InZone",
+                  "zone": "Graveyard"
+                }
+              ]
+            }
+          }
+        },
+        "comparator": "GE",
+        "rhs": {
+          "type": "Fixed",
+          "value": 4
+        }
+      }
+    },
+    {
+      "op": "test",
+      "path": "/abilities/0/sub_ability/sub_ability/effect",
+      "value": {
+        "type": "Unimplemented",
+        "name": "unrecognized_clause_head",
+        "description": "four cards named Sphinx's Approach from your graveyard"
+      }
+    },
+    {
+      "op": "replace",
+      "path": "/abilities/0/sub_ability/sub_ability/effect",
+      "value": {
+        "type": "ChangeZone",
+        "origin": "Graveyard",
+        "destination": "Exile",
+        "target": {
+          "type": "Typed",
+          "type_filters": [
+            "Card"
+          ],
+          "controller": "You",
+          "properties": [
+            {
+              "type": "Named",
+              "name": "Sphinx's Approach"
+            },
+            {
+              "type": "InZone",
+              "zone": "Graveyard"
+            }
+          ]
+        },
+        "owner_library": false,
+        "enter_transformed": false,
+        "enter_tapped": false,
+        "enters_attacking": false
+      }
+    },
+    {
+      "op": "add",
+      "path": "/abilities/0/sub_ability/sub_ability/multi_target",
+      "value": {
+        "min": 4,
+        "max": {
+          "type": "Fixed",
+          "value": 4
+        }
+      }
+    },
+    {
+      "op": "add",
+      "path": "/abilities/0/sub_ability/sub_ability/target_choice_timing",
+      "value": "Resolution"
+    },
+    {
+      "op": "test",
+      "path": "/abilities/0/sub_ability/sub_ability/sub_ability/effect/type",
+      "value": "SearchLibrary"
+    },
+    {
+      "op": "test",
+      "path": "/abilities/0/sub_ability/sub_ability/sub_ability/condition",
+      "value": {
+        "type": "EffectOutcome",
+        "signal": "OptionalEffectPerformed"
+      }
+    }
+  ],
+  "tests": [
+    {
+      "name": "exactly four other copies, accept: exile this spell and the four, a Sphinx enters (CR 608.2c, 701.23)",
+      "setup": [
+        {
+          "card": "Sphinx's Approach",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Sphinx's Approach",
+          "owner": 0,
+          "zone": "Graveyard",
+          "count": 4
+        },
+        {
+          "card": "Goliath Sphinx",
+          "owner": 0,
+          "zone": "Exile"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "debug": "MoveToZone",
+          "object": {
+            "card": "Goliath Sphinx",
+            "owner": 0,
+            "zone": "Exile"
+          },
+          "data": {
+            "to_zone": "Library",
+            "library_position": {
+              "type": "Bottom"
+            },
+            "simulate": false
+          }
+        },
+        {
+          "cast": {
+            "card": "Sphinx's Approach"
+          }
+        }
+      ],
+      "answers": {
+        "optional": [
+          true
+        ],
+        "select": [
+          {
+            "card": "Goliath Sphinx",
+            "owner": 0
+          }
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "hand": [
+            9,
+            null
+          ],
+          "library": [
+            31,
+            null
+          ],
+          "zones": [
+            {
+              "card": "Sphinx's Approach",
+              "owner": 0,
+              "zone": "Exile",
+              "count": 5
+            },
+            {
+              "card": "Sphinx's Approach",
+              "owner": 0,
+              "zone": "Graveyard",
+              "count": 0
+            },
+            {
+              "card": "Goliath Sphinx",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1
+            }
+          ]
+        },
+        "bug": {
+          "zones": [
+            {
+              "card": "Sphinx's Approach",
+              "owner": 0,
+              "zone": "Exile",
+              "count": 1
+            },
+            {
+              "card": "Sphinx's Approach",
+              "owner": 0,
+              "zone": "Graveyard",
+              "count": 4
+            },
+            {
+              "card": "Goliath Sphinx",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "six other copies, accept: exactly four of them are exiled with the spell",
+      "setup": [
+        {
+          "card": "Sphinx's Approach",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Sphinx's Approach",
+          "owner": 0,
+          "zone": "Graveyard",
+          "count": 6
+        },
+        {
+          "card": "Goliath Sphinx",
+          "owner": 0,
+          "zone": "Exile"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "debug": "MoveToZone",
+          "object": {
+            "card": "Goliath Sphinx",
+            "owner": 0,
+            "zone": "Exile"
+          },
+          "data": {
+            "to_zone": "Library",
+            "library_position": {
+              "type": "Bottom"
+            },
+            "simulate": false
+          }
+        },
+        {
+          "cast": {
+            "card": "Sphinx's Approach"
+          }
+        }
+      ],
+      "answers": {
+        "optional": [
+          true
+        ],
+        "select": [
+          {
+            "card": "Goliath Sphinx",
+            "owner": 0
+          }
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "hand": [
+            9,
+            null
+          ],
+          "library": [
+            31,
+            null
+          ],
+          "zones": [
+            {
+              "card": "Sphinx's Approach",
+              "owner": 0,
+              "zone": "Exile",
+              "count": 5
+            },
+            {
+              "card": "Sphinx's Approach",
+              "owner": 0,
+              "zone": "Graveyard",
+              "count": 2
+            },
+            {
+              "card": "Goliath Sphinx",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1
+            }
+          ]
+        },
+        "bug": {
+          "zones": [
+            {
+              "card": "Sphinx's Approach",
+              "owner": 0,
+              "zone": "Exile",
+              "count": 1
+            },
+            {
+              "card": "Sphinx's Approach",
+              "owner": 0,
+              "zone": "Graveyard",
+              "count": 6
+            },
+            {
+              "card": "Goliath Sphinx",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "three other copies: no option, nothing exiled, no search (CR 608.2c, ruling)",
+      "setup": [
+        {
+          "card": "Sphinx's Approach",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Sphinx's Approach",
+          "owner": 0,
+          "zone": "Graveyard",
+          "count": 3
+        },
+        {
+          "card": "Goliath Sphinx",
+          "owner": 0,
+          "zone": "Exile"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "debug": "MoveToZone",
+          "object": {
+            "card": "Goliath Sphinx",
+            "owner": 0,
+            "zone": "Exile"
+          },
+          "data": {
+            "to_zone": "Library",
+            "library_position": {
+              "type": "Bottom"
+            },
+            "simulate": false
+          }
+        },
+        {
+          "cast": {
+            "card": "Sphinx's Approach"
+          }
+        }
+      ],
+      "answers": {
+        "optional": [
+          true
+        ],
+        "select": [
+          {
+            "card": "Goliath Sphinx",
+            "owner": 0
+          }
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "hand": [
+            9,
+            null
+          ],
+          "library": [
+            32,
+            null
+          ],
+          "zones": [
+            {
+              "card": "Sphinx's Approach",
+              "owner": 0,
+              "zone": "Exile",
+              "count": 0
+            },
+            {
+              "card": "Sphinx's Approach",
+              "owner": 0,
+              "zone": "Graveyard",
+              "count": 4
+            },
+            {
+              "card": "Goliath Sphinx",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 0
+            }
+          ]
+        },
+        "bug": {
+          "zones": [
+            {
+              "card": "Sphinx's Approach",
+              "owner": 0,
+              "zone": "Exile",
+              "count": 1
+            },
+            {
+              "card": "Sphinx's Approach",
+              "owner": 0,
+              "zone": "Graveyard",
+              "count": 3
+            },
+            {
+              "card": "Goliath Sphinx",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "copies in an opponent's graveyard don't count (three of yours, two of theirs)",
+      "setup": [
+        {
+          "card": "Sphinx's Approach",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Sphinx's Approach",
+          "owner": 0,
+          "zone": "Graveyard",
+          "count": 3
+        },
+        {
+          "card": "Sphinx's Approach",
+          "owner": 1,
+          "zone": "Graveyard",
+          "count": 2
+        },
+        {
+          "card": "Goliath Sphinx",
+          "owner": 0,
+          "zone": "Exile"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "debug": "MoveToZone",
+          "object": {
+            "card": "Goliath Sphinx",
+            "owner": 0,
+            "zone": "Exile"
+          },
+          "data": {
+            "to_zone": "Library",
+            "library_position": {
+              "type": "Bottom"
+            },
+            "simulate": false
+          }
+        },
+        {
+          "cast": {
+            "card": "Sphinx's Approach"
+          }
+        }
+      ],
+      "answers": {
+        "optional": [
+          true
+        ],
+        "select": [
+          {
+            "card": "Goliath Sphinx",
+            "owner": 0
+          }
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "hand": [
+            9,
+            null
+          ],
+          "library": [
+            32,
+            null
+          ],
+          "zones": [
+            {
+              "card": "Sphinx's Approach",
+              "owner": 0,
+              "zone": "Exile",
+              "count": 0
+            },
+            {
+              "card": "Sphinx's Approach",
+              "owner": 0,
+              "zone": "Graveyard",
+              "count": 4
+            },
+            {
+              "card": "Sphinx's Approach",
+              "owner": 1,
+              "zone": "Graveyard",
+              "count": 2
+            },
+            {
+              "card": "Goliath Sphinx",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 0
+            }
+          ]
+        },
+        "bug": {
+          "zones": [
+            {
+              "card": "Sphinx's Approach",
+              "owner": 0,
+              "zone": "Exile",
+              "count": 1
+            },
+            {
+              "card": "Sphinx's Approach",
+              "owner": 0,
+              "zone": "Graveyard",
+              "count": 3
+            },
+            {
+              "card": "Goliath Sphinx",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "four other copies, decline: draw two only, the spell goes to the graveyard",
+      "setup": [
+        {
+          "card": "Sphinx's Approach",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Sphinx's Approach",
+          "owner": 0,
+          "zone": "Graveyard",
+          "count": 4
+        },
+        {
+          "card": "Goliath Sphinx",
+          "owner": 0,
+          "zone": "Exile"
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "debug": "MoveToZone",
+          "object": {
+            "card": "Goliath Sphinx",
+            "owner": 0,
+            "zone": "Exile"
+          },
+          "data": {
+            "to_zone": "Library",
+            "library_position": {
+              "type": "Bottom"
+            },
+            "simulate": false
+          }
+        },
+        {
+          "cast": {
+            "card": "Sphinx's Approach"
+          }
+        }
+      ],
+      "answers": {
+        "optional": [
+          false
+        ],
+        "select": [
+          {
+            "card": "Goliath Sphinx",
+            "owner": 0
+          }
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "hand": [
+            9,
+            null
+          ],
+          "library": [
+            32,
+            null
+          ],
+          "zones": [
+            {
+              "card": "Sphinx's Approach",
+              "owner": 0,
+              "zone": "Exile",
+              "count": 0
+            },
+            {
+              "card": "Sphinx's Approach",
+              "owner": 0,
+              "zone": "Graveyard",
+              "count": 5
+            },
+            {
+              "card": "Goliath Sphinx",
+              "owner": 0,
+              "zone": "Battlefield",
+              "count": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "four other copies, accept, no Sphinx in the library: the five are still exiled, nothing enters",
+      "setup": [
+        {
+          "card": "Sphinx's Approach",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Sphinx's Approach",
+          "owner": 0,
+          "zone": "Graveyard",
+          "count": 4
+        }
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "infinite_mana": [
+        0
+      ],
+      "steps": [
+        {
+          "cast": {
+            "card": "Sphinx's Approach"
+          }
+        }
+      ],
+      "answers": {
+        "optional": [
+          true
+        ],
+        "select": [
+          {
+            "card": "Goliath Sphinx",
+            "owner": 0
+          }
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "hand": [
+            9,
+            null
+          ],
+          "library": [
+            31,
+            null
+          ],
+          "zones": [
+            {
+              "card": "Sphinx's Approach",
+              "owner": 0,
+              "zone": "Exile",
+              "count": 5
+            },
+            {
+              "card": "Sphinx's Approach",
+              "owner": 0,
+              "zone": "Graveyard",
+              "count": 0
+            }
+          ]
+        },
+        "bug": {
+          "zones": [
+            {
+              "card": "Sphinx's Approach",
+              "owner": 0,
+              "zone": "Exile",
+              "count": 1
+            },
+            {
+              "card": "Sphinx's Approach",
+              "owner": 0,
+              "zone": "Graveyard",
+              "count": 4
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "history": [
+    {
+      "date": "2026-10-23",
+      "status": "active",
+      "note": "Written against Oracle text, the Dragon's Approach ruling and CR 608.2c/608.2d/701.23a/608.2n; tested on 0.116.0 (3f79456): upstream accepts the option with any number of copies, exiles only the spell and still searches; the override offers it only with four other copies and exiles exactly four of them."
+    }
+  ]
+}

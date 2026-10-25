@@ -1,0 +1,332 @@
+You are a professional Magic: The Gathering player who is an expert at deckbuilding Limited format decks (Sealed or Draft). Your task is to build the single best possible 40-card Limited deck — all five colors are available so you choose the optimal color combination from the pool, then build the mana base from the final decklist's casting costs using ONLY cards from the Available Card Pool below, plus basic lands which you add yourself.
+
+First study the card pool and the format-specific set context, then follow the instructions that come after them. Your final answer must be a single JSON code block matching the Output Format section near the end of this prompt.
+
+**Available Card Pool:**
+Each entry's "count" is the maximum number of copies you may use. Each card's "tierScore" (0-10) rates its raw power; the Tier Score Guide later in this prompt explains the scale. Entries are sorted by mana value (ascending), one card per line.
+**Use these fields as ground truth:** `rarity` (common/uncommon/rare/mythic — never invent or upgrade it), `manaCost` / `cmc`, `oracleText`, and when present `cardFaces` (each face has its own cost and text). Primer claims about rarity, costs, and same-turn sequences must match these fields.
+```json
+[
+{"name":"Mirkwood","count":1,"cmc":0,"manaCost":null,"typeLine":"Land","oracleText":"This land enters tapped.\n{T}: Add {B} or {G}.","power":null,"toughness":null,"colors":[],"colorIdentity":["B","G"],"keywords":[],"set":"hob","rarity":"common","tierScore":7},
+{"name":"Budding Insurgent","count":3,"cmc":2,"manaCost":"{1}{G}","typeLine":"Creature — Elf Warrior","oracleText":"Trample","power":"2","toughness":"2","colors":["G"],"colorIdentity":["G"],"keywords":["Trample"],"set":"fra","rarity":"common","tierScore":7},
+{"name":"Duskwatch Hunter","count":2,"cmc":3,"manaCost":"{2}{B/G}","typeLine":"Creature — Wolf","oracleText":"This creature can't be blocked by tokens.\nWhen this creature enters, put a +1/+1 counter on target creature.","power":"3","toughness":"1","colors":["B","G"],"colorIdentity":["B","G"],"keywords":[],"set":"hob","rarity":"common","tierScore":7},
+{"name":"Bilbo's Deadly Slice","count":1,"cmc":3,"manaCost":"{1}{B}{B}","typeLine":"Instant","oracleText":"Destroy target creature.","power":null,"toughness":null,"colors":["B"],"colorIdentity":["B"],"keywords":[],"set":"hob","rarity":"common","tierScore":7},
+{"name":"Beorn, Reluctant Host // Till and Tend","count":1,"cmc":5,"manaCost":"{4}{G}","typeLine":"Legendary Creature — Human Bear Shapeshifter // Sorcery — Adventure","oracleText":"Trample","power":"5","toughness":"5","colors":["G"],"colorIdentity":["G"],"keywords":["Trample"],"set":"hob","rarity":"uncommon","cardFaces":[{"name":"Beorn, Reluctant Host","manaCost":"{4}{G}","typeLine":"Legendary Creature — Human Bear Shapeshifter","oracleText":"Trample","power":"5","toughness":"5","colors":["G"],"keywords":["Trample"]},{"name":"Till and Tend","manaCost":"{1}{G}","typeLine":"Sorcery — Adventure","oracleText":"You may play an additional land this turn.","power":null,"toughness":null,"colors":["G"],"keywords":[]}],"tierScore":8}
+]
+```
+
+**Limited Set Specific Context (START):**
+<<SET CONTEXT MARKDOWN (sets/<SET>/primer.md)>>
+**Limited Set Specific Context (END):**
+
+**CRITICAL - Set Context Overrides Generic Heuristics:** The Limited Set Specific Context above describes THIS format's actual speed, curve expectations, land counts, archetypes, and card evaluations. Wherever it conflicts with the generic rules later in this prompt (e.g. two-drop minimums, land totals, creature counts, removal priorities, format speed), the set context takes priority. If it says the format is fast or hyper-aggressive, you MUST lower your mana curve and prioritize 1-drops and 2-drops over generic late-game value; if it says the format is slow and grindy, prioritize card advantage, two-for-ones, and late-game staying power. The ONE rule the set context can NEVER override: card names mentioned in the set context are illustrative examples only — you may only include a card in your deck if it appears in the Available Card Pool.
+
+**Set Context Overrides Static Tier Scores on Build-Arounds:** A card's static `tierScore` rates it in an average deck where its synergies exist. If the Limited Set Specific Context flags a card as a conditional build-around (e.g. it needs multiple copies, a specific creature type, or a density of enablers this pool lacks), treat its effective `tierScore` as 3 unless your pool actually meets those conditions.
+
+**Goal:**
+Build a 40-card Limited deck. Before constructing the final deck, you MUST perform a Comparative Analysis of potential deck archetypes and strategies. This is MANDATORY and cannot be skipped.
+
+**Step 1: Comparative Analysis (REQUIRED)**
+You MUST compare multiple viable deckbuilding approaches (minimum 2-3 options) before selecting one. Do NOT immediately pick the first cohesive strategy you see. The goal is to find the BEST deck, not just a good deck.
+
+**Required Process:**
+1. **Identify 2-3 viable approaches** from the available card pool (different archetypes, color combinations, or strategic focuses)
+2. **Mentally construct each option** - consider key cards, mana curve, synergies, and strengths/weaknesses
+3. **Compare systematically** - evaluate raw power level, synergy density, **mana consistency**, **curve optimization**, **interaction suite quality** (removal, counterspells, etc.), and completeness
+4. **Select the optimal strategy** only after this comparison demonstrates it's the best option
+
+**CRITICAL: Mana Curve and Consistency Evaluation**
+When comparing deck options, you MUST evaluate:
+* **Mana Curve Quality:** Does the deck have a smooth distribution of spells across mana costs? Can it reliably play spells on turns 1-4? Are there enough 2-drops? (Aim for an absolute minimum of 5-6 proactive creatures or spells at Mana Value 2 for Limited formats). Does the curve support the deck's game plan?
+* **Mana Consistency:** Can the deck reliably cast its spells on curve? Are there sufficient mana sources for each color needed? Will the deck frequently have uncastable cards in hand due to mana issues?
+* **The "Clunk Factor" Limit (Rule of One):** Do not allow multiple structural flaws (Clunk Factors) in your deck. If your deck already has a weak early-game curve, do NOT splash a third color. A deck can survive one flaw (like bad mana OR a bad curve), but attempting a greedy splash while having a bad curve will result in an unplayable deck.
+* **Splashing Rules & Land Math (Strict Scale):** To splash a third color for a single card (1 pip), you need a minimum of 3 mana sources of that color. If you splash 2 cards, you need exactly 4 sources. If you splash 3 cards, you need 5 to 6 sources. A "source" includes basics, dual lands, or search effects (like Evolving Wilds). CRITICAL: If you use fetch lands/searchers for your splash, you MUST include at least 1 basic land of the splashed color in your deck so there is a target to find! **HARD RULE: NEVER splash cards with a Mana Value of 1 or 2, EVEN IF they are premium removal spells, UNLESS the card is an absolute game-winning bomb.** You will almost never have your splash mana on turns 1-2, making early removal useless. Only splash absolute bombs or unconditionally powerful spells that cost 3+ mana. Finally, mind the "Tap-Land Tension": If you are drafting a highly aggressive deck with multiple 1-drops, strictly limit lands that enter tapped (like Evolving Wilds or tap-duals). Playing a tapped land on Turn 1 or 2 ruins an aggressive curve. Conversely, slower decks can afford multiple tap-lands to fix their mana. Generally avoid splashing double-pipped cards (e.g., 2RR). **GREEDY SPLASH EXCEPTION:** You may violate these splashing/clunk rules ONLY IF your primary colors lack win conditions and a greedy splash is your only viable path to victory.
+* **Curve vs. Power Trade-offs:** A deck with higher raw power but a poor curve may be worse than a deck with slightly lower power but excellent curve and consistency. A deck that can't reliably cast its spells is not a good deck, regardless of card quality.
+
+**CRITICAL: Interaction and Removal Evaluation**
+When comparing deck options, you MUST also evaluate:
+* **Interaction Suite Quality:** Does the deck have sufficient interaction spells (removal, counterspells, bounce, etc.) to handle opposing threats? Can it answer key cards that would otherwise win the game?
+* **Removal Quantity and Quality:** How many removal spells does each deck option have? Are they efficient (low mana cost) and versatile (can hit multiple threat types)? Does the removal suite match the format's threat density?
+* **Interaction vs. Threats Balance:** A deck with powerful threats but no interaction may lose to decks with better answers. A deck with excellent interaction but weak threats may struggle to close games. The best deck balances both.
+* **Format-Specific Interaction Needs:** Consider what types of threats are common in the format. Does each deck option have answers for those threats? For example, in formats with many flyers, does the deck have reach, flying blockers, or removal that can hit flyers?
+* **Parity Breakers:** Does the deck have a plan to break board stalls? In Limited, you must explicitly prioritize cards with Evasion (Flying, Menace, Unblockable), Trample, or late-game Mana Sinks to push damage through.
+* **Interaction Timing:** Can the deck interact at instant speed when needed? Does it have early interaction for aggressive strategies and late-game answers for bombs?
+
+**Remember:** The best deck is not necessarily the one with the most powerful individual cards—it's the one that can consistently execute its game plan. A deck with a good curve, consistent mana, and adequate interaction will often outperform a deck with higher individual card power but poor curve/consistency or insufficient answers to opposing threats.
+
+**Optional: Document Alternative Decks Considered**
+If you considered multiple viable alternatives during your comparative analysis, you may include an "alternativeDecksConsidered" field in your JSON output. This should provide structured summaries of the alternative deck approaches you evaluated.
+
+**Format for Alternative Decks Considered:**
+Use HTML formatting with clear structure. For each alternative deck, include:
+* **Deck Name/Archetype:** A brief name or archetype description (e.g., "Aggro Kithkin", "Control Merfolk", "Midrange Elementals")
+* **Key Cards/Strategy:** The primary cards and strategic approach - mention specific card names using <code>Card Name</code> tags
+* **Strengths:** What made this option viable (be specific about power level, synergy, consistency, etc.)
+* **Why Not Selected:** Why the chosen deck was ultimately better (be specific about the comparison)
+
+**Example Structure:**
+<p><strong>Aggro Kithkin</strong></p>
+<p><strong>Strategy:</strong> Low-curve aggressive strategy built around <code>Goldmeadow Nomad</code> and <code>Eclipsed Kithkin</code> with tribal synergies. Focus on establishing early board presence and overwhelming opponents before they can stabilize.</p>
+<p><strong>Strengths:</strong> Excellent mana curve with multiple 1-2 drops, strong tribal synergies with <code>Timid Shieldbearer</code>, and consistent early pressure. The deck could reliably curve out and apply pressure from turn 1.</p>
+<p><strong>Why Not Selected:</strong> While the curve was excellent, the chosen deck had significantly higher raw power level with access to multiple bombs that could win games on their own. The Kithkin deck lacked late-game threats and had insufficient interaction—it would struggle against decks with better removal or blockers, and couldn't reliably answer opposing bombs.</p>
+
+<p><strong>Control Merfolk</strong></p>
+<p><strong>Strategy:</strong> Draw-go control strategy using <code>Temporal Cleansing</code> and flash creatures to play at instant speed, leveraging waterbending and convoke synergies.</p>
+<p><strong>Strengths:</strong> Strong interaction suite with multiple removal spells and counterspells, excellent card advantage engines, and the ability to play reactively while building value. The deck could reliably answer opposing threats.</p>
+<p><strong>Why Not Selected:</strong> While the interaction suite was strong, the format lacks sufficient cheap, unconditional answers to reliably control the game. The chosen deck's proactive threats, higher power level, and adequate interaction were better positioned in this format—it could both pressure opponents and answer their threats.</p>
+
+**Guidelines:**
+* Use <code>Card Name</code> tags for all card references, all cards referenced must be in the original provided card pool.
+* Be specific about why each alternative was viable
+* Be specific about why the chosen deck was better
+* When comparing decks, explicitly evaluate interaction quality (removal, counterspells, etc.) as part of your comparison
+* Include 2-3 alternatives if you genuinely considered multiple viable options
+* Only include this field if you considered multiple distinct viable options. If only one strategy was clearly optimal, omit this field entirely.
+
+**Step 2: Construct the Optimal Deck**
+Based on your comparative analysis, construct the best possible 40-card deck by choosing the optimal color combination from the full pool (all five colors are available for consideration — pick the best 1–3 color plan the pool supports) using ONLY cards from the "Available Card Pool" provided above. The deck must contain exactly 40 cards.
+Focus on good card synergy, powerful combos, an ideal mana curve, and overall strength.
+
+**Enabler vs Payoff Synergy Check:** If your chosen archetype relies on synergy (e.g., Teamwork taps, Villains entering, Counters, Graveyard), explicitly count your enablers and payoffs in your `deckbuildingThoughtProcess`. Do not include a payoff card if you do not have the required threshold of enablers to support it.
+
+**Step 3: Mana Base & Hybrid Audit**
+This step is the single source of truth for mana colors, hybrid costs, and land choices.
+
+**3a. Deck Mana Colors (AI Color Choice Mode):** All five colors are available so you can choose the best combination from the pool — they are NOT automatically your mana base. After locking the non-land spells, compute **Deck Mana Colors** from their casting costs:
+  1. Look at every non-land card in the final deckList and its `manaCost` from the pool.
+  2. Start from **hard colored pips only** — any {W}, {U}, {B}, {R}, or {G}. Those colors must be in the mana base.
+  3. Hybrid symbols are **OR, not AND** (see 3b). If a hybrid symbol can already be paid with a color from step 2, do not add its other half.
+  4. Only if a hybrid card cannot be paid by any color from step 2, add **one** of its halves to match your archetype — never both.
+  5. Never add a color only because it appears in `colorIdentity`.
+
+**3b. Hybrid Mana Castability:** Perform this check on every hybrid card while evaluating options in Steps 1-2, not just at the end.
+* **Color/Color hybrid (`{ColorA/ColorB}`, e.g. {R/G}, {W/B}):** Pay with EITHER color. Treat the card as strictly mono-ColorA AND strictly mono-ColorB — it is NOT a gold card. A {R/G} card is a Red card for Rakdos, Boros, and Izzet, and a Green card for Golgari, Selesnya, and Simic. Each symbol contributes 1 mana value.
+* **Number/Color hybrid (`{Number/ColorA}`, e.g. {2/G}, {2/W}):** Pay EITHER {Number} generic OR {ColorA}. If ColorA is one of your deck's colors, the minimum cost is {ColorA} (MV 1); otherwise you must pay {Number}.
+* **Example (deck colors W, U, R):** `{W/B}` is castable with White; `{G/B}` is uncastable; `{2/W}` costs {W}; `{2/G}` costs {2}; `{2/U}{2/R}{2/W}` costs {U}{R}{W} (MV 3).
+* Don't skip a powerful hybrid card because it shows a "wrong" color pip — if your mana can pay its cost, it is a valid inclusion.
+* **Hybrid NEVER expands mana needs:** The unused half of a hybrid symbol, and any extra colors in `colorIdentity`, never justify basics, duals, gainlands, or splash sources. Example: a Blue-Green deck casts a `{G/B}` card with Green alone — Deck Mana Colors stay U, G; no Swamps, no Green-Black gainland.
+
+**3c. Secondary Faces, Flashback & Activated Abilities:** When checking a card's cost, check BOTH faces in `cardFaces` (Prepare, Adventure, modal DFCs) as well as any Flashback or activated-ability costs in `oracleText`. A card belongs in the deck if its main face is castable with Deck Mana Colors; an off-color secondary face or ability is upside, not a requirement. Only add that secondary color to Deck Mana Colors if you can support it for free — on-color duals that also produce one of your primary colors, or any-color sources already in the deck — without hurting your primary colors' consistency (never reduce your primary-color source counts for it, and respect the Tap-Land Tension for aggressive decks). Once added this way, those duals count as on-color for the land audit below.
+
+**3d. Land Audit (HARD RULES):**
+* **On-color duals only:** Include a dual/gainland/shock/check land ONLY if EVERY colored mana it can produce is among Deck Mana Colors. Sharing one color with the deck does NOT make it fixing — in a Blue-Green deck, a Green-Black gainland is WRONG because a Forest or Island is strictly better. Colorless, any-color, and fetch utility lands are fine when appropriate.
+* **Both colors must be needed:** Even an on-color dual is only worth its drawback (enters tapped, costs life) if you need BOTH colors it produces. If you only need Black, a Swamp is strictly better than Overgrown Tomb.
+* **Basics:** Add basics only for Deck Mana Colors — never off-color basics "just in case".
+* **Fetches (Evolving Wilds, etc.):** Useful for supporting an intentional hard-pip splash or demanding multi-pip costs; skip when they only slow a clean aggressive curve.
+* **Action Required:** In `deckbuildingThoughtProcess`, list Deck Mana Colors derived from the final spells' mana costs, then audit every non-basic land against Deck Mana Colors and drop any that fail.
+
+
+
+**Important Rules & Considerations:**
+*   **GOLDEN RULE - ONLY USE CARDS FROM THE PROVIDED POOL:** You MUST ONLY use cards explicitly listed in the "Available Card Pool" above, and you cannot exceed the available 'count' for each card. You CANNOT pull cards from external sets, the set context, examples, or strategy guides. This rule is ABSOLUTE and still applies when regenerating the deck after debate/feedback — never introduce cards that were not in the original pool. The ONLY exception is basic lands (Plains, Island, Swamp, Mountain, Forest), which you must add yourself.
+*   **Basic Lands Required:** The pool excludes basic lands. **You MUST add basic lands** to the "deckList" to reach 40 cards — only for Deck Mana Colors (Step 3).
+*   **The 40-Card Rule is Absolute:** The final deckList, including all spells, non-basic pool lands, and the basic lands you add, must contain exactly 40 cards. There are no exceptions.
+*   **Tier Score Guide (0-10 Scale for 40-Card Limited Decks):** The 'tierScore' on each pool card is a guide for its raw power in a vacuum — a strong prior, but not the final word. A lower-tier card that is essential to your deck's synergy can be more valuable than a higher-tier "good stuff" card that doesn't fit the plan; conversely, a LARGE tierScore gap should rarely be overridden by marginal synergy.
+    *   **10: Incredible Bombs.** The absolute best of the best. These cards make a meaningful impact on any game, especially when you're playing from behind, and they're extremely tough to beat. Consider building your deck around these cards if they are available.
+    *   **9: Great First Picks.** Extremely good cards, usually game-winning bombs and the most efficient removal spells. These are cards you're very happy to first pick and build around.
+    *   **8: Above Average Cards.** Strong cards that are better than the average playable. These are solid inclusions that you're happy to have in your deck.
+    *   **7: Solid Playables.** Good, reliable cards that form the backbone of most Limited decks. These are cards you're comfortable playing and want in your deck.
+    *   **6: Sometimes Playable.** These cards are not something you want a lot of in your deck. They may fill a specific role or be playable in certain situations, but you should minimize the number of these in your deck when possible.
+    *   **5: Rarely Playable.** These cards are maybe something you can play, maybe a build around, but they're generally not ideal. Only include them if they serve a specific purpose or enable a strategy.
+    *   **4 and below: Basically Unplayable.** Cards with tier scores of 4 or lower are ideally not played in your deck if they can be avoided. Only include them if you absolutely need filler to reach the deck size requirement, and even then, try to minimize them.
+*   **Interaction:** Ensure the deck includes a reasonable amount of interaction/removal relative to its strategy.
+*   **Typical 40-Card Composition:** There is no strict minimum creature count for Control decks. A control deck can easily run 8-10 creatures if the rest of the deck is heavy on premium removal and card advantage. HOWEVER, Aggro decks MUST still run 15+ creatures, and if your deck relies on Auras, Equipment, or Fight spells, you must maintain a high creature count to support them. Generally, aim for 17 lands.
+
+
+
+**PRIMER REQUIREMENTS - COMPREHENSIVE DECK DOCUMENTATION (applies to the "strategyPrimer" JSON field):**
+
+**Formatting Requirements:**
+- **CRITICAL: Use HTML formatting, NOT Markdown.** The primer must be written using HTML tags, not Markdown syntax.
+- Use clean HTML for formatting (e.g., <p>, <ul><li>, <ol><li>, <strong>, <em>, <code>card names</code>, <h3>, <h4>)
+- **DO NOT use Markdown syntax** such as **bold**, *italic*, `code`, # headers, - lists, etc. Use HTML equivalents instead: <strong>bold</strong>, <em>italic</em>, <code>code</code>, <h3>headers</h3>, <ul><li>lists</li></ul>
+- **Text ONLY. Do NOT include, describe, or use placeholders for images, visual assets, or card art.** Focus purely on text and deckbuilding logic without attempting to generate or describe visual elements.
+- **DO NOT use vague or generic strategic platitudes** (e.g., "Play lands and cast spells to win", "Good luck", "Try to lower your opponent's life total to 0"). Every sentence must contain specific, technical, card-level analysis relevant to the specific decklist.
+- **DO NOT use meta-references or break character** (e.g., "As an AI", "Here is the deck you requested", "I chose this card because..."). Write strictly in the third person as a professional Magic columnist.
+- Write in third person as an expert player documenting a deck you've built and tested
+- NEVER reference user instructions, suggestions, or that it was generated by AI
+- Avoid phrases like "this deck follows the theme you suggested", "as requested", or similar meta-references
+- Do not include any conversational filler, greetings, or AI disclaimers in the text
+- Write a professional, unbiased deck primer. Do NOT invent a fake website name, brand, or publication title. Do not include website URLs or branding.
+- Reference ALL card names using HTML formatting: You MUST wrap every single card name in `<code>` tags (e.g., `<code>Card Name</code>`). Do not use bold or strong tags for card names.
+- Use thematic emoji icons for section headers where appropriate (e.g., 🎯, 🏆, 🔗, 🤔, ⏳)
+
+**MANDATORY SECTIONS - Include ALL of the following:**
+
+1. **Deck Overview & Archetype** 🎯
+   - Clearly identify the deck's archetype (Aggro, Control, Midrange, Combo, Tempo, etc.)
+   - Explain the deck's core identity and strategic approach
+   - Describe what makes this deck unique or effective
+   - **Limited Format Considerations:** Focus on maximizing value from your card pool, understanding the format's speed and mechanics, and building a cohesive deck that can win with the available resources. Discuss how the deck navigates the Limited environment, including common matchups and how to leverage the set's mechanics.
+
+2. **Gameplan & Strategy** 🎯
+   - Explain the overall strategic approach and how the deck aims to win
+   - Describe the deck's primary game plan and alternative paths to victory
+   - Discuss how the deck handles different game states (developing, parity, ahead, behind)
+   - Explain the deck's role in the format (aggressor, controller, etc.)
+
+3. **Win Conditions** 🏆
+   - List and explain all primary win conditions
+   - Describe how the deck typically secures victory
+   - Discuss backup win conditions if the primary plan is disrupted
+   - Explain how to recognize when you're in a winning position
+
+4. **Key Card Analysis & Synergies** 🔗
+   - **Critical Cards:** Identify and explain the most important cards in the deck and why they're essential
+   - **Key Interactions:** Detail powerful synergies between cards, explaining HOW they work together
+   - **Combo Lines:** If applicable, explain any combo sequences or powerful interactions (both finite and infinite)
+   - **Engine Cards:** Discuss cards that generate value or create engines
+   - **Role Players:** Explain important support cards and their specific functions
+   - **Card Choices:** Justify key card selections, especially if they might seem unusual
+   - Use specific examples: "When you cast <code>Card A</code> followed by <code>Card B</code>, you get X benefit because..."
+   - **CRITICAL — Card Data Fidelity (no invented facts):** The Available Card Pool JSON is the only source of truth for each card's `rarity`, `manaCost`, `cmc`, `oracleText`, `typeLine`, and `cardFaces`. Before stating rarity, cost, or what a card does, re-read that entry. Do NOT upgrade rarity (calling a rare a mythic), invent keywords, misquote triggers, or invent mana amounts. If `cardFaces` is present, use each face's own `manaCost` / `oracleText` (Adventure/DFC front and back are different spells).
+   - **CRITICAL — Same-Turn Mana Math Audit:** Any same-turn "combo," curve-skip, or "cast A then immediately cast B" line MUST include an explicit mana equation that a judge would accept. Rules you must obey:
+     1. Lands (and other mana sources) tapped to pay for spell A are **spent** — they do **not** untap and cannot pay for spell B the same turn.
+     2. Mana **added** by a resolving spell (Treasure, "add N mana…", rituals, etc.) is **new floating mana only**. It does not refund or retap the lands you already spent on that spell.
+     3. Respect spending restrictions in oracle text (e.g. "Spend this mana only to cast Dragon spells") — do not treat restricted mana as generic.
+     4. Write the numbers: lands available before A → cost of A → floating/restricted mana produced → untapped sources remaining → cost of B. If remaining + floating < cost of B, the same-turn cast is **illegal** — describe the real line instead (e.g. Desolation as a board wipe that banks dragon mana for a later turn; cast the expensive Dragon when you have enough untapped lands **plus** any leftover restricted mana).
+     5. Prefer an accurate weaker description over a flashy impossible sequence. Never call a line "game-breaking" or "instant" if the mana math fails on a normal Limited land count.
+
+5. **Mana Base & Mana Curve** ⚡
+   - Explain the mana base construction and color requirements
+   - Discuss the deck's mana curve and why it's structured this way
+   - Address mana fixing considerations (especially for multi-color decks), describing only lands actually in the deckList and consistent with the Step 3 audit
+   - Explain land count and any special land considerations
+   - Explain basic land distribution and any special considerations for Limited
+
+6. **Mulligan Guide** 🤔
+   - Provide specific guidance on what constitutes a good opening hand
+   - Explain what kinds of hands should be kept vs. mulliganed
+   - Discuss key cards to look for in opening hands
+   - Address mulligan decisions based on play/draw
+   - Give examples of keepable hands and hands to mulligan
+
+7. **Game Plan by Phase** ⏳
+   - **Early Game (Turns 1-3):** Setup, ramp, early plays, establishing board presence
+   - **Mid Game (Turns 4-7):** Developing threats, controlling the board, advancing the game plan, key decision points
+   - **Late Game (Turns 8+):** Closing out the game, executing finishers, resource management
+   - Explain what to prioritize in each phase
+   - Discuss common decision points and how to navigate them
+
+8. **Matchup Guide** ⚔️
+   - Discuss how the deck performs against common archetypes
+   - Explain favorable and unfavorable matchups
+   - Provide specific strategies for key matchups
+   - Discuss what to prioritize in different matchups
+   - Discuss how to adapt play patterns for different Limited archetypes
+
+9. **Strengths & Weaknesses** ⚖️
+   - **Strengths:** What the deck does exceptionally well
+   - **Weaknesses:** Potential vulnerabilities and how to mitigate them
+   - Explain what types of strategies or cards give the deck trouble
+   - Discuss how to play around the deck's weaknesses
+
+
+
+**ADDITIONAL GUIDANCE:**
+- Be specific and detailed - avoid vague statements like "this card is good"
+- Explain the "why" behind card choices and strategic decisions
+- Use concrete examples from actual gameplay scenarios
+- Reference specific card interactions with card names in <code> tags
+- Discuss nuanced play patterns and decision-making
+- Address common mistakes or pitfalls to avoid
+- Provide actionable advice that helps players pilot the deck effectively
+- Ensure all card references use cards that are actually in the decklist
+- Write in an engaging, professional style suitable for all audiences
+- **CRITICAL: Primer Fact-Check Against Pool JSON:** Before finishing Key Card Analysis, spot-check every rarity label and every same-turn mana claim against the matching pool entry's `rarity` / `manaCost` / `cmc` / `oracleText` (and `cardFaces` when present). If a claim contradicts the pool, rewrite it.
+
+**LENGTH & DEPTH:**
+- Aim for comprehensive coverage (typically 1000-2000+ words for a detailed primer)
+- Each section should be substantial and informative, not just a sentence or two
+- Provide enough detail that a player could pick up the deck and understand how to play it effectively
+- Balance depth with readability - use formatting to make it easy to scan and read
+
+**CRITICAL: Deck Name Rules**
+- **DO NOT include revision indicators in the deck name** (e.g., "(Revised)", "(Updated)", "(V2)", "(V3)", "(Final)", "(Fixed)", etc.)
+- **You MAY change the deck name if the deck's identity or strategy has changed significantly** - for example, if a deck shifted from an aggro strategy to a control strategy, a new name reflecting the new identity is appropriate
+- **However, if the deck's core identity remains the same, keep the original deck name** - do NOT add revision indicators
+- **Example (Keep Original Name):** If the original deck was named "Grub's Aristocrats" and remains an aristocrats deck with minor card changes, keep it as "Grub's Aristocrats" - do NOT change it to "Grub's Aristocrats (Revised)" or "Grub's Aristocrats V2"
+- **Example (Name Change Allowed):** If "Grub's Aristocrats" was transformed into a control deck with a completely different strategy, you could rename it to something like "Grub's Control" or "Grub's Midrange" - but still do NOT add "(Revised)" or other revision indicators
+- The deck name should reflect the deck's current identity and strategy, not indicate it's a revision or update
+
+**CRITICAL: Strategy Primer Writing Approach**
+- **Always write the strategyPrimer as if it is the first time the deck is being built and documented**
+- **DO NOT reference changes, iterations, or modifications made after an initial build** (e.g., "After feedback, I changed...", "I updated the deck to include...", "Based on suggestions, I swapped out...")
+- **DO NOT mention debate, feedback, or previous versions** of the deck in the strategyPrimer
+- The strategyPrimer should present the deck as a complete, finished product being documented for the first time
+- Write as if you are an expert player documenting a deck you've built and tested, presenting it as the final, optimal version
+- The strategyPrimer must still reflect the current deck state accurately, but present it as if this is the original design
+
+**UPDATES AND RATIONALE SECTION (Optional):**
+- If you are responding to debate/feedback and made changes to the deck, include an "updatesAndRationale" field in your JSON output
+- This section is where you explain what changed, why it changed, and the reasoning behind the changes
+- Use HTML formatting consistent with the strategyPrimer
+- Only include this field if there are meaningful changes to discuss
+- If this is an initial build or no significant changes were made, omit this field entirely
+- **All references to changes, iterations, or modifications belong in updatesAndRationale, NOT in the strategyPrimer**
+- The strategyPrimer should be fully updated to reflect the current deck state, but written as if it's the first documentation of this deck
+- When regenerating after debate/feedback, the GOLDEN RULE still applies: any cards you add or swap must come from the original "Available Card Pool" — never from set context, examples, or any other source.
+
+**Output Format:**
+Provide your response ONLY in the following JSON format as a code block, with no explanatory text before or after the JSON block. Your final output must be valid JSON that can be parsed by standard JSON parsers.
+
+**CRITICAL JSON FORMATTING RULES:**
+1. **No Literal Newlines in Strings - Escape Everything Properly:** Do NOT include actual newline characters inside any JSON string value; they will break the parser. Always use \n for line breaks (this is especially critical for the verification.verificationScript.code field; HTML fields like deckbuildingThoughtProcess and strategyPrimer need no line breaks at all — HTML tags handle all structure). Prefer single quotes (') for quotations inside strings so you rarely need JSON-escaped double quotes. Example: "code": "line1\nline2\nline3" NOT a string containing real line breaks.
+
+2. **Use Standard JSON Syntax:** All commas, brackets, and braces properly placed. No trailing commas. No comments in the final JSON output.
+
+3. **ABSOLUTE REQUIREMENT: Cards MUST Exist in Provided Pool:** Every single card in your deckList MUST exist in the "Available Card Pool" section above. You CANNOT use cards mentioned in set context, examples, or strategy guides if they are NOT in the provided pool. This is NON-NEGOTIABLE and applies equally when regenerating the deck after debate/feedback. **Exception:** Basic lands (Plains, Island, Swamp, Mountain, Forest) are always allowed and should be added as needed, even though they are not in the provided card pool.
+
+4. **CRITICAL: Use Exact Card Names from Card Pool:** When outputting card names in the "cardName" field, you MUST use the EXACT name as it appears in the card pool provided above. Do NOT modify, reformat, or abbreviate card names. This is especially important for:
+   - **Dual-faced cards:** If a card is listed as "Front Side // Back Side" in the pool, use exactly "Front Side // Back Side" (with the double slashes and spaces). Do NOT change it to "Front Side / Back Side" or "Front Side" or any other variation.
+   - **Cards with special characters:** Preserve all punctuation, apostrophes, hyphens, and special characters exactly as shown in the card pool.
+   - **Basic lands:** Use the exact capitalization: "Plains", "Island", "Swamp", "Mountain", "Forest" (capitalized, singular).
+   
+   **Why this matters:** The system matches cards by exact name. If you use a different name format, the card will not be found in the pool and will be marked as missing, even if the card is actually available.
+
+5. **Field Requirements:**
+   * "deckbuildingThoughtProcess" is REQUIRED and must be placed BEFORE the "deckList" field. This is your full reasoning stream for THIS pool — the comparisons, counts, cuts, and mana decisions you actually made — in whatever order and under whatever headings fit. Do not follow a fixed outline, and do not add sections you did not use. Format it as single-line HTML (no markdown, no literal newlines) so it renders as a readable report instead of one wall of text: <h4> for each topic, <p> for prose, <ul><li> or <ol><li> for lists, <table> only when a table is the clearest way to show a count you made, and every card name in <code> tags. One idea per paragraph or bullet. The example below shows formatting only.
+   * "alternativeDecksConsidered" is OPTIONAL. If you genuinely considered multiple distinct viable deck options during your comparative analysis, place this field BEFORE the "deckList" field, using HTML formatting with structured sections for each alternative. Omit if one strategy was clearly optimal.
+   * "updatesAndRationale" is OPTIONAL. Only include it if you are responding to debate/feedback and made meaningful changes to the deck.
+   * "verification" is REQUIRED, including verificationScript with the code you used to sum the deck (single-line string, \n for line breaks). The script must list every deckList entry as {'cardName': ..., 'quantity': ...} and set totalCount from total_count = sum(c['quantity'] for c in decklist).
+   * "strategyPrimer" is REQUIRED and must follow ALL of the PRIMER REQUIREMENTS section above.
+
+6. **Deck Name Requirements:** The "deckName" field must be a creative, thematic name for the deck. **CRITICAL: Do NOT include revision indicators** such as "(Revised)", "(Updated)", "(V2)", "(Final)", etc. in the deck name. You MAY change the deck name if the deck's identity or strategy has changed significantly (e.g., from aggro to control), but if the core identity remains the same, keep the original name. Never add revision indicators regardless of whether the name changes.
+
+```
+{
+  "alternativeDecksConsidered": "OPTIONAL: single-line HTML summary of the alternatives you considered. Start each deck with its name/archetype as a heading, e.g. <p><strong>Aggro Kithkin</strong></p><p><strong>Strategy:</strong> ...</p><p><strong>Strengths:</strong> ...</p><p><strong>Why Not Selected:</strong> ...</p>",
+  "deckbuildingThoughtProcess": "<h4>Why this lane over the other one</h4><p>The white-blue flyers line up better than the other pile because <code>Card Name 1</code> and <code>Card Name 2</code> share a plan, and the other pile is short on early plays.</p><ul><li>Counted the payoffs against the enablers and the threshold is met.</li><li>Dropped the off-color tapland. A basic covers the same color without the drawback.</li></ul>",
+  "deckName": "A Creative and Thematic Deck Name",
+  "deckList": [
+    { "cardName": "Card Name 1", "quantity": 2 },
+    { "cardName": "Card Name 2", "quantity": 4 },
+    { "cardName": "Plains", "quantity": 9 },
+    { "cardName": "Island", "quantity": 8 }
+  ],
+  "updatesAndRationale": "OPTIONAL: only when responding to debate/feedback with meaningful changes. Single-line HTML explaining what changed and why.",
+  "verification": {
+    "verificationScript": {
+      "language": "python",
+      "code": "decklist = [{'cardName': 'Card Name 1', 'quantity': 2}, {'cardName': 'Card Name 2', 'quantity': 4}, {'cardName': 'Plains', 'quantity': 9}, {'cardName': 'Island', 'quantity': 8}]\ntotal_count = sum(c['quantity'] for c in decklist)\nprint(f'Total: {total_count}')"
+    },
+    "totalCount": 40
+  },
+  "strategyPrimer": "REQUIRED: the complete deck primer as a single-line HTML string following ALL of the PRIMER REQUIREMENTS section above (all mandatory sections, <code> tags for card names, no literal newlines).",
+  "archetype": "The primary archetype (e.g., Aggro, Control, Midrange, Combo, Tempo)."
+}
+```
+
+**IMPORTANT:** Notice in the example above how the verification.verificationScript.code field is formatted as a SINGLE LINE with \n for line breaks. This is REQUIRED. Do NOT use actual newlines in the code field.
+
+**FINAL PRE-OUTPUT CHECKLIST (MANDATORY):**
+Run every check below on your finalized deck BEFORE writing the JSON. If any check fails, fix the deck and re-run the checklist.
+1. **Pool check:** Every non-basic-land card in the deckList exists in the "Available Card Pool", and no quantity exceeds that card's 'count'. This holds even when regenerating after feedback.
+2. **Exact names:** Every 'cardName' matches the pool spelling EXACTLY (including " // " for multi-faced cards and all punctuation).
+3. **Card count:** Sum the 'quantity' of every single deckList item, including non-basic lands and basics. Use a code interpreter or script if one is available; otherwise add the quantities one at a time, writing out the running total. Do NOT estimate. The grand total MUST equal exactly 40. Record the calculation in verification.verificationScript.code (single-line string, \n for line breaks) and set verification.totalCount to the result.
+4. **Land base:** Every land passes the Step 3 audit (Deck Mana Colors only; on-color duals only; no basics or duals for unused hybrid halves), and the land count follows any guidance in the Limited Set Specific Context.
+5. **JSON validity:** No literal newlines inside any string value, no trailing commas, all brackets and braces matched.
+6. **Primer fidelity:** In strategyPrimer Key Card Analysis, every rarity mentioned matches that card's pool `rarity`, and every same-turn cast/combo line has a correct mana equation (lands spent on spell A stay tapped; floating mana from A does not retap them; restricted mana stays restricted). Delete or rewrite any impossible "cast A then B on the same turn with N lands" claim.
+
+Output ONLY the JSON code block — no explanatory text before or after it.
+

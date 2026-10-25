@@ -1,0 +1,605 @@
+{
+  "card": "Ravenous Tyrannosaurus",
+  "title": "flagged unsupported by a false-positive Replacement_Instead swallow warning; the data plays as printed",
+  "status": "active",
+  "kind": "coverage",
+  "upstream_issue": null,
+  "marks_supported": true,
+  "applies_to": {
+    "server_version": "0.116.0",
+    "build_commit": "3f79456",
+    "card_data_sha256": "c4cfb737d0c0b1b135d3a353d71a95606f6ee147727bc11c3d16b82ece33da41",
+    "entry_sha256": "8b900a7f7b7668dd41fa1a0fbe56c07bd1d1d7dcdd2e461b4fbeadf94652dcc7"
+  },
+  "rules": {
+    "oracle": "Devour 3 (As this creature enters, you may sacrifice any number of creatures. It enters with three times that many +1/+1 counters on it.)\nWhenever this creature attacks, it deals damage equal to its power to up to one other target creature. Excess damage is dealt to that creature's controller instead.",
+    "cr": [
+      "702.82a",
+      "614.1c",
+      "508.1m",
+      "603.2",
+      "115.4",
+      "120.4a",
+      "120.6"
+    ],
+    "actual": "The coverage report lists the card as unsupported with one gap, `Swallow:Replacement_Instead` (\"Whenever this creature attacks, it deals damage equal to its power to up to one other target creature. Excess damage is dealt to that creatu…\"): it claims the parser dropped the \"instead\" clause.",
+    "expected": "As it enters, its controller may sacrifice any number of other creatures, and it enters with three +1/+1 counters for each (CR 702.82a). Whenever it attacks, it deals damage equal to its power to up to one other target creature; damage beyond lethal is dealt to that creature's controller instead (CR 120.4a), so a lethal-exact hit sends nothing and no target deals nothing.",
+    "diagnosis": "False positive. The \"Excess damage is dealt to that creature's controller instead\" clause is carried by the attack trigger's `DealDamage { excess: TargetController }`, which the damage resolver applies as the CR 120.4a excess redirect (game/effects/deal_damage.rs:43-46, `excess_recipient`). The Replacement_Instead detector (parser/swallow_check.rs:642, `detect_replacement_instead`) fires on any \" instead\" in the unit unless the unit has a replacement definition or one of the listed carriers (`*Instead` conditions, `any_ability_has_replacement_carrier` at parser/swallow_check.rs:1946, …), and the `DealDamage.excess` rider is not among them; game/coverage.rs:8316 turns every `SwallowedClause` into a `Swallow:{detector}` gap, which marks the card unsupported. Flame Spill, Pigment Storm and Gandalf's Sanction share the same false positive.",
+    "suggested_fix": "In `detect_replacement_instead` (parser/swallow_check.rs), accept a `DealDamage` whose `excess` is set (`ExcessRecipient`, CR 120.4a) as the carrier of an \"Excess damage is dealt to … instead\" sentence, for example by adding it to `any_ability_has_replacement_carrier`, and occurrence-balance it so a card with another, genuinely dropped \"instead\" still fires. Regression test: Ravenous Tyrannosaurus and Flame Spill parse with no `SwallowedClause` and stay supported in the coverage report.",
+    "override_note": "Nothing is patched: the test ops pin what the sandbox games verified: the Devour 3 replacement (sacrifice up to any number of your creatures, then three +1/+1 counters per creature sacrificed) and the attack trigger dealing damage equal to its power to up to one other target creature with the excess going to that creature's controller. The cases show devouring two creatures (12/12) and none (6/6); the attack trigger at an opponent's 6/4 (2 excess to the opponent, CR 120.4a), at your own 2/2 (4 excess to you), at a 1/6 (exactly lethal, no excess), with no target (nothing happens, \"up to one\"), and after devouring one creature (9 damage, 5 excess)."
+  },
+  "patch": [
+    {
+      "op": "test",
+      "path": "/triggers/0/mode",
+      "value": "Attacks"
+    },
+    {
+      "op": "test",
+      "path": "/triggers/0/valid_card",
+      "value": {
+        "type": "SelfRef"
+      }
+    },
+    {
+      "op": "test",
+      "path": "/triggers/0/execute/effect",
+      "value": {
+        "type": "DealDamage",
+        "amount": {
+          "type": "Ref",
+          "qty": {
+            "type": "Power",
+            "scope": {
+              "type": "Source"
+            }
+          }
+        },
+        "target": {
+          "type": "Typed",
+          "type_filters": [
+            "Creature"
+          ],
+          "controller": null,
+          "properties": [
+            {
+              "type": "Another"
+            }
+          ]
+        },
+        "excess": {
+          "type": "TargetController"
+        }
+      }
+    },
+    {
+      "op": "test",
+      "path": "/triggers/0/execute/multi_target",
+      "value": {
+        "min": 0,
+        "max": {
+          "type": "Fixed",
+          "value": 1
+        }
+      }
+    },
+    {
+      "op": "test",
+      "path": "/replacements/0/execute/effect",
+      "value": {
+        "type": "Sacrifice",
+        "target": {
+          "type": "Typed",
+          "type_filters": [
+            "Creature"
+          ],
+          "controller": "You",
+          "properties": []
+        },
+        "count": {
+          "type": "UpTo",
+          "max": {
+            "type": "Ref",
+            "qty": {
+              "type": "ObjectCount",
+              "filter": {
+                "type": "Typed",
+                "type_filters": [
+                  "Creature"
+                ],
+                "controller": "You",
+                "properties": []
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "op": "test",
+      "path": "/replacements/0/execute/sub_ability/effect",
+      "value": {
+        "type": "PutCounter",
+        "counter_type": "P1P1",
+        "count": {
+          "type": "Multiply",
+          "factor": 3,
+          "inner": {
+            "type": "Ref",
+            "qty": {
+              "type": "PreviousEffectCount"
+            }
+          }
+        },
+        "target": {
+          "type": "SelfRef"
+        }
+      }
+    },
+    {
+      "op": "test",
+      "path": "/parse_warnings/0/detector",
+      "value": "Replacement_Instead"
+    }
+  ],
+  "tests": [
+    {
+      "name": "devour two creatures (CR 702.82a): it enters with six +1/+1 counters, the creature not chosen stays",
+      "setup": [
+        {
+          "card": "Ravenous Tyrannosaurus",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Hill Giant",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Horned Turtle",
+          "owner": 0,
+          "zone": "Battlefield"
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "cast": {
+            "card": "Ravenous Tyrannosaurus"
+          }
+        }
+      ],
+      "answers": {
+        "select": [
+          {
+            "card": "Grizzly Bears",
+            "owner": 0,
+            "zone": "Battlefield"
+          },
+          {
+            "card": "Hill Giant",
+            "owner": 0,
+            "zone": "Battlefield"
+          }
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "zones": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "zone": "Graveyard"
+            },
+            {
+              "card": "Hill Giant",
+              "owner": 0,
+              "zone": "Graveyard"
+            },
+            {
+              "card": "Horned Turtle",
+              "owner": 0,
+              "zone": "Battlefield"
+            }
+          ],
+          "objects": [
+            {
+              "card": "Ravenous Tyrannosaurus",
+              "owner": 0,
+              "zone": "Battlefield",
+              "counters": {
+                "P1P1": 6
+              },
+              "power": 12,
+              "toughness": 12
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "devour nothing: a 6/6 with no counters",
+      "setup": [
+        {
+          "card": "Ravenous Tyrannosaurus",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Battlefield"
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "cast": {
+            "card": "Ravenous Tyrannosaurus"
+          }
+        }
+      ],
+      "answers": {
+        "select": []
+      },
+      "expect": {
+        "fixed": {
+          "zones": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "zone": "Battlefield"
+            }
+          ],
+          "objects": [
+            {
+              "card": "Ravenous Tyrannosaurus",
+              "owner": 0,
+              "zone": "Battlefield",
+              "counters": {},
+              "power": 6,
+              "toughness": 6
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "attack trigger at an opponent's 6/4: 4 damage is lethal, the 2 excess goes to its controller (CR 120.4a)",
+      "setup": [
+        {
+          "card": "Ravenous Tyrannosaurus",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Craw Wurm",
+          "owner": 1,
+          "zone": "Battlefield"
+        }
+      ],
+      "steps": [
+        {
+          "attack": [
+            {
+              "card": "Ravenous Tyrannosaurus",
+              "owner": 0
+            }
+          ]
+        },
+        {
+          "resolve": true
+        }
+      ],
+      "answers": {
+        "targets": [
+          {
+            "card": "Craw Wurm",
+            "owner": 1,
+            "zone": "Battlefield"
+          }
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            18
+          ],
+          "zones": [
+            {
+              "card": "Craw Wurm",
+              "owner": 1,
+              "zone": "Graveyard"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "attack trigger at your own 2/2: the 4 excess goes to you, its controller",
+      "setup": [
+        {
+          "card": "Ravenous Tyrannosaurus",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Battlefield"
+        }
+      ],
+      "steps": [
+        {
+          "attack": [
+            {
+              "card": "Ravenous Tyrannosaurus",
+              "owner": 0
+            }
+          ]
+        },
+        {
+          "resolve": true
+        }
+      ],
+      "answers": {
+        "targets": [
+          {
+            "card": "Grizzly Bears",
+            "owner": 0,
+            "zone": "Battlefield"
+          }
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "life": [
+            16,
+            20
+          ],
+          "zones": [
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "zone": "Graveyard"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "no excess: 6 damage to a 1/6 is exactly lethal, nothing to its controller",
+      "setup": [
+        {
+          "card": "Ravenous Tyrannosaurus",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Wandering Tombshell",
+          "owner": 1,
+          "zone": "Battlefield"
+        }
+      ],
+      "steps": [
+        {
+          "attack": [
+            {
+              "card": "Ravenous Tyrannosaurus",
+              "owner": 0
+            }
+          ]
+        },
+        {
+          "resolve": true
+        }
+      ],
+      "answers": {
+        "targets": [
+          {
+            "card": "Wandering Tombshell",
+            "owner": 1,
+            "zone": "Battlefield"
+          }
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            20
+          ],
+          "zones": [
+            {
+              "card": "Wandering Tombshell",
+              "owner": 1,
+              "zone": "Graveyard"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "up to one: choosing no target deals no damage",
+      "setup": [
+        {
+          "card": "Ravenous Tyrannosaurus",
+          "owner": 0,
+          "zone": "Battlefield",
+          "sick": false
+        },
+        {
+          "card": "Craw Wurm",
+          "owner": 1,
+          "zone": "Battlefield"
+        }
+      ],
+      "steps": [
+        {
+          "attack": [
+            {
+              "card": "Ravenous Tyrannosaurus",
+              "owner": 0
+            }
+          ]
+        },
+        {
+          "resolve": true
+        }
+      ],
+      "answers": {
+        "targets": [
+          null
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            20
+          ],
+          "zones": [
+            {
+              "card": "Craw Wurm",
+              "owner": 1,
+              "zone": "Battlefield"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "after devouring one creature it is a 9/9: 9 damage to the 6/4, 5 excess",
+      "setup": [
+        {
+          "card": "Ravenous Tyrannosaurus",
+          "owner": 0,
+          "zone": "Hand"
+        },
+        {
+          "card": "Grizzly Bears",
+          "owner": 0,
+          "zone": "Battlefield"
+        },
+        {
+          "card": "Craw Wurm",
+          "owner": 1,
+          "zone": "Battlefield"
+        }
+      ],
+      "infinite_mana": [
+        0
+      ],
+      "phase": {
+        "phase": "PreCombatMain",
+        "active": 0
+      },
+      "steps": [
+        {
+          "cast": {
+            "card": "Ravenous Tyrannosaurus"
+          }
+        },
+        {
+          "debug": "SetSummoningSickness",
+          "object": {
+            "card": "Ravenous Tyrannosaurus",
+            "owner": 0,
+            "zone": "Battlefield"
+          },
+          "data": {
+            "sick": false
+          }
+        },
+        {
+          "attack": [
+            {
+              "card": "Ravenous Tyrannosaurus",
+              "owner": 0
+            }
+          ]
+        },
+        {
+          "resolve": true
+        }
+      ],
+      "answers": {
+        "select": [
+          {
+            "card": "Grizzly Bears",
+            "owner": 0,
+            "zone": "Battlefield"
+          }
+        ],
+        "targets": [
+          {
+            "card": "Craw Wurm",
+            "owner": 1,
+            "zone": "Battlefield"
+          }
+        ]
+      },
+      "expect": {
+        "fixed": {
+          "life": [
+            20,
+            15
+          ],
+          "zones": [
+            {
+              "card": "Craw Wurm",
+              "owner": 1,
+              "zone": "Graveyard"
+            },
+            {
+              "card": "Grizzly Bears",
+              "owner": 0,
+              "zone": "Graveyard"
+            }
+          ],
+          "objects": [
+            {
+              "card": "Ravenous Tyrannosaurus",
+              "owner": 0,
+              "zone": "Battlefield",
+              "counters": {
+                "P1P1": 3
+              },
+              "power": 9,
+              "toughness": 9
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "history": [
+    {
+      "date": "2026-10-23",
+      "status": "active",
+      "note": "Written against Oracle text and CR 702.82a, 120.4a, 115.4; tested on 0.116.0 (3f79456): all cases play as printed on the upstream data."
+    }
+  ]
+}

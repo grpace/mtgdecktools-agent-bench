@@ -1,0 +1,50 @@
+# Local development for the Hub: Postgres on 127.0.0.1:5440 (its own volume), and optionally the hub
+# itself in a container on 127.0.0.1:8840 (profile "hub"; most of the time run it on the host instead:
+# `npm run hub:serve`, which defaults to this database).
+#
+#   podman compose -f packages/hub/compose.dev.yaml up -d            # just Postgres
+#   podman compose -f packages/hub/compose.dev.yaml --profile hub up --build
+#   (docker compose works the same; without compose see the podman run lines in packages/hub/README.md)
+name: mtgdt-hub-dev
+services:
+  postgres:
+    image: docker.io/library/postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: hub
+      POSTGRES_PASSWORD: hub
+      POSTGRES_DB: hub
+    ports:
+      - "127.0.0.1:${HUB_PG_PORT:-5440}:5432"
+    volumes:
+      - hub-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hub -d hub"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  hub:
+    profiles: ["hub"]
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    image: mtgdt-director:local
+    command: ["node", "--import", "tsx", "packages/hub/src/main.ts"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${HUB_PORT:-8840}:8787"
+    environment:
+      DATABASE_URL: postgres://hub:hub@postgres:5432/hub
+      HUB_DATA_DIR: /hub-data
+      HUB_ENGINE_DATA_DIR: /engine-data
+      HUB_PUBLIC_URL: http://127.0.0.1:${HUB_PORT:-8840}
+      HUB_ADMIN_TOKEN: ${HUB_ADMIN_TOKEN:-}
+    volumes:
+      - hub-data:/hub-data
+      # draft-pools.json, card-data.json, unsupported-cards.json for pack regeneration and card details
+      - ../../data:/engine-data:ro,z
+volumes:
+  hub-pgdata:
+  hub-data:

@@ -1,0 +1,28 @@
+{
+  "_comment": "Cards phase-rs is known or suspected to get wrong (docs/CARD-OVERRIDES.md). `npm run overrides -- triage --write` adds cards that independent agent reports name (status suspected) and appends report references; it never changes a status. People set confirmed (reproduced), not-a-bug (agents were wrong) or fixed (with fixed_in: the phase-rs server_version that fixed it). Games where a suspected or confirmed card was played, without an active override for it, get the known_issue_card engine flag (METHODOLOGY §5.6).",
+  "format": 1,
+  "issues": [
+    {
+      "card": "Heated Argument",
+      "status": "confirmed",
+      "upstream_issue": "https://github.com/phase-rs/phase/issues/10205",
+      "override": "heated-argument",
+      "summary": "With the optional exile, the 2 damage hits the caster instead of the targeted creature's controller. Reproduced in a scripted sandbox game on 0.115.0 (6485512); fixed locally by the heated-argument override.",
+      "first_seen": "2026-10-22",
+      "reports": [
+        {
+          "event": "2026-10-22-14-39-42-sos-909e",
+          "seat": "seat-fc5874",
+          "game": "seat-fc5874 vs seat-4ff9a3 — game 1",
+          "turn": 12
+        },
+        {
+          "event": "2026-10-22-14-39-42-sos-909e",
+          "seat": "seat-6c1424",
+          "game": "seat-06fb60 vs seat-6c1424 — game 1",
+          "turn": 14
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/grpace/mtgdecktools-agent-bench/security/advisories/new
+    about: Report security issues privately (docs/SECURITY.md). Please don't open a public issue.
+  - name: Set primer suggestions
+    url: https://www.mtgdecktools.com
+    about: Primers are written on mtgdecktools.com; suggest changes there or in a general issue, not as pull requests.
