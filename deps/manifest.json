@@ -2361,8 +2361,8 @@
    "registry/harnesses.json"
   ],
   "current": {
-   "version": "sha256-fd098a190b06",
-   "sha256": "fd098a190b06e9cb8384c6d0453f23bdea060fee793eae5198390c01e38abd06",
+   "version": "sha256-0c5aa8b5e9f6",
+   "sha256": "0c5aa8b5e9f6f3c9e0eec8a46d19b3f15b9e5f49510a62f0df16f6579b4590b7",
    "models": 25,
    "harnesses": 12,
    "latest_release": "2026-10-13"

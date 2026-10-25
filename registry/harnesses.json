@@ -211,7 +211,7 @@
       "vendor": "SST",
       "kind": "agent",
       "seated": "headless",
-      "status": "untested",
+      "status": "tested",
       "aliases": [
         "open-code",
         "sst-opencode"
@@ -259,7 +259,7 @@
       "vendor": "Anysphere",
       "kind": "agent",
       "seated": "headless",
-      "status": "untested",
+      "status": "tested",
       "aliases": [
         "cursor-agent",
         "cursor-cli"
