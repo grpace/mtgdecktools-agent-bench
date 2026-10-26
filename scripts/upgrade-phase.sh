@@ -38,10 +38,22 @@ if [ "$digest" = "$current" ] && [ "$dry" != "--dry-run" ]; then echo "Already o
 echo "== starting candidate $digest on :$cand_port"
 cleanup
 podman run -d --name "$cand_name" -p "127.0.0.1:$cand_port:9374" -v "$cand_vol:/var/lib/phase-server" "$image@$digest" >/dev/null
-for _ in $(seq 1 120); do curl -sf -m 2 "http://127.0.0.1:$cand_port/health" >/dev/null && break; sleep 2; done
+ready=""
+for _ in $(seq 1 120); do
+  if curl -sf -m 2 "http://127.0.0.1:$cand_port/health" >/dev/null; then ready=1; break; fi
+  sleep 2
+done
+if [ -z "$ready" ]; then
+  echo "UPGRADE BLOCKED: candidate never answered /health on :$cand_port. Current pin unchanged."
+  podman inspect -f 'status={{.State.Status}} exit={{.State.ExitCode}} error={{.State.Error}}' "$cand_name" 2>&1 || true
+  echo "== candidate logs =="
+  podman logs "$cand_name" 2>&1 | tail -80 || true
+  exit 1
+fi
 hello=$(node -e '
   const WebSocket = require("ws");
   const ws = new WebSocket(process.argv[1]);
+  ws.on("error", () => process.exit(1));
   ws.on("message", (d) => { console.log(String(d)); process.exit(0); });
   setTimeout(() => process.exit(1), 10000);
 ' "ws://127.0.0.1:$cand_port/ws")

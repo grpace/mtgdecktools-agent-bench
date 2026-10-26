@@ -954,7 +954,9 @@ def cmd_update(a) -> int:
     text = "\n".join(lines)
     log("\n== Summary\n" + text)
     if a.summary:
-        Path(a.summary).write_text(text + "\n", encoding="utf-8")
+        summary = Path(a.summary)
+        summary.parent.mkdir(parents=True, exist_ok=True)
+        summary.write_text(text + "\n", encoding="utf-8")
     return rc
 
 

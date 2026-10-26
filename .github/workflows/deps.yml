@@ -226,7 +226,20 @@ jobs:
           podman cp mtgdt-phase:/var/lib/phase-server/draft-pools.json data/
           python3 -I scripts/refresh-phase-data.py data
       - name: Upgrade (pull, protocol and data report, smoke event, switch the pin only if it passes)
-        run: npm run deps -- update phase --summary tmp/summary-phase.md
+        run: |
+          set +e
+          npm run deps -- update phase --summary tmp/summary-phase.md
+          rc=$?
+          set -e
+          # A candidate that fails its check leaves the pin alone. That is a refusal, not a broken
+          # workflow, so it does not fail the run or send a failure email. The summary is in the log.
+          if [ "$rc" != 0 ] && [ -f tmp/summary-phase.md ] && grep -q 'pin unchanged' tmp/summary-phase.md; then
+            echo "::notice title=phase-rs upgrade blocked::The candidate did not pass. The pin was not changed and no pull request was opened."
+            echo "-----"
+            cat tmp/summary-phase.md
+            exit 0
+          fi
+          exit "$rc"
       - name: Package the change for the pull request job
         id: change
         run: |
