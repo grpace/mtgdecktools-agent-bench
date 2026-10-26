@@ -7,7 +7,8 @@
  *
  * Three things live here:
  * 1. **The scrubber** (`scrubText`, `scrubPublic`): API keys and tokens, JWTs, e-mail and IP addresses (v4 and v6) and
- *    file paths become `[secret]`, `[token]`, `[email]`, `[ip]`, `[path]`. Card names and rules text never match
+ *    file paths become `[secret]`, `[token]`, `[email]`, `[ip]`, `[path]`. NUL bytes are removed and a lone surrogate
+ *    becomes U+FFFD, so a stored log can go into Postgres. Card names and rules text never match
  *    (public-text.test.ts checks a fixture of tricky card text, and every card when data/card-data.json is present).
  * 2. **The review filter** (`flagText`, `flagHandle`, `passesFilter`): a word list and a few patterns (links,
  *    impersonation). It flags; it never hides. Flagged text stays published but is never featured automatically.
@@ -108,14 +109,17 @@ const RULES: Rule[] = [
  */
 const INVISIBLE = /(\u{1F3F4}[\u{E0030}-\u{E0039}\u{E0061}-\u{E007A}]{1,7}\u{E007F})|[\u061C\u200B\u200E\u200F\u202A-\u202E\u2060-\u2064\u2066-\u2069\uFEFF\u{E0000}-\u{E007F}]/gu;
 
+/** A UTF-16 surrogate without its pair (not valid Unicode text; Postgres refuses it in jsonb). */
+const LONE_SURROGATE = /[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/g;
+
 export function stripInvisible(s: string): string {
   return s.replace(INVISIBLE, (_m, flag: string | undefined) => flag ?? '');
 }
 
-/** A string with secrets, tokens, paths, e-mail and IP addresses replaced by placeholders, invisible characters removed. Card text is unchanged. */
+/** A string with secrets, tokens, paths, e-mail and IP addresses replaced by placeholders, invisible characters removed, and text Postgres can store (no NUL, no lone surrogate). Card text is unchanged. */
 export function scrubText(s: string): string {
   if (!s) return s;
-  let out = stripInvisible(s);
+  let out = stripInvisible(s).replace(/\u0000/g, '').replace(LONE_SURROGATE, '\ufffd');
   for (const [re, to] of RULES) out = out.replace(re, to as string);
   return out;
 }
