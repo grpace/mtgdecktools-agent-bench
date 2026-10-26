@@ -8,8 +8,9 @@
 #  5. Only if that passes: install the new data, rewrite engine/phase.lock.json, and restart the
 #     main container (mtgdt-phase) on the new digest. Prints what changed (new sets, protocol bump).
 #
-# If the smoke test fails, nothing changes; the report says why (usually a protocol change the
-# Director needs to learn: see packages/director/src/phase.ts and game.ts).
+# If the candidate never comes up or the smoke test fails, nothing changes and the script exits 2.
+# The report says why (usually a protocol change the Director needs to learn: see packages/director/src/phase.ts
+# and game.ts). Any other failure exits 1: the check itself broke, and the pin is still unchanged.
 # Usage: scripts/upgrade-phase.sh [tag] [--dry-run]   (--dry-run always runs the full check, never installs)
 # Env (for a second worktree on a machine that is already running the stack): PHASE_CANDIDATE_NAME and
 # PHASE_CANDIDATE_PORT (default mtgdt-phase-candidate on :9375), PHASE_CANDIDATE_SMOKE_PORT (the smoke Director,
@@ -28,6 +29,14 @@ cand_data="tmp/phase-candidate"
 
 cleanup() { podman rm -f "$cand_name" >/dev/null 2>&1 || true; podman volume rm -f "$cand_vol" >/dev/null 2>&1 || true; }
 trap cleanup EXIT
+# 2: the candidate was tried and refused. The pin is unchanged. Anything else (exit 1) is the check itself failing.
+blocked() {
+  echo "UPGRADE BLOCKED: $1 Current pin unchanged."
+  podman inspect -f 'status={{.State.Status}} exit={{.State.ExitCode}} error={{.State.Error}}' "$cand_name" 2>&1 || true
+  echo "== candidate logs =="
+  podman logs "$cand_name" 2>&1 | tail -80 || true
+  exit 2
+}
 
 echo "== pulling $image:$tag"
 podman pull -q "$image:$tag" >/dev/null
@@ -41,22 +50,20 @@ podman run -d --name "$cand_name" -p "127.0.0.1:$cand_port:9374" -v "$cand_vol:/
 ready=""
 for _ in $(seq 1 120); do
   if curl -sf -m 2 "http://127.0.0.1:$cand_port/health" >/dev/null; then ready=1; break; fi
+  state="$(podman inspect -f '{{.State.Status}}' "$cand_name" 2>/dev/null || echo missing)"
+  if [ "$state" != "running" ]; then blocked "candidate is $state before it answered /health on :$cand_port."; fi
   sleep 2
 done
-if [ -z "$ready" ]; then
-  echo "UPGRADE BLOCKED: candidate never answered /health on :$cand_port. Current pin unchanged."
-  podman inspect -f 'status={{.State.Status}} exit={{.State.ExitCode}} error={{.State.Error}}' "$cand_name" 2>&1 || true
-  echo "== candidate logs =="
-  podman logs "$cand_name" 2>&1 | tail -80 || true
-  exit 1
-fi
-hello=$(node -e '
+if [ -z "$ready" ]; then blocked "candidate never answered /health on :$cand_port."; fi
+if ! hello=$(node -e '
   const WebSocket = require("ws");
   const ws = new WebSocket(process.argv[1]);
   ws.on("error", () => process.exit(1));
   ws.on("message", (d) => { console.log(String(d)); process.exit(0); });
   setTimeout(() => process.exit(1), 10000);
-' "ws://127.0.0.1:$cand_port/ws")
+' "ws://127.0.0.1:$cand_port/ws"); then
+  blocked "candidate answered /health but not its websocket on :$cand_port."
+fi
 protocol=$(echo "$hello" | python3 -I -c "import json,sys; print(json.load(sys.stdin)['data']['protocol_version'])")
 version=$(echo "$hello" | python3 -I -c "import json,sys; print(json.load(sys.stdin)['data']['server_version'])")
 commit=$(echo "$hello" | python3 -I -c "import json,sys; print(json.load(sys.stdin)['data']['build_commit'])")
@@ -64,7 +71,14 @@ echo "   server $version, build $commit, protocol $protocol"
 
 echo "== copying card + booster data"
 rm -rf "$cand_data"; mkdir -p "$cand_data"
-for _ in $(seq 1 60); do podman exec "$cand_name" test -f /var/lib/phase-server/draft-pools.json && break; sleep 2; done
+ready=""
+for _ in $(seq 1 120); do
+  if podman exec "$cand_name" sh -c 'test -s /var/lib/phase-server/draft-pools.json && test -s /var/lib/phase-server/card-data.json'; then ready=1; break; fi
+  state="$(podman inspect -f '{{.State.Status}}' "$cand_name" 2>/dev/null || echo missing)"
+  if [ "$state" != "running" ]; then blocked "candidate is $state before it wrote its card data."; fi
+  sleep 2
+done
+if [ -z "$ready" ]; then blocked "candidate never wrote its card data."; fi
 podman cp "$cand_name:/var/lib/phase-server/card-data.json" "$cand_data/card-data.json"
 podman cp "$cand_name:/var/lib/phase-server/draft-pools.json" "$cand_data/draft-pools.json"
 python3 -I scripts/refresh-phase-data.py "$cand_data"
@@ -87,7 +101,7 @@ old_protocol=$(python3 -I -c "import json; print(json.load(open('engine/phase.lo
 echo "== smoke event against the candidate"
 if ! PHASE_PROTOCOL_VERSION="$protocol" scripts/smoke-event.sh "ws://127.0.0.1:$cand_port/ws" "$cand_data" fra "$smoke_port"; then
   echo "UPGRADE BLOCKED: smoke test failed against $digest. Current pin unchanged."
-  exit 1
+  exit 2
 fi
 
 if [ "$dry" = "--dry-run" ]; then echo "Dry run: smoke passed; not switching."; exit 0; fi

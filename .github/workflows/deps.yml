@@ -218,10 +218,16 @@ jobs:
           image="$(node -p "const l=require('./engine/phase.lock.json'); l.image + '@' + l.digest")"
           podman run -d --name mtgdt-phase -p 127.0.0.1:9374:9374 -v mtgdt-phase-data:/var/lib/phase-server "$image"
           mkdir -p data
+          ready=""
           for _ in $(seq 1 120); do
-            podman exec mtgdt-phase sh -c 'test -s /var/lib/phase-server/draft-pools.json && test -s /var/lib/phase-server/card-data.json' && break
+            if podman exec mtgdt-phase sh -c 'test -s /var/lib/phase-server/draft-pools.json && test -s /var/lib/phase-server/card-data.json'; then ready=1; break; fi
             sleep 2
           done
+          if [ -z "$ready" ]; then
+            echo "::error::pinned phase-server never wrote its card data"
+            podman logs mtgdt-phase 2>&1 | tail -40 || true
+            exit 1
+          fi
           podman cp mtgdt-phase:/var/lib/phase-server/card-data.json data/
           podman cp mtgdt-phase:/var/lib/phase-server/draft-pools.json data/
           python3 -I scripts/refresh-phase-data.py data
@@ -231,12 +237,12 @@ jobs:
           npm run deps -- update phase --summary tmp/summary-phase.md
           rc=$?
           set -e
-          # A candidate that fails its check leaves the pin alone. That is a refusal, not a broken
-          # workflow, so it does not fail the run or send a failure email. The summary is in the log.
-          if [ "$rc" != 0 ] && [ -f tmp/summary-phase.md ] && grep -q 'pin unchanged' tmp/summary-phase.md; then
+          # Exit 2 is upgrade-phase.sh refusing the candidate. The pin did not move, so this is not
+          # a broken workflow and it does not send a failure email. Any other failure still fails.
+          if [ "$rc" -eq 2 ]; then
             echo "::notice title=phase-rs upgrade blocked::The candidate did not pass. The pin was not changed and no pull request was opened."
             echo "-----"
-            cat tmp/summary-phase.md
+            cat tmp/summary-phase.md 2>/dev/null || true
             exit 0
           fi
           exit "$rc"

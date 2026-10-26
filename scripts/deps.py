@@ -858,8 +858,12 @@ def cmd_update_phase(a) -> tuple[int, list[str]]:
         log(f"archived outgoing booster data: {p}")
     cmd = [str(ROOT / "scripts" / "upgrade-phase.sh"), a.tag] + (["--dry-run"] if a.dry_run else [])
     rc = subprocess.run(cmd, cwd=ROOT).returncode
+    # upgrade-phase.sh exits 2 when it tried the candidate and refused it. Any other non-zero
+    # exit means the check itself failed (pull, podman, a script error) and the pin was not moved.
+    if rc == 2:
+        return rc, [f"- phase-rs upgrade to `{a.tag}` blocked; pin unchanged"]
     if rc != 0:
-        return rc, [f"- phase-rs upgrade to `{a.tag}` blocked (smoke test or pull failed); pin unchanged"]
+        return rc, [f"- phase-rs upgrade to `{a.tag}` failed; pin unchanged"]
     after = read_json(LOCK, {})
     if a.dry_run or after.get("digest") == before_lock.get("digest"):
         return 0, [f"- phase-rs: no change ({'dry run' if a.dry_run else 'already on the newest image'})"]
