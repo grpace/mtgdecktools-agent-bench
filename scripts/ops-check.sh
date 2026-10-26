@@ -4,7 +4,7 @@
 #   scripts/ops-check.sh                 Director and Hub /health, intake, open-data build, capacity, TLS expiry
 #   scripts/ops-check.sh --server        also the host (SSH_HOST, or SSH_HOST=local when already on it): disk
 #                                        use, the stack's volume sizes, container log caps, the newest Hub database dump,
-#                                        and the nightly volume backup
+#                                        and the nightly volume backup (BACKUP_DIR; skipped when unset)
 #   scripts/ops-check.sh --alert         e-mail when checks fail twice in a row (a deploy's restart doesn't
 #                                        alert), again every ALERT_REPEAT_HOURS while they keep failing or when a different
 #                                        check fails, and once when everything is back. On the host, mail goes through
@@ -113,26 +113,30 @@ for v in json.loads(sys.argv[1]) or []:
     [ -z "$uncapped" ] && ok "container logs capped ($(awk '{print $1 "=" $2}' <<<"$caps" | paste -sd' ' -))" || bad logs "container logs not capped: $uncapped"
   fi
 
-  # The newest /dumps/hub-<Day>.dump in the hub-db container (Coolify names containers <service>-<uuid>).
-  dump="$(on_host 'c=$(docker ps --format "{{.Names}}" | grep "^hub-db-" | head -1); [ -n "$c" ] && docker exec "$c" sh -c "ls -t /dumps/hub-*.dump 2>/dev/null | head -1 | xargs -r stat -c %Y"' 2>/dev/null)"
+  # The newest /dumps/hub-<Day>.dump in this project's hub-db container (Coolify names containers <service>-<uuid>).
+  dump="$(on_host "c=\$(docker ps --filter label=coolify.projectName=$project --format '{{.Names}}' | grep '^hub-db-' | head -1); [ -n \"\$c\" ] && docker exec \"\$c\" sh -c 'ls -t /dumps/hub-*.dump 2>/dev/null | head -1 | xargs -r stat -c %Y'" 2>/dev/null)"
   if [ -z "$dump" ]; then bad dump "hub database dump: none found"
   else
     age=$(( ( $(date +%s) - dump ) / 3600 ))
     [ "$age" -le "${DUMP_MAX_HOURS:-30}" ] && ok "hub database dump ${age} h old" || bad dump "hub database dump ${age} h old"
   fi
 
-  # The server's nightly volume backup (/opt/backup/backup.sh, 03:00, encrypted to Google Drive) keeps its last run in
-  # /tmp/gr3g-backup/<timestamp>/volumes: it must hold this stack's runs and Hub data. /tmp is emptied by a reboot.
-  b="$(on_host "d=\$(ls -d /tmp/gr3g-backup/*/ 2>/dev/null | sort | tail -1); up=\$(cut -d. -f1 /proc/uptime); echo \"\${d:-none} \$up \$( [ -n \"\$d\" ] && stat -c %Y \"\$d\" ) \$( [ -n \"\$d\" ] && ls \"\$d/volumes\" 2>/dev/null | grep -cE '_(director-runs|hub-data|hub-pgdump)\\.tar\\.gz\$')\"" 2>/dev/null)"
+  # Nightly volume backup. BACKUP_DIR holds timestamped run folders, each with volumes/. Unset: skip.
+  # A directory on a tmpfs is emptied by a reboot, so a missing run right after boot is not a failure.
+  if [ -z "${BACKUP_DIR:-}" ]; then ok "volume backup: BACKUP_DIR not set"
+  else
+  bdir_q="$(printf '%q' "$BACKUP_DIR")"
+  b="$(on_host "d=\$(ls -d ${bdir_q}/*/ 2>/dev/null | sort | tail -1); up=\$(cut -d. -f1 /proc/uptime); echo \"\${d:-none} \$up \$( [ -n \"\$d\" ] && stat -c %Y \"\$d\" ) \$( [ -n \"\$d\" ] && ls \"\$d/volumes\" 2>/dev/null | grep -cE '_(director-runs|hub-data|hub-pgdump)\\.tar\\.gz\$')\"" 2>/dev/null)"
   read -r bdir uptime_s bt bcount <<<"${b:-none 0}"
   if [ "${bdir:-none}" = none ]; then
-    if [ "${uptime_s:-0}" -lt $(( ${BACKUP_MAX_HOURS:-30} * 3600 )) ]; then ok "volume backup: none in /tmp since the reboot (the next runs at 03:00)"
-    else bad backup "volume backup: none found in /tmp/gr3g-backup"; fi
+    if [ "${uptime_s:-0}" -lt $(( ${BACKUP_MAX_HOURS:-30} * 3600 )) ]; then ok "volume backup: none in $BACKUP_DIR since the reboot (the next runs at 03:00)"
+    else bad backup "volume backup: none found in $BACKUP_DIR"; fi
   else
     age=$(( ( $(date +%s) - ${bt:-0} ) / 3600 ))
     if [ "$age" -gt "${BACKUP_MAX_HOURS:-30}" ]; then bad backup "volume backup ${age} h old ($bdir)"
     elif [ "${bcount:-0}" -lt 3 ]; then bad backup "volume backup $bdir lacks director-runs, hub-data or hub-pgdump"
     else ok "volume backup ${age} h old (director-runs, hub-data, hub-pgdump included)"; fi
+  fi
   fi
 fi
 

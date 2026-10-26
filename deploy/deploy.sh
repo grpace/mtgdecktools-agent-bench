@@ -272,17 +272,20 @@ echo "== ops check: install it and its 5-minute cron on $SSH_HOST"
 # OPS_DIR, when set, is an absolute path on the host. Unset: the host uses its own home.
 if [ -n "${OPS_DIR:-}" ]; then ops_remote=$(printf '%q' "$OPS_DIR"); else ops_remote='$HOME/.local/share/mtgdt-ops'; fi
 if git show "$sha:scripts/ops-check.sh" | on_host "set -e; d=$ops_remote; mkdir -p \"\$d\"; cat > \"\$d/ops-check.sh.new\"; chmod 755 \"\$d/ops-check.sh.new\"; mv \"\$d/ops-check.sh.new\" \"\$d/ops-check.sh\"" \
-  && on_host bash -s -- "$instance" "$name" "$domain" "$hub_domain" "${OPS_DIR:-}" <<'CRON'
+  && on_host bash -s -- "$instance" "$name" "$domain" "$hub_domain" "${OPS_DIR:-}" "${BACKUP_DIR:-}" <<'CRON'
 set -e
-instance="$1"; name="$2"; domain="$3"; hub="$4"; d="${5:-$HOME/.local/share/mtgdt-ops}"
+instance="$1"; name="$2"; domain="$3"; hub="$4"; d="${5:-$HOME/.local/share/mtgdt-ops}"; backup="$6"
 mark="# ops:$name"
+prefix=""
+[ -z "$backup" ] || prefix="BACKUP_DIR=$(printf '%q' "$backup") "
 if [ "$instance" = prod ]; then
-  line="*/5 * * * * SSH_HOST=local DIRECTOR_URL=https://$domain HUB_URL=https://$hub PROJECT=$name OPS_STATE_DIR=\$HOME/.local/state/$name-ops $d/ops-check.sh --server --alert >/dev/null 2>&1 $mark"
+  line="*/5 * * * * ${prefix}SSH_HOST=local DIRECTOR_URL=https://$domain HUB_URL=https://$hub PROJECT=$name OPS_STATE_DIR=\$HOME/.local/state/$name-ops $d/ops-check.sh --server --alert >/dev/null 2>&1 $mark"
 else
-  line="*/5 * * * * SSH_HOST=local $d/ops-check.sh --server --alert >/dev/null 2>&1 $mark"
+  line="*/5 * * * * ${prefix}SSH_HOST=local $d/ops-check.sh --server --alert >/dev/null 2>&1 $mark"
 fi
 current="$(crontab -l 2>/dev/null || true)"
-kept="$(printf '%s\n' "$current" | awk -v mark="$mark" 'index($0, mark) { next } /ops-check\.sh --server --alert/ && index($0, "# ops:") == 0 { next } { print }')"
+# Replace only this instance's marked line. Another instance's line, marked or not, stays.
+kept="$(printf '%s\n' "$current" | awk -v mark="$mark" 'index($0, mark) { next } { print }')"
 printf '%s\n' "$kept" | { cat; echo "$line"; } | crontab -
 echo "  cron line set"
 CRON
