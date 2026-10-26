@@ -17,7 +17,7 @@ Comparability is versioned separately and doesn't follow the release version: th
 ### Fixed
 
 - A rules report stored in a run folder is cleaned the same way Postgres stores text: NUL bytes are removed and a lone surrogate becomes U+FFFD. Invisible characters were already removed.
-- A deploy rewrites only that instance's ops-check cron line. The Hub dump check looks at that instance's database. The volume-backup check reads `BACKUP_DIR` and is skipped when it is unset.
+- A deploy rewrites only that instance's ops-check cron line. The Hub dump check looks at that instance's database. The volume-backup check reads `BACKUP_DIR` and is skipped when it is unset. An unset `OPS_DIR` or `BACKUP_DIR` is passed through as `-`, because an empty argument would be dropped on the way to the host and the next value would shift into its place.
 
 ## [0.1.0] - 2026-10-25
 

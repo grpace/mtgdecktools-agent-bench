@@ -272,9 +272,12 @@ echo "== ops check: install it and its 5-minute cron on $SSH_HOST"
 # OPS_DIR, when set, is an absolute path on the host. Unset: the host uses its own home.
 if [ -n "${OPS_DIR:-}" ]; then ops_remote=$(printf '%q' "$OPS_DIR"); else ops_remote='$HOME/.local/share/mtgdt-ops'; fi
 if git show "$sha:scripts/ops-check.sh" | on_host "set -e; d=$ops_remote; mkdir -p \"\$d\"; cat > \"\$d/ops-check.sh.new\"; chmod 755 \"\$d/ops-check.sh.new\"; mv \"\$d/ops-check.sh.new\" \"\$d/ops-check.sh\"" \
-  && on_host bash -s -- "$instance" "$name" "$domain" "$hub_domain" "${OPS_DIR:-}" "${BACKUP_DIR:-}" <<'CRON'
+  && on_host bash -s -- "$instance" "$name" "$domain" "$hub_domain" "${OPS_DIR:--}" "${BACKUP_DIR:--}" <<'CRON'
 set -e
-instance="$1"; name="$2"; domain="$3"; hub="$4"; d="${5:-$HOME/.local/share/mtgdt-ops}"; backup="$6"
+instance="$1"; name="$2"; domain="$3"; hub="$4"
+# "-" stands for unset: ssh drops an empty argument and the next value would shift into its place.
+if [ "$5" = "-" ]; then d="$HOME/.local/share/mtgdt-ops"; else d="$5"; fi
+if [ "$6" = "-" ]; then backup=""; else backup="$6"; fi
 mark="# ops:$name"
 prefix=""
 [ -z "$backup" ] || prefix="BACKUP_DIR=$(printf '%q' "$backup") "
