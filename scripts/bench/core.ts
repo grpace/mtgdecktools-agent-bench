@@ -41,12 +41,12 @@ const DATA_DIR = join(env.XDG_DATA_HOME || join(home, '.local/share'), 'mtgdt-be
 export const RUNS = resolve(env.BENCH_RUNS_DIR ?? (PACKAGED || !REPO ? join(DATA_DIR, 'runs') : join(REPO, 'runs')));
 /** Local stack state (the admin token): .bench/ in a checkout. */
 export const LOCAL = REPO ? join(REPO, '.bench') : join(CONFIG_DIR, 'local');
-/** The current join prompt (prompts/join.md); earlier sets are in prompts/archive/vN in a checkout. */
+/** The current join prompt (prompts/join.md). The released copy is prompts/archive/v9. */
 export const JOIN_PROMPT = join(ASSETS, 'prompts/join.md');
 export const SETUP_PROMPT = join(ASSETS, 'prompts/setup.md');
 
 /**
- * `bench play --prompt`: a file, or an archived set by its old folder name ("v3", "prompts/v3", "prompts/archive/v3")
+ * `bench play --prompt`: a file, or the released set by folder name ("v9", "prompts/v9", "prompts/archive/v9")
  * → that set's join.md (in a checkout; the package ships the current prompts only).
  */
 export function joinPromptFile(arg: string): string {

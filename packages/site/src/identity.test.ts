@@ -16,7 +16,7 @@ import { swissFinishes } from './outcomes.js';
 import { currentPromptKeys, makeContext } from './context.js';
 import { builder, serialize, withDeprecatedKeys } from './export.js';
 import { SUMMARY_FINISHES } from './json.js';
-import { PROMPTS_ARCHIVE, PROMPTS_DIR, promptsHash, promptVersionOf } from '../../director/src/prompts.js';
+import { PROMPTS_DIR, promptsHash, promptVersionOf } from '../../director/src/prompts.js';
 
 const T0 = Date.parse('2026-10-22T12:00:00Z');
 const root = mkdtempSync(join(tmpdir(), 'mtgdt-identity-'));
@@ -208,23 +208,22 @@ try {
     assert.ok(boards.filter((b) => b.group !== main[0]!.key).every((b) => b.role === 'side'));
   });
 
-  check('the real prompt change (v6 → v7): v6 tables become an earlier side group; no main board until v7 has rated games', () => {
-    const v6 = promptsHash(join(PROMPTS_ARCHIVE, 'v6'))!;
-    const v7 = promptsHash(PROMPTS_DIR)!;
-    assert.notEqual(v6, v7);
-    // The current set's version name (v7 when this was written; whichever set is current now).
-    assert.deepEqual(currentPromptKeys(), [`sha256:${v7.slice(0, 12)}`, promptVersionOf(PROMPTS_DIR)]);
+  check('an older prompt group is a side group; no main board until the current prompts have rated games', () => {
+    const older = 'a'.repeat(64);
+    const current = promptsHash(PROMPTS_DIR)!;
+    assert.notEqual(older, current);
+    assert.deepEqual(currentPromptKeys(), [`sha256:${current.slice(0, 12)}`, promptVersionOf(PROMPTS_DIR)]);
     const mk = (id: string, sha: string, version: string, t: number) => event2(id, { seats: [{ name: 'o-1', ...OPUS }, { name: 's-1', ...SONNET }], games: [['o-1', 's-1'], ['s-1', 'o-1']], start: { prompt_sha256: sha, prompt_version: version }, t });
-    const old = [0, 1, 2].map((k) => mk(`p7-v6-${k}`, v6, 'v6', T0 + k));
+    const old = [0, 1, 2].map((k) => mk(`p7-old-${k}`, older, 'older', T0 + k));
     const exportOf = (evs: EventData[]) => builder(makeContext({ events: evs, cards: new CardDb(undefined), setsDir: root, replicates: 0 }), null, join(root, 'no-curated.json')).index();
     let idx = exportOf(old);
-    assert.equal(idx.main_board, null, 'the v6 group is not the headline (default mainPrompts: this checkout\u2019s prompts)');
+    assert.equal(idx.main_board, null, 'an older group is not the headline (default mainPrompts: this checkout\u2019s prompts)');
     assert.ok(idx.groups.every((g) => g.role === 'side'));
-    idx = exportOf([...old, mk('p7-v7-0', v7, 'v7', T0 + 100)]);
+    idx = exportOf([...old, mk('p7-now-0', current, promptVersionOf(PROMPTS_DIR), T0 + 100)]);
     const main = idx.groups.find((g) => g.role === 'main')!;
-    assert.equal(main.conditions.prompt_key, `sha256:${v7.slice(0, 12)}`);
+    assert.equal(main.conditions.prompt_key, `sha256:${current.slice(0, 12)}`);
     assert.equal(idx.main_board, `${main.key}|*|all`);
-    assert.equal(idx.groups.find((g) => g.conditions.prompt_key === `sha256:${v6.slice(0, 12)}`)?.label.endsWith('Earlier Prompt'), true);
+    assert.equal(idx.groups.find((g) => g.conditions.prompt_key === `sha256:${older.slice(0, 12)}`)?.label.endsWith('Earlier Prompt'), true);
   });
 
   check('the headline board is the current prompt group: before it has rated games there is none, never an older group', () => {

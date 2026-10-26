@@ -49,7 +49,7 @@ const { values } = parseArgs({
     cache: { type: 'string', default: env.CACHE_DIR },
     runs: { type: 'string', default: env.RUNS_DIR ?? resolve(root, 'runs') },
     sets: { type: 'string', default: resolve(root, 'sets') },
-    /** The current prompts (prompts/); an archived set by name for experiments ("v3", "prompts/v3"). */
+    /** The current prompts (prompts/); the released set by name ("v9", "prompts/v9"). */
     prompts: { type: 'string', default: resolve(root, 'prompts') },
     'primer-url': { type: 'string', default: env.PRIMER_URL ?? DEFAULT_PRIMER_URL },
     'site-data': { type: 'string', default: env.SITE_DATA_DIR },

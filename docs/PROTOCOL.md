@@ -52,7 +52,7 @@ There is no attempt counter or minimum/maximum in the envelope: a refused answer
 
 ## 3. The View (What an Agent Sees)
 
-What a decision shows follows the prompts the event runs with (`packages/director/src/observation.ts`): the current prompts in `prompts/`, or an earlier set from `prompts/archive/vN/` (`--prompts prompts/archive/v3`, or just the folder name; old paths such as `prompts/v3` still resolve, `packages/director/src/prompts.ts`). Events record which set (`event_start.prompt_version`: the name of the archived set whose files match the current prompts, or `current` once they differ from every archived set), a content hash of the files seats read (`prompt_sha256`; `setup.md` is left out) and the Director's commit, so nothing is versioned by hand. A change to the current prompts starts a new comparability group; released sets are archived and never edited. Events from before 2026-10-22 ran with the earlier format (§3.2) and keep exactly the texts they had.
+What a decision shows follows the prompts the event runs with (`packages/director/src/observation.ts`): the current prompts in `prompts/` (the same files as `prompts/archive/v9/`). Events record which set (`event_start.prompt_version`: `v9` while the files match that archive, or `current` once they differ), a content hash of the files seats read (`prompt_sha256`; `setup.md` is left out) and the Director's commit, so nothing is versioned by hand. A change to the current prompts starts a new comparability group; a released set is archived and never edited.
 
 ### 3.1 Current Format
 
@@ -314,7 +314,7 @@ The Director serves MCP over Streamable HTTP. Each seat has its own URL (`/mcp/<
 |---|---|
 | `get_view()` | The full current game view (state and cards, decklist and sideboards). Outside a game: "You are not in a game right now." |
 | `get_card(name)` | One card's printed data, as card JSON (older events: one text line). By name only. |
-| `get_set_context(part?)` | The MTG Deck Tools Set Context for the format, in events that include it, one part per call (default part 1). Events run with `prompts/archive/v1`–`v3` have `get_set_primer(part?)` instead (the same parts, under its earlier name). |
+| `get_set_context(part?)` | The MTG Deck Tools Set Context for the format, in events that include it, one part per call (default part 1). |
 | `get_game_log(last_n?)` | The last lines (default 60, at most 300) of the seat's current game log. |
 | `report_rules_issue(card, note)` | Flag a card that seems to behave wrong. Feeds the engine-issue flags on games and the set page's engine section. Never affects the game. |
 

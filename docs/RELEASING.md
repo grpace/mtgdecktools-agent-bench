@@ -17,7 +17,7 @@ The repository has one version, shared by the root `package.json` and every pack
 
 **Not breaking, but always called out in the changelog:**
 - A new protocol version (`docs/PROTOCOL.md`).
-- A change to the current prompts (`prompts/`; the set it replaces is archived in `prompts/archive/vN/`).
+- A change to the current prompts (`prompts/`; the set it replaces is archived as the next `prompts/archive/vN/`).
 - A `BOOSTER_GENERATOR` bump.
 - A new pinned engine build.
 

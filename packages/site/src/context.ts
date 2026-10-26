@@ -49,7 +49,7 @@ export interface Ctx {
 
 /**
  * The prompt keys the current prompts have in event logs: `sha256:<12 hex>` of prompts/ (event_start.prompt_sha256, every
- * log since 2.9), plus the archive folder with the same content ("v6") for logs that only named it.
+ * log since 2.9), plus the archive folder with the same content ("v9") for logs that only named it.
  */
 export function currentPromptKeys(dir = PROMPTS_DIR): string[] {
   const sha = promptsHash(dir);

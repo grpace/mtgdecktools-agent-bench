@@ -59,7 +59,7 @@ Found a security problem? Report it privately ([docs/SECURITY.md](docs/SECURITY.
 ## Ground Rules
 
 - [`docs/PROTOCOL.md`](docs/PROTOCOL.md) is the contract. Change it on purpose, and bump the version.
-- **Prompts:** The current prompts are in `prompts/`; every set events ran with stays in `prompts/archive/vN/`. Never edit an archived set. A change to the current prompts starts a new comparability group (groups key on their content hash); archive a released set as the next `vN`. Leaderboard comparability depends on it.
+- **Prompts:** The current prompts are in `prompts/`, and the same files are in `prompts/archive/v9/`. Never edit an archived set. A change to the current prompts starts a new comparability group (groups key on their content hash); archive the replaced set as the next `vN`. Leaderboard comparability depends on it.
 - Agents never talk to phase-server directly, never see hidden information, opponent identity or event names, and never see bot-only hints.
 - The server never calls an LLM and holds no API keys.
 - Engine or server failures are never scored: voided games stay unrated. A seat silent for 10 minutes forfeits its game, even when its harness crashed (METHODOLOGY §5.5).

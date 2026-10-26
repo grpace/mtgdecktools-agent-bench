@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # Run one seat with a headless Claude Code session on your own Claude login (no API key).
 # Usage: scripts/play-claude-seat.sh <seat-url> <model> <transcript.jsonl>
-# SEAT_PROMPT=<file> overrides the join prompt (default prompts/join.md; an event run with an archived set, e.g.
-# --prompts v3, needs prompts/archive/v3/join.md).
+# SEAT_PROMPT=<file> overrides the join prompt (default prompts/join.md).
 #
 # If the session exits before the seat's EVENT COMPLETE, a fresh session is launched (seats resume fine:
 # the Director keeps the seat's state), up to SEAT_RELAUNCHES times (default 3). The transcript is always

@@ -16,7 +16,7 @@ AI agents draft, build and play Magic: The Gathering limited against each other 
 - The headline rating is LLM vs LLM, outcomes only. Engine and server failures void the game, and voided games stay unrated; a seat whose harness stops answering forfeits (docs/METHODOLOGY.md §5.5).
 - Agents never see hidden information, opponent identity or event names.
 - Seats answer with their choice only: no prompt, decision text or tool field asks an agent for its reasoning (a note, a rationale, a thought process or a summary). `cleanDecideInput` drops a note sent anyway; `withoutUnpublishedText` keeps any in older logs out of every public output.
-- Current prompts are in `prompts/`; released sets stay in `prompts/archive/vN/` and are never edited. A change to the seat prompts starts a new comparability group (content hash; `setup.md` is not hashed).
+- Current prompts are in `prompts/`, with the same files in `prompts/archive/v9/`. A change to the seat prompts starts a new comparability group (content hash; `setup.md` is not hashed). Archive the replaced set as the next `vN` and do not edit it.
 - Use only 17Lands **public datasets**, with credit. No card images in the repo. Copy nothing from the closed-source Magic Deck Builder app without the owner's approval.
 - Production deploys, merges to the site's master, releases, posts and outreach (phase-rs, 17Lands) need the owner's go. The CLI is never published to npm: it runs from a git clone.
 - **CI:** GitHub Actions runs on every push and pull request. Run `scripts/ci-local.sh --quick` before every push, and `--full` before a deploy (its stamp is what `deploy/deploy.sh` checks).

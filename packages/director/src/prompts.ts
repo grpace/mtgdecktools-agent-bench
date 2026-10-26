@@ -1,12 +1,12 @@
 /**
  * The prompt folders. `prompts/` holds the current prompts: what seats read (join.md, fundamentals.md,
- * deckbuilding-guide.md) and the setup prompt people paste into a coding agent (setup.md). `prompts/archive/vN` keeps
- * every earlier set exactly as events used it, for history and for re-running an old condition.
+ * deckbuilding-guide.md) and the setup prompt people paste into a coding agent (setup.md). `prompts/archive/v9`
+ * is that same set, so the logged name stays "v9" until the files change.
  *
  * Logs name the set an event ran with in `event_start.prompt_version` and identify it exactly by
- * `prompt_sha256`. The name is the archive folder ("v2", "v3", "v4"), or "current" for current prompts that no
- * archive matches (prompts refined in place since the last archived set). Old names keep resolving: "v3",
- * "prompts/v3" and "prompts/archive/v3" are the same folder (resolvePromptsDir).
+ * `prompt_sha256`. The name is the archive folder ("v9"), or "current" for current prompts that no
+ * archive matches (prompts refined in place since the last archived set). A released name still resolves:
+ * "v9", "prompts/v9" and "prompts/archive/v9" are the same folder (resolvePromptsDir).
  */
 import { createHash } from 'node:crypto';
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
@@ -15,7 +15,7 @@ import { basename, join, resolve } from 'node:path';
 export const REPO_ROOT = resolve(import.meta.dirname, '../../..');
 /** The current prompts. */
 export const PROMPTS_DIR = join(REPO_ROOT, 'prompts');
-/** Prompt sets events ran with, one folder each (v1 to v6; v6 is also the current prompts). */
+/** The released copy of the current prompts (v9). */
 export const PROMPTS_ARCHIVE = join(PROMPTS_DIR, 'archive');
 /** prompt_version of current prompts that match no archived set. */
 export const CURRENT_PROMPTS = 'current';
@@ -27,7 +27,7 @@ const isDir = (p: string) => existsSync(p) && statSync(p).isDirectory();
 
 /**
  * A prompts folder from what a command line, a log or a doc names: a path that exists; "current" or "prompts" (the
- * current prompts); or an old folder name ("v3", "prompts/v3", "prompts/archive/v3") → prompts/archive/v3. Anything
+ * current prompts); or the released folder name ("v9", "prompts/v9", "prompts/archive/v9") → prompts/archive/v9. Anything
  * else comes back resolved as given (and fails where it is read).
  */
 export function resolvePromptsDir(name: string, root = PROMPTS_DIR): string {
@@ -54,8 +54,8 @@ export function promptsHash(promptsDir: string): string | undefined {
 }
 
 /**
- * The name logged as prompt_version: an archive folder's own name ("v3"); for the current prompts, the archived set
- * with the same content (today "v6"), else "current". Other folders (experiments): their folder name.
+ * The name logged as prompt_version: an archive folder's own name ("v9"); for the current prompts, the archived set
+ * with the same content (today "v9"), else "current". Other folders (experiments): their folder name.
  */
 export function promptVersionOf(promptsDir: string, root = PROMPTS_DIR): string {
   const dir = resolve(promptsDir);
