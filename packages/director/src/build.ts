@@ -119,7 +119,7 @@ export function askForDeck(seat: AgentSeat, pool: PackCard[], cards: CardDb, rat
         if (picks.length + basicCount < 40) return `the deck has ${picks.length + basicCount} cards; it needs at least 40.`;
         const main = picks.map((n) => pool[n - 1]!);
         const built: BuiltDeck = { deck: toDeck(main, basics, pool), mainCards: main, basics, by: 'agent' };
-        log('deck_built', { seat: seat.name, by: 'agent', main: built.deck.main_deck, sideboard: built.deck.sideboard, note: input.note, latency_ms: Date.now() - o.createdAt });
+        log('deck_built', { seat: seat.name, by: 'agent', main: built.deck.main_deck, sideboard: built.deck.sideboard, latency_ms: Date.now() - o.createdAt });
         resolve(built);
         return null;
       },
@@ -155,7 +155,7 @@ function deckText(observation: ObservationFormat | undefined, id: string, pool: 
     ...poolAnalysis(pool, ratings, knowledge.stats), '',
     ...(knowledge.guide ? [knowledge.guide.trim(), ''] : []),
     ...(knowledge.primer ? [`Your MTG Deck Tools ${doc.lower} (archetypes, lane strategy, curve and land advice) is available any time via ${doc.tool}.`, ''] : []),
-    `DECISION ${id} — submit your deck: decide(decision_id="${id}", cards=[pool numbers for the main deck], basics={"Plains": 8, "Island": 9}, note="<one-line plan for the deck>").`,
+    `DECISION ${id} — submit your deck: decide(decision_id="${id}", cards=[pool numbers for the main deck], basics={"Plains": 8, "Island": 9}).`,
   ];
   return lines.join('\n');
 }
@@ -185,10 +185,10 @@ function askForDeckV4(seat: AgentSeat, pool: PackCard[], cards: CardDb, ratings:
     const lock = (deck: DeckSubmission, input: DecideInput, review: Record<string, unknown>) => {
       const built: BuiltDeck = { deck: toDeckIdx(deck.main, deck.basics, pool), mainCards: deck.main.map((i) => pool[i]!), basics: deck.basics, by: 'agent' };
       log('deck_built', {
-        seat: seat.name, by: 'agent', main: built.deck.main_deck, sideboard: built.deck.sideboard, note: input.note,
+        seat: seat.name, by: 'agent', main: built.deck.main_deck, sideboard: built.deck.sideboard,
         pool_numbers: deck.main.map((i) => i + 1), basics: deck.basics,
         ...(input.deck_name ? { deck_name: input.deck_name } : {}), ...(input.archetype ? { archetype: input.archetype } : {}),
-        ...(input.total_count !== undefined ? { total_count: input.total_count } : {}), ...(input.analysis ? { analysis: input.analysis } : {}),
+        ...(input.total_count !== undefined ? { total_count: input.total_count } : {}),
         ...(rejected.length ? { rejected } : {}), review, latency_ms: Date.now() - startedAt,
       });
       resolve(built);
@@ -237,7 +237,7 @@ function askForDeckV4(seat: AgentSeat, pool: PackCard[], cards: CardDb, ratings:
         '',
         review.text,
         '',
-        `DECISION ${r.id} — lock this deck with decide(decision_id="${r.id}", option="confirm"), or fix it: resubmit the whole deck once with decide(decision_id="${r.id}", cards=[…], basics={…}, total_count=…, deck_name="…", archetype="…", analysis="…", note="…"). A resubmitted deck locks at once.`,
+        `DECISION ${r.id} — lock this deck with decide(decision_id="${r.id}", option="confirm"), or fix it: resubmit the whole deck once with decide(decision_id="${r.id}", cards=[…], basics={…}, total_count=…, deck_name="…", archetype="…"). A resubmitted deck locks at once.`,
       ].join('\n');
       log('build_offered', { seat: seat.name, id: r.id, kind: 'deck_review', text: r.text });
       return r;

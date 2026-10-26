@@ -93,7 +93,5 @@ One decide call, with:
 - `basics`: e.g. {"Plains": 8, "Island": 9}, exact names.
 - `total_count`: your own sum from the final check.
 - `deck_name` (creative and thematic) and `archetype` (Aggro, Control, Midrange, Tempo, Combo…).
-- `analysis`: your deckbuilding thought process for THIS pool: the options you compared and why this one won, the counts you made (creatures, two-drops, removal, enablers and payoffs), the cuts, the mana audit (Deck Mana Colors, every non-basic land checked), and your sideboard plan (what comes in against what, and what it replaces).
-- `note`: the deck's plan in one line.
 
 The Director then shows you the deck exactly as it counted it (JSON: each card with its count, lands, curve, sources against pips per color, and flags for any rule it breaks). Confirm it, or resubmit the whole deck once. Nothing locks until then.

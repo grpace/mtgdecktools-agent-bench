@@ -150,6 +150,9 @@ const base = {
   seatConnectTimeoutMs: env.SEAT_CONNECT_TIMEOUT_MS ? Number(env.SEAT_CONNECT_TIMEOUT_MS) : undefined,
   // The most one decision may stay open however often the seat calls (DECISION_MAX_MS, default 30 min; 0 = off).
   decisionMaxMs: env.DECISION_MAX_MS ? Number(env.DECISION_MAX_MS) : undefined,
+  // The draft clocks: DRAFT_PICK_MS (default 75 s) per pick, FIRST_PICK_MS (default 3 min) for the first pick; 0 = off.
+  draftPickMs: env.DRAFT_PICK_MS ? Number(env.DRAFT_PICK_MS) : undefined,
+  firstPickMs: env.FIRST_PICK_MS ? Number(env.FIRST_PICK_MS) : undefined,
 };
 
 /**

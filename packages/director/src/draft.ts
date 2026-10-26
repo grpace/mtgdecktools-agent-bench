@@ -30,6 +30,8 @@ const RARITY_LETTER: Record<string, string> = { common: 'C', uncommon: 'U', rare
  */
 export class Draft {
   readonly pools: PackCard[][];
+  /** The pick clocks the event enforces (event.ts), told to the seats in each pick (0 = no clock). */
+  pickClock = { firstMs: 0, ms: 0 };
   private seenText: Array<Set<string>>;
   /** MTGDT_OBS_COMPARE only: the v3 "text shown earlier" bookkeeping for seats that see v4. */
   private shadowSeen: Array<Set<string>>;
@@ -133,12 +135,13 @@ export class Draft {
         text: '',
         options: pack.map((c, idx) => ({ id: String(idx + 1), label: c.name, value: idx })),
         createdAt: Date.now(),
+        draftPick: { pack: round + 1, pick: pick + 1 },
         answer: async (input, o) => {
           const extra = unexpectedFields(input, [], 'A draft pick');
           if (extra) return extra;
           const idx = input.option != null ? Number(input.option) - 1 : NaN;
           if (!(idx >= 0 && idx < pack.length)) return `Pick a card with option="1".."${pack.length}".`;
-          record(idx, 'agent', { latency_ms: Date.now() - o.createdAt, note: input.note });
+          record(idx, 'agent', { latency_ms: Date.now() - o.createdAt });
           resolve(idx);
           return null;
         },
@@ -154,6 +157,17 @@ export class Draft {
       offer.text = this.pickText(seat, i, pack, round, pick, packSize, dir, setName, offer.id);
       seat.offer(offer);
     });
+  }
+
+  /** " within 75 s (…)" for a pick with a clock, else "". */
+  private clockText(round: number, pick: number): string {
+    const first = round === 0 && pick === 0;
+    const ms = first ? this.pickClock.firstMs : this.pickClock.ms;
+    if (!(ms > 0)) return '';
+    const secs = Math.round(ms / 1000);
+    return first
+      ? ` within ${secs >= 120 && secs % 60 === 0 ? `${secs / 60} minutes` : `${secs} s`} (this first pick includes reading your briefing; if no first pick arrives in time, the event is stopped)`
+      : ` within ${secs} s (past that, the Director picks for you by the bot policy)`;
   }
 
   private pickText(seat: AgentSeat, i: number, pack: PackCard[], round: number, pick: number, packSize: number, dir: number, setName: string, id: string): string {
@@ -184,7 +198,7 @@ export class Draft {
       const stats = this.knowledge.stats ? this.ratings.statsLabel(c.name) : '';
       lines.push(`  [${idx + 1}] (${r}) ${desc}${stats ? `  [${stats}]` : ''}`);
     });
-    lines.push('', `DECISION ${id} — pick one card. Answer with decide(decision_id="${id}", option="<number>", note="<short reason>").`);
+    lines.push('', `DECISION ${id} — pick one card${this.clockText(round, pick)}. Answer with decide(decision_id="${id}", option="<number>").`);
     return lines.join('\n');
   }
 
@@ -196,7 +210,7 @@ export class Draft {
     lines.push('', `Your picks so far (${pool.length}):`, ...poolSummaryV4(pool, this.cards));
     lines.push('', 'THIS PACK (one card per line; "n" is the option number):');
     pack.forEach((c, idx) => lines.push(JSON.stringify(packCardJson(c, idx + 1, this.cards, this.knowledge.stats ? this.ratings.statsLabel(c.name) : ''))));
-    lines.push('', `DECISION ${id} — pick one card. Answer with decide(decision_id="${id}", option="<n>", note="<short reason>").`);
+    lines.push('', `DECISION ${id} — pick one card${this.clockText(round, pick)}. Answer with decide(decision_id="${id}", option="<n>").`);
     return lines.join('\n');
   }
 }

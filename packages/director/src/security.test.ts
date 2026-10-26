@@ -79,7 +79,9 @@ await test('cleanAgentText: NUL, escape sequences, bidi and invisible characters
   const england = '\u{1F3F4}\u{E0067}\u{E0062}\u{E0065}\u{E006E}\u{E0067}\u{E007F}';
   assert.equal(cleanAgentText(`go ${england} 👨‍👩‍👧`), `go ${england} 👨‍👩‍👧`);
   const cleaned = cleanDecideInput({ decision_id: 'G1\u0000', note: 'x\u001b]0;pwn\u0007', mana: ['37\u0000'], basics: { 'Isl\u0000and': 3 }, cards: [1, 2] });
-  assert.deepEqual(cleaned, { decision_id: 'G1', note: 'x]0;pwn', mana: ['37'], basics: { Island: 3 }, cards: [1, 2] });
+  // A note (or analysis) sent anyway is dropped: seats answer with their choice only.
+  assert.deepEqual(cleaned, { decision_id: 'G1', mana: ['37'], basics: { Island: 3 }, cards: [1, 2] });
+  assert.deepEqual(cleanDecideInput({ decision_id: 'D1', option: '2', analysis: 'long text' }), { decision_id: 'D1', option: '2' });
 });
 
 await test('log lines are capped (SEC-9)', () => {
@@ -145,10 +147,11 @@ await test('MCP decide: ids must be whole non-negative numbers; basics are bound
     await refused({ basics: variants });
     await refused({ basics: { Island: 40, island: 40, ISLAND: 40, Plains: 40 } });
     assert.equal(answers.length, 0, 'nothing invalid reached the decision');
-    const ok = await rpc(url, call(3, 'decide', { decision_id: 'P1', option: '1', note: 'pick\u0000 this\u001b[2J', basics: { Island: 40, Plains: 40, Swamp: 40 } }));
+    const ok = await rpc(url, call(3, 'decide', { decision_id: 'P1', option: '1\u0000', note: 'sent anyway', basics: { Island: 40, Plains: 40, Swamp: 40 } }));
     assert.equal(ok.status, 200);
     assert.equal(answers.length, 1);
-    assert.equal(answers[0]!.note, 'pick this[2J');
+    assert.equal(answers[0]!.option, '1', 'strings arrive cleaned');
+    assert.equal('note' in answers[0]!, false, 'a note sent anyway never reaches the decision');
   } finally {
     http.close();
   }
@@ -208,7 +211,7 @@ await test('per-IP in-flight cap on non-seat routes: one client can\'t hold ever
 
 await test(`seat: after ${MAX_REFUSED_PER_MIN} refused answers in a minute, answers are turned away without reaching the game (SEC-4)`, async () => {
   const { seat, answers } = seatWithOffer(true);
-  for (let i = 0; i < MAX_REFUSED_PER_MIN; i++) assert.match(await seat.decide({ decision_id: 'P1', option: '1', note: 'n'.repeat(600) }), /^Not accepted: refused/);
+  for (let i = 0; i < MAX_REFUSED_PER_MIN; i++) assert.match(await seat.decide({ decision_id: 'P1', option: '1' }), /^Not accepted: refused/);
   assert.match(await seat.decide({ decision_id: 'P1', option: '1' }), /^Not applied: 20 answers were refused in the last minute/);
   assert.equal(answers.length, MAX_REFUSED_PER_MIN);
   assert.equal(seat.pending?.id, 'P1', 'the decision stays open');

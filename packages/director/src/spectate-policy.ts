@@ -6,11 +6,11 @@
  *
  * The threat: anyone can watch a public live event, including the operator of one seat or an agent
  * with web tools. Whatever the stream shows, one agent could be fed. So the stream only shows, at any
- * moment, what no still-competing seat could use: public game state live, decisions and notes after a
- * delay with hidden card names redacted, and private information once nobody can benefit from it.
+ * moment, what no still-competing seat could use: public game state live, decisions after a delay with
+ * hidden card names redacted, and private information once nobody can benefit from it.
  */
 
-/** When a draft pick (the card, the pack it came from, the drafter's note) becomes visible. */
+/** When a draft pick (the card and the pack it came from) becomes visible. */
 export type DraftReveal =
   /** When every pack of that round is empty: no pack it describes can still be picked from (default). */
   | 'round'
@@ -19,14 +19,14 @@ export type DraftReveal =
   /** When the drafter has no games left (bots: when the draft is over). Strictest. */
   | 'seat';
 
-/** When a seat's private game information (its hand, what it saw, unredacted notes, its deck) becomes visible. */
+/** When a seat's private game information (its hand, what it saw, its deck) becomes visible. */
 export type HiddenReveal =
   /** When the seat has no games left in the event: its deck can't help a future opponent (default). */
   | 'seat'
   /** When the game ends (weaker: a seat's hands in game 1 reveal its deck for game 2). */
   | 'game';
 
-/** When a game decision's choice and note become visible (redacted until `hidden` allows the full text). */
+/** When a game decision's choice becomes visible (redacted until `hidden` allows the full text). Env: SPECTATE_NOTES. */
 export type NotesReveal = { turns: number } | 'game' | 'seat';
 
 export interface SpectateLimits {
@@ -48,6 +48,7 @@ export interface SpectatePolicy {
   /** public: anyone; admin: admin token required; off: the live endpoints answer 404. */
   access: 'public' | 'admin' | 'off';
   draft: DraftReveal;
+  /** When a decision's choice is released (SPECTATE_NOTES). */
   notes: NotesReveal;
   hidden: HiddenReveal;
   /** Broadcast delay for public game information (boards, log, clock), in ms. 0 = live. */
@@ -100,18 +101,18 @@ export function spectatePolicyFromEnv(env: Record<string, string | undefined>): 
 
 /** Plain-language summary of the policy, shown to viewers (hello message, Watch page) and in exports. */
 export function describePolicy(p: SpectatePolicy): { public: string; draft: string; decisions: string; hidden: string; decks: string } {
-  const notes = p.notes === 'game' ? 'when the game ends' : p.notes === 'seat' ? 'when that seat has no games left' : `${p.notes.turns} turns after they were made`;
+  const notes = p.notes === 'game' ? 'when the game ends' : p.notes === 'seat' ? 'when that seat has no games left' : `${p.notes.turns} turns after it was made`;
   return {
     public: p.delayMs ? `Boards, life totals and the game log, ${Math.round(p.delayMs / 1000)} s behind the table.` : 'Boards, life totals, the game log and who is on the clock, as they happen.',
     draft:
       p.draft === 'round'
-        ? 'Picks, packs and drafters’ notes once every pack of that round is empty (live: who has picked, not what).'
+        ? 'Picks and packs once every pack of that round is empty (live: who has picked, not what).'
         : p.draft === 'draft'
-          ? 'Picks, packs and drafters’ notes once the draft is over.'
-          : 'Picks, packs and notes once the drafter has no games left (bots: after the draft).',
-    decisions: `Each game decision’s choice and note ${notes}, with any card that is still hidden (in a hand or library) blanked out.`,
-    hidden: p.hidden === 'seat' ? 'Hands, what each agent saw and unredacted notes once that seat has no games left.' : 'Hands, what each agent saw and unredacted notes when the game ends.',
-    decks: 'Decklists, what each seat sideboarded and deck notes once the seat has no games left; until then, the cards it has shown in play and its deck size.',
+          ? 'Picks and packs once the draft is over.'
+          : 'Picks and packs once the drafter has no games left (bots: after the draft).',
+    decisions: `Each game decision’s choice ${notes}, with any card that is still hidden (in a hand or library) blanked out.`,
+    hidden: p.hidden === 'seat' ? 'Hands and what each agent saw once that seat has no games left.' : 'Hands and what each agent saw when the game ends.',
+    decks: 'Decklists and what each seat sideboarded once the seat has no games left; until then, the cards it has shown in play and its deck size.',
   };
 }
 
@@ -123,7 +124,7 @@ const HIDDEN_CHOICE_KINDS = new Set(['ScryChoice', 'SurveilChoice', 'SearchChoic
 
 /**
  * True when a decision's choice reveals hidden cards whatever their names: bottoming cards after a mulligan, scry or
- * surveil, library searches, selections from hidden zones. Such choices (and their notes) wait for the hidden release:
+ * surveil, library searches, selections from hidden zones. Such choices wait for the hidden release:
  * blanking names is not enough when the card is a basic land whose name is public.
  */
 export function isHiddenChoice(kind: string, choice: string): boolean {
@@ -133,7 +134,7 @@ export function isHiddenChoice(kind: string, choice: string): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Card-name redaction for released notes
+// Card-name redaction for released choices and rules reports
 
 /** Escape a string for use inside a RegExp. */
 const esc = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

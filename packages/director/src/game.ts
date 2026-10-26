@@ -705,7 +705,7 @@ export class Game {
       p.paymentCounted = true;
       this.log('agent_decision', {
         game: this.label, seat: p.seat.name, id: o.id, kind: o.kind, turn: u.state.turn_number, latency_ms: Date.now() - o.createdAt,
-        choice: `Tap ${this.manaLabel(u.state, input.mana)}`, note: input.note, accepted: true,
+        choice: `Tap ${this.manaLabel(u.state, input.mana)}`, accepted: true,
       });
       this.advancePayment(p, u, dedupe(u.legal));
       return null;
@@ -764,7 +764,7 @@ export class Game {
         p.payFailures++;
         this.log('agent_decision', {
           game: this.label, seat: p.seat.name, id: o.id, kind: o.kind, turn: u.state.turn_number, latency_ms: latency,
-          choice: `${label} (tapping ${this.manaLabel(u.state, preTap)})`, structured: false, note: input.note, accepted: false, action: action.type, reason: pre.reason,
+          choice: `${label} (tapping ${this.manaLabel(u.state, preTap)})`, structured: false, accepted: false, action: action.type, reason: pre.reason,
         });
         // Sources already tapped stay tapped and their mana floats: offer the decision again from the new state.
         if (pre.tapped && p.latest && p.latest !== u) {
@@ -795,7 +795,7 @@ export class Game {
     const tapping = input.mana?.length && (payment === 'manual' || action.data?.payment_mode?.type === 'Manual');
     this.log('agent_decision', {
       game: this.label, seat: p.seat.name, id: o.id, kind: o.kind, turn: u.state.turn_number, latency_ms: latency,
-      choice: `${label}${tapping ? ` (tapping ${this.manaLabel(u.state, input.mana!)})` : ''}`, structured: !chosen, note: input.note, accepted: r.ok,
+      choice: `${label}${tapping ? ` (tapping ${this.manaLabel(u.state, input.mana!)})` : ''}`, structured: !chosen, accepted: r.ok,
       // payment: "auto" = the engine paid this ability's mana by itself (no plan); "manual+auto" = it tapped more
       // sources after the agent's plan (auto_tapped).
       ...(payment === 'auto' ? { payment: 'auto' } : payment === 'manual' && autoTapped.length ? { payment: 'manual+auto', auto_tapped: autoTapped } : {}),
@@ -1128,7 +1128,7 @@ export class Game {
     }
     parts.push(`DECISION ${o.id} — ${prompt}`);
     for (const x of o.options) if (!x.unlisted) parts.push(`  [${x.id}] ${x.label}`);
-    parts.push('', `Answer with decide(decision_id="${o.id}", option="<id>"${accepts.length ? ` or ${accepts.join('/')}` : ''}, note="<short reason>").`);
+    parts.push('', `Answer with decide(decision_id="${o.id}", option="<id>"${accepts.length ? ` or ${accepts.join('/')}` : ''}).`);
     return parts.join('\n');
   }
 
@@ -1155,7 +1155,7 @@ export class Game {
    */
   private textV4(p: Player, u: PhaseUpdate, o: Offer, prompt: string, accepts: Structured[], since: string[], events: EventEntry[], envelope: Envelope, omitted = 0): string {
     const v = p.obs.render(u.state, { byObject: u.byObject, options: o.options, context: this.context(p) });
-    const answer = `decide(decision_id="${o.id}", option="<id>"${accepts.length ? ` or ${accepts.join('/')}` : ''}, note="<short reason>")`;
+    const answer = `decide(decision_id="${o.id}", option="<id>"${accepts.length ? ` or ${accepts.join('/')}` : ''})`;
     if (envelope === 'text') {
       const parts: string[] = [`[${this.seatLabel}] ${v.summary}`, ''];
       if (since.length) parts.push('Since your last decision:', ...since.map((l) => `  ${l}`), '');

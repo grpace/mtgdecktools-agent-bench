@@ -18,12 +18,10 @@ export interface DecideInput {
   basics?: Record<string, number>;
   /** Mana sources to tap, in order: object ids, optionally with a color ("37", "50:U"). */
   mana?: string[];
-  note?: string;
-  /** Deckbuilding (prompt v4): the agent's own card count, deck name, archetype and thought process. */
+  /** Deckbuilding (prompt v4): the agent's own card count, deck name and archetype. */
   total_count?: number;
   deck_name?: string;
   archetype?: string;
-  analysis?: string;
 }
 
 /** The structured answer fields of decide (besides `option`). */
@@ -67,6 +65,8 @@ export interface Offer {
    * game. Clears the seat's pending offer; returns details for the `forfeit` log record.
    */
   forfeit?: () => Record<string, unknown>;
+  /** A draft pick: which one (1-based), for the draft clocks (event.ts checkDraftClocks). */
+  draftPick?: { pack: number; pick: number };
 }
 
 /** How long after a decision's full text was returned a racing call gets the one-line pointer instead. */

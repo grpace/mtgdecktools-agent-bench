@@ -228,7 +228,7 @@ function seatFlow(level: 'none' | 'primer' | 'primer+stats' = 'primer') {
   const done = askForDeck(seat, pool, cards, ratings, knowledge(level), (type, rec) => logs.push({ type, ...rec }));
   return { seat, logs, done };
 }
-const deck40 = { cards: [1, 1, 1, 4, 13, 8, 2, 6, 14, 10, 17], basics: { Forest: 15, Island: 14 }, total_count: 40, deck_name: 'Bears', archetype: 'Midrange', analysis: 'Compared UG and BG.', note: 'curve out' };
+const deck40 = { cards: [1, 1, 1, 4, 13, 8, 2, 6, 14, 10, 17], basics: { Forest: 15, Island: 14 }, total_count: 40, deck_name: 'Bears', archetype: 'Midrange', note: 'curve out' };
 
 await test('flow: submit → review (not locked) → confirm locks the deck as submitted', async () => {
   const { seat, logs, done } = seatFlow();
@@ -252,7 +252,7 @@ await test('flow: submit → review (not locked) → confirm locks the deck as s
   assert.equal(rec.review.outcome, 'confirmed');
   assert.equal(rec.deck_name, 'Bears');
   assert.equal(rec.total_count, 40);
-  assert.equal(rec.analysis, 'Compared UG and BG.');
+  assert.equal('analysis' in rec || 'note' in rec, false, 'the deck is logged without any written reasoning');
 });
 
 await test('flow: rejected submissions are logged; a resubmission at review locks at once', async () => {

@@ -339,7 +339,8 @@ async function cmdPlay(argv: string[]) {
         continue;
       }
       if (launches > maxRelaunch) {
-        console.warn(`seat ${seat.name}: session exited (code ${code}) before EVENT COMPLETE; no relaunches left (--relaunch ${maxRelaunch}). Its log: ${tilde(join(dir, `harness-${seat.name}.log`))}`);
+        const why = lastHarnessError(join(dir, `transcript-${seat.name}.jsonl`));
+        console.warn(`seat ${seat.name}: session exited (code ${code}) before EVENT COMPLETE; no relaunches left (--relaunch ${maxRelaunch}).${why ? ` The harness said: ${why}` : ''} Its log: ${tilde(join(dir, `harness-${seat.name}.log`))}`);
         break;
       }
       console.warn(`seat ${seat.name}: session exited (code ${code}) before EVENT COMPLETE; relaunching (${launches}/${maxRelaunch})`);
@@ -388,6 +389,25 @@ function directorBase(ev: LocalEvent, seat: Seat | undefined): string {
   return (ev.director ?? seat?.url.replace(/\/mcp\/.*$/, '') ?? directorUrl()).replace(/\/+$/, '');
 }
 
+/**
+ * The last error a harness session reported in its transcript (Claude Code's stream-json `result` record), first line
+ * only: an API error or a refused model, so a seat that keeps failing to start says why. Undefined when there is none.
+ */
+function lastHarnessError(transcript: string): string | undefined {
+  if (!existsSync(transcript)) return undefined;
+  let last: string | undefined;
+  for (const line of readFileSync(transcript, 'utf8').split('\n')) {
+    if (!line.includes('"is_error":true')) continue;
+    try {
+      const r = JSON.parse(line);
+      if (r.type === 'result' && r.is_error && typeof r.result === 'string') last = r.result;
+    } catch {
+      // a cut line
+    }
+  }
+  return last ? printable(last.split('\n')[0]!, 300) : undefined;
+}
+
 /** Wait (polling the public status, no tokens spent) until a hosted event has ended: 'done', 'aborted' or 'timeout'. */
 async function waitForEventEnd(base: string, ev: LocalEvent, maxMs = 4 * 3600_000): Promise<'done' | 'aborted' | 'timeout'> {
   const until = Date.now() + maxMs;
@@ -396,7 +416,11 @@ async function waitForEventEnd(base: string, ev: LocalEvent, maxMs = 4 * 3600_00
     const s = await eventStatus(base, ev.id);
     const stage = String(s?.stage ?? '');
     if (stage === 'done') return 'done';
-    if (stage === 'aborted' || stage === 'gone' || stage.startsWith('not running')) return 'aborted';
+    if (stage === 'aborted' || stage === 'gone' || stage.startsWith('not running')) {
+      const detail = typeof s?.abort_detail === 'string' ? s.abort_detail : typeof s?.abort_reason === 'string' ? s.abort_reason : '';
+      if (detail) console.warn(`The event was stopped: ${printable(detail, 400)}`);
+      return 'aborted';
+    }
     if (Date.now() > until) return 'timeout';
     if (!told) {
       console.log(`Your seats are done; other matches are still being played. Waiting for the event to end to send your seats' usage to the Hub (no tokens are spent; Ctrl-C is safe: \`${BENCH} attach-logs ${ev.id}\` sends it later).`);
@@ -463,7 +487,7 @@ async function cmdStatus(argv: string[]) {
   if (s.standings_after) console.log(`  public view${tok ? ` (the ${as ?? 'given'} token isn't this event's organizer's)` : ''}: standings and seat details come when the event ends${tok ? '' : '; give the token that created it (--token) for the full status'}`);
   else if (tok && s.stage !== 'done' && s.stage !== 'aborted') console.log(`  organizer's view (${as ?? 'given'} token)`);
   if (s.stage === 'queued') console.log(`  queued: position ${s.queue_position ?? '?'}; it starts on its own when a table frees up`);
-  if (s.stage === 'aborted' && s.abort_reason) console.log(`  stopped: ${s.abort_reason}`);
+  if (s.stage === 'aborted' && s.abort_reason) console.log(`  stopped: ${s.abort_detail ? printable(s.abort_detail, 400) : s.abort_reason}`);
   for (const a of s.agents ?? []) console.log(`  ${a.name.padEnd(20)} ${a.status}`);
   if (s.standings?.length) {
     console.log('  standings:');

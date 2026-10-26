@@ -249,7 +249,7 @@ export function deckOfferV4(id: string, pool: PackCard[], cards: CardDb, ratings
     compactJson(poolFacts(pool, cards, ratings, knowledge.stats)),
   ];
   if (knowledge.guide) lines.push('', renderGuide(knowledge.guide, { set_context: !!knowledge.primer, stats: knowledge.stats, hybrid }));
-  lines.push('', `DECISION ${id} — submit your deck: decide(decision_id="${id}", cards=[pool numbers, one per copy], basics={"Plains": 8, "Island": 9}, total_count=40, deck_name="…", archetype="…", analysis="…", note="<one-line plan>").`);
+  lines.push('', `DECISION ${id} — submit your deck: decide(decision_id="${id}", cards=[pool numbers, one per copy], basics={"Plains": 8, "Island": 9}, total_count=40, deck_name="…", archetype="…").`);
   return lines.join('\n');
 }
 

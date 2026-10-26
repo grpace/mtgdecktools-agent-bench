@@ -438,6 +438,7 @@ export class EventServer {
   private newEvent(req: EventCheckpoint['request'] | (Omit<EventCheckpoint['request'], 'seed'> & { seed?: string }), owner: Owner, restore?: { id: string; tokens: Record<string, string> }, factory?: BoosterFactory): Event {
     const ev = this.makeEvent(req, owner, restore, factory);
     ev.beforeGame = (seats) => this.gameGate(seats);
+    ev.onStall = (reason, message) => this.stop(ev, reason, message);
     return ev;
   }
 
@@ -833,6 +834,7 @@ export class EventServer {
     if (cp && cp.status !== 'done' && cp.status !== 'aborted') {
       cp.status = ev.stage === 'done' && !ev.aborted ? 'done' : 'aborted';
       if (ev.aborted) cp.abort_reason = ev.aborted;
+      if (ev.abortDetail) cp.abort_detail = ev.abortDetail;
       cp.ended_at = Date.now();
       ev.persist();
     }
@@ -935,6 +937,7 @@ export class EventServer {
     if (cp?.status === 'aborted' && !ev.aborted) {
       out.stage = 'aborted';
       out.abort_reason = cp.abort_reason;
+      if (cp.abort_detail) out.abort_detail = cp.abort_detail;
     }
     return out;
   }
@@ -1009,7 +1012,7 @@ export class EventServer {
     }
     const cp = readCheckpoint(dir);
     const stage = summary ? 'done' : cp?.status === 'aborted' ? 'aborted' : 'not running (no summary)';
-    return { id, stage, ...(cp?.abort_reason ? { abort_reason: cp.abort_reason } : {}), standings: summary?.standings ?? [], live: false };
+    return { id, stage, ...(cp?.abort_reason ? { abort_reason: cp.abort_reason } : {}), ...(cp?.abort_detail ? { abort_detail: cp.abort_detail } : {}), standings: summary?.standings ?? [], live: false };
   }
 
   private submitting = false;

@@ -156,7 +156,7 @@ export function sideboardText(id: string, pool: PackCard[], deck: MatchDeck, car
     `The opponent's deck: ${ctx.opponentDeck} cards; their sideboard: ${ctx.opponentSideboard} cards (before their sideboarding).`,
     ...(ctx.setContext ? ['Your MTG Deck Tools Set Context (archetypes, key cards, what beats what) is available via get_set_context.'] : []),
     '',
-    `DECISION ${id} — keep your deck: decide(decision_id="${id}", option="keep", note="…"); or submit your whole deck for game ${ctx.game}: decide(decision_id="${id}", cards=[pool numbers, one per copy], basics={…}, note="<what you changed and why>"). Your current deck as an answer: ${current}.`,
+    `DECISION ${id} — keep your deck: decide(decision_id="${id}", option="keep"); or submit your whole deck for game ${ctx.game}: decide(decision_id="${id}", cards=[pool numbers, one per copy], basics={…}). Your current deck as an answer: ${current}.`,
   ].join('\n');
 }
 
@@ -185,7 +185,7 @@ export function askSideboard(seat: AgentSeat, pool: PackCard[], current: MatchDe
       const basics = Object.fromEntries(Object.entries(deck.basics).filter(([, n]) => n > 0));
       log('sideboarded', {
         seat: seat.name, ...meta, by, kept, in: s.in, out: s.out, main: data.main_deck, sideboard: data.sideboard, basics,
-        main_count: data.main_deck.length, ...(input?.note ? { note: input.note } : {}), ...(rejected.length ? { rejected } : {}), latency_ms: Date.now() - startedAt,
+        main_count: data.main_deck.length, ...(rejected.length ? { rejected } : {}), latency_ms: Date.now() - startedAt,
       });
       resolve({ deck, kept });
       const lands = data.main_deck.filter((n) => isLandCard({ name: n, typeLine: cards.get(n)?.typeLine ?? '' } as PackCard, cards)).length;
@@ -248,7 +248,7 @@ export function playDrawText(id: string, ctx: PlayDrawContext): string {
     `PLAY OR DRAW — your best-of-3 match (${ctx.roundLabel}), score: you ${ctx.score.me}–${ctx.score.them} opponent. ${why} Both players sideboard after this choice, knowing it.`,
     '  [play] You play first (you skip your first draw)',
     '  [draw] Your opponent plays first (you draw on your first turn)',
-    `DECISION ${id} — decide(decision_id="${id}", option="play" or "draw", note="…").`,
+    `DECISION ${id} — decide(decision_id="${id}", option="play" or "draw").`,
   ].join('\n');
 }
 
@@ -267,7 +267,7 @@ export function askPlayDraw(seat: AgentSeat, ctx: PlayDrawContext, log: LogFn, m
         if (extra) return extra;
         const choice = String(input.option ?? '').trim().toLowerCase();
         if (choice !== 'play' && choice !== 'draw') return 'answer with option "play" (you play first) or "draw" (your opponent plays first).';
-        resolve({ choice, by: 'agent', ...(input.note ? { note: input.note } : {}), latency_ms: Date.now() - offer.createdAt });
+        resolve({ choice, by: 'agent', latency_ms: Date.now() - offer.createdAt });
         o.acceptedText = choice === 'play' ? `You play first in game ${ctx.game}.` : `Your opponent plays first in game ${ctx.game}; you draw.`;
         return null;
       },

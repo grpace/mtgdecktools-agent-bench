@@ -9,7 +9,7 @@ import { BodyTooLarge, clientIp, RateLimiter, readLimited, tooLarge } from './ra
 import { AgentSeat } from './seat.js';
 
 export const SEAT_INSTRUCTIONS = `You are one player in a Magic: The Gathering limited event against other AI agents: FORMAT.
-Loop: call wait_for_decision; read it; call decide with your choice and a short note; repeat until a result says EVENT COMPLETE.
+Loop: call wait_for_decision; read it; call decide with your choice; repeat until a result says EVENT COMPLETE.
 - wait_for_decision returns after ~40 s with a status line while others are still deciding; just call it again. Waits between rounds of matches can take 10–30 minutes: keep calling it until EVENT COMPLETE, even when you have no match right now.
 - decide usually returns your next decision directly.
 - Draft picks and the deck use option numbers / pool numbers. In games, card ids look like [#42] and stay fixed for the whole game.
@@ -18,7 +18,7 @@ Loop: call wait_for_decision; read it; call decide with your choice and a short 
 
 /** Prompt v4 seats: same loop, plus how to read the JSON state. */
 export const SEAT_INSTRUCTIONS_V4 = `You are one player in a Magic: The Gathering limited event against other AI agents: FORMAT.
-Loop: call wait_for_decision; read it; call decide with your choice and a short note; decide returns your next decision, so call one tool at a time and don't call wait_for_decision after it unless it says to. Repeat until a result says EVENT COMPLETE.
+Loop: call wait_for_decision; read it; call decide with your choice; decide returns your next decision, so call one tool at a time and don't call wait_for_decision after it unless it says to. Repeat until a result says EVENT COMPLETE.
 - wait_for_decision returns after ~40 s with a status line while others are still deciding; just call it again. Waits between rounds of matches can take 10–30 minutes: keep calling it until EVENT COMPLETE, even when you have no match right now.
 - Draft picks and the deck use option numbers / pool numbers ("n" in the card JSON); to play several copies of a card in your deck, repeat its pool number.
 - Matches are best of 3. Before games 2 and 3 the loser of the previous game chooses to play or draw, then both players may sideboard: option "keep", or the whole deck again (pool numbers and basics).
@@ -53,10 +53,15 @@ export function cleanAgentText(s: string): string {
   return stripInvisible((s as string & { toWellFormed(): string }).toWellFormed().replace(UNSAFE_TEXT, ''));
 }
 
+/** decide fields older prompts asked for (a reason per decision, the deck's thought process); never kept now. */
+const NOT_RECORDED = new Set(['note', 'analysis']);
+
 /** Every string an agent sends with decide, cleaned (cleanAgentText); numbers and structure untouched. */
 export function cleanDecideInput<T extends Record<string, unknown>>(input: T): T {
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(input)) {
+    // Seats aren't asked for their reasoning: a note or analysis sent anyway (an archived prompt, habit) is dropped unread.
+    if (NOT_RECORDED.has(k)) continue;
     if (typeof v === 'string') out[k] = cleanAgentText(v);
     else if (Array.isArray(v)) out[k] = v.map((x) => (typeof x === 'string' ? cleanAgentText(x) : x));
     else if (k === 'basics' && v && typeof v === 'object') out[k] = Object.fromEntries(Object.entries(v).map(([n, c]) => [cleanAgentText(n), c]));
@@ -105,7 +110,7 @@ export function setContextPart(seat: AgentSeat, part: number | undefined, name: 
 function seatServer(lookup: SeatLookup, cards: CardDb, token: string): McpServer {
   // Prompt v4 seats get the v4 texts and tool names; v2/v3 seats keep what they had.
   const v4 = lookup(token)?.observation === 'v4';
-  const server = new McpServer({ name: 'mtg-seat', version: '0.3.0' }, { instructions: seatInstructions(lookup(token)) });
+  const server = new McpServer({ name: 'mtg-seat', version: '0.4.0' }, { instructions: seatInstructions(lookup(token)) });
   const seat = () => {
     const s = lookup(token);
     if (!s) throw new Error('Unknown seat token.');
@@ -126,9 +131,8 @@ function seatServer(lookup: SeatLookup, cards: CardDb, token: string): McpServer
     cards: z.array(objectId).max(400).optional(),
     basics: basicsSchema.optional(),
     mana: z.array(z.string().max(40)).max(60).optional().describe('Mana sources to tap, in order, when casting or paying: object ids, with an optional color for multi-color sources, e.g. ["37", "50:U"].'),
-    note: z.string().max(600).optional().describe('One short sentence on why. Logged for replays and analysis.'),
   };
-  // Prompt v4: the deck answer also carries the builder's own count, name, archetype and thought process.
+  // Prompt v4: the deck answer also carries the builder's own count, name and archetype.
   const decideSchemaV4 = {
     ...decideSchema,
     cards: z.array(objectId).max(400).optional().describe('Deckbuilding and sideboarding: pool numbers of the main deck\'s non-basic cards, one per copy (repeat a number to play more copies of that card). Games: object ids.'),
@@ -137,7 +141,6 @@ function seatServer(lookup: SeatLookup, cards: CardDb, token: string): McpServer
     total_count: z.number().int().min(0).max(400).optional().describe('Deckbuilding: your own count of the main deck (pool cards + basics).'),
     deck_name: z.string().max(120).optional().describe('Deckbuilding: a creative, thematic deck name.'),
     archetype: z.string().max(60).optional().describe('Deckbuilding: Aggro, Control, Midrange, Tempo, Combo…'),
-    analysis: z.string().max(20000).optional().describe('Deckbuilding: your thought process (options compared, counts, cuts, mana audit). Logged.'),
   };
   server.registerTool('decide', {
     description: v4

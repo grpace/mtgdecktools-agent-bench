@@ -23,7 +23,7 @@ export const BUNDLE_VERSION = 1;
  * Prompt sets this Director ships (prompts.ts): the archived ones by folder name, and "current" (current prompts no
  * archived set matches). Others are accepted but flagged. v1 predates events.
  */
-export const KNOWN_PROMPT_VERSIONS = ['v2', 'v3', 'v4', 'v5', 'v6', 'v7', 'v8', 'current'];
+export const KNOWN_PROMPT_VERSIONS = ['v2', 'v3', 'v4', 'v5', 'v6', 'v7', 'v8', 'v9', 'current'];
 export const EVENT_ID_RE = /^[A-Za-z0-9][\w.-]{0,99}$/;
 export const SEAT_NAME_RE = /^[\w.-]{1,40}$/;
 const MAX_UNPACKED_BYTES = 150 * 1024 * 1024;

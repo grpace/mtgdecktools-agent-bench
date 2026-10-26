@@ -61,6 +61,17 @@ export interface EventConfig {
    */
   decisionMaxMs?: number;
   /**
+   * The draft's pick clock (DRAFT_PICK_MS, default 75 s; 0 = off): a pick still open this long is made by the bot
+   * policy (logged as a forfeit with reason `pick_clock`), and the seat keeps drafting. Counted from the pick's offer.
+   */
+  draftPickMs?: number;
+  /**
+   * The first pick's clock (FIRST_PICK_MS, default 3 min; 0 = off): the first pick also covers reading the briefing and
+   * the Set Context. A seat that hasn't made its first pick by then stops the event (reason `draft_stalled`): a seat
+   * that never connects or never picks would otherwise hold the whole table.
+   */
+  firstPickMs?: number;
+  /**
    * Fields logged with event_start beyond the request: who organized the event (hosted play) and where the
    * seat metadata comes from (`self-reported` for contributor events).
    */
@@ -122,6 +133,8 @@ export const DEFAULT_RESUME_GRACE_MS = 15 * 60_000;
 
 export const DEFAULT_SEAT_TIMEOUT_MS = 10 * 60_000;
 export const DEFAULT_DECISION_MAX_MS = 30 * 60_000;
+export const DEFAULT_DRAFT_PICK_MS = 75_000;
+export const DEFAULT_FIRST_PICK_MS = 3 * 60_000;
 export const DEFAULT_SEAT_CONNECT_TIMEOUT_MS = 30 * 60_000;
 
 /**
@@ -187,6 +200,13 @@ export class Event {
   private startedAt = Date.now();
   /** Set when the event was stopped for good (max duration, abandoned, canceled): the reason. */
   aborted?: string;
+  /** Why it was stopped, in words, for the organizer (status endpoint, `bench status`, the live view). */
+  abortDetail?: string;
+  /**
+   * Stops the event from inside (a stalled draft). The server sets it to its own stop (hand-off, checkpoint, lobby);
+   * without a server the event aborts itself.
+   */
+  onStall?: (reason: string, message: string) => void;
   /** The set as event_start logged it (for a stopped event's summary.json). */
   private setInfo?: ReturnType<BoosterFactory['set']>;
   /** Games that reached game_over (this process and, after a restart, the log). */
@@ -338,7 +358,7 @@ export class Event {
     // results and are rated; open games are void, except that an organizer who stops their table forfeits the open
     // games of their own seats against seats that aren't theirs.
     const open = [...this.liveGames].map((g) => ({ game: g.label, seats: g.seatNames }));
-    this.log('event_abort', { reason, stage: this.stage, by, open_games: open, completed_games: this.completedGames });
+    this.log('event_abort', { reason, ...(this.abortDetail ? { detail: this.abortDetail } : {}), stage: this.stage, by, open_games: open, completed_games: this.completedGames });
     if (this.watchdog) clearInterval(this.watchdog);
     for (const g of this.liveGames) g.abandon();
     this.liveGames.clear();
@@ -401,7 +421,9 @@ export class Event {
 
   async run(): Promise<void> {
     const timeout = this.seatTimeoutMs;
-    this.watchdog = timeout > 0 ? setInterval(() => this.checkIdle(), Math.min(5_000, Math.max(250, timeout / 4))) : undefined;
+    const clocks = [timeout, this.draftPickMs, this.firstPickMs].filter((ms) => ms > 0);
+    // Every second: the pick clock is counted in seconds (checkIdle is a few comparisons per seat).
+    this.watchdog = clocks.length ? setInterval(() => this.checkIdle(), Math.min(1_000, Math.max(250, Math.min(...clocks) / 4))) : undefined;
     this.watchdog?.unref();
     try {
       await this.runStages();
@@ -414,6 +436,48 @@ export class Event {
     return this.cfg.seatTimeoutMs ?? DEFAULT_SEAT_TIMEOUT_MS;
   }
 
+  get draftPickMs(): number {
+    return this.cfg.draftPickMs ?? DEFAULT_DRAFT_PICK_MS;
+  }
+
+  get firstPickMs(): number {
+    return this.cfg.firstPickMs ?? DEFAULT_FIRST_PICK_MS;
+  }
+
+  /**
+   * The draft clocks: a first pick still open after firstPickMs stops the event (draft_stalled); any later pick open
+   * for draftPickMs is made by the bot policy. After a resume, a seat that hasn't called since keeps the resume grace
+   * (checkIdle). Returns true when the event was stopped.
+   */
+  private checkDraftClocks(now: number, resumeGrace: number): boolean {
+    const stalled: AgentSeat[] = [];
+    for (const s of this.agents) {
+      const o = s.pending;
+      if (!o?.draftPick || !o.forfeit || o.answering || s.done) continue;
+      const first = o.draftPick.pack === 1 && o.draftPick.pick === 1;
+      const limit = first ? this.firstPickMs : this.draftPickMs;
+      if (!(limit > 0)) continue;
+      const waitingOutRestart = this.resumedAt != null && (s.lastActivity ?? 0) <= this.resumedAt && now - this.resumedAt < resumeGrace;
+      if (waitingOutRestart || now - Math.max(o.createdAt, this.resumedAt ?? 0) < limit) continue;
+      if (first) stalled.push(s);
+      else this.forfeit(s, o, now - (s.lastActivity ?? this.startedAt), 'pick_clock');
+    }
+    if (!stalled.length) return false;
+    const never = stalled.filter((s) => s.lastActivity == null).map((s) => s.name);
+    const slow = stalled.filter((s) => s.lastActivity != null).map((s) => s.name);
+    const list = (names: string[]) => names.join(', ');
+    const secs = Math.round(this.firstPickMs / 1000);
+    const why = [
+      never.length ? `${list(never)} never connected` : '',
+      slow.length ? `${list(slow)} connected but made no first pick` : '',
+    ].filter(Boolean).join('; ');
+    const detail = `The draft stalled on pack 1, pick 1: ${why} within ${secs} s of the draft opening. Check those seats' harness logs (a harness that fails to start, an API error or a refused model are the usual causes).`;
+    const stop = this.onStall ?? ((reason: string, message: string) => this.abort(reason, message));
+    this.abortDetail = detail;
+    stop('draft_stalled', `The event was stopped: ${detail}`);
+    return true;
+  }
+
   /**
    * The inactivity watchdog: settle the open decision of any seat that has made no MCP request for the timeout
    * (counted from its last request or from when the decision opened, whichever is later), and every later
@@ -421,9 +485,13 @@ export class Event {
    */
   checkIdle(now = Date.now()): void {
     const timeout = this.seatTimeoutMs;
-    if (!(timeout > 0) || this.stage === 'done' || this.aborted) return;
+    if (this.stage === 'done' || this.aborted) return;
     // Paused while the server shuts down or restarts: seats can't reach it then, so their silence means nothing.
     if (this.cfg.watchdogPaused?.()) return;
+    const resumeGraceMs = Math.max(timeout, this.cfg.resumeGraceMs ?? DEFAULT_RESUME_GRACE_MS);
+    // The draft clocks run even when no seat has connected: a table nobody joins stops at its first pick.
+    if (this.stage === 'draft' && this.checkDraftClocks(now, resumeGraceMs)) return;
+    if (!(timeout > 0)) return;
     // Hosted: if no seat ever connected, the server stops the event as abandoned instead of letting it play itself.
     if (this.checkpoint && !this.anySeatSeen) return;
     const connect = Math.max(timeout, this.cfg.seatConnectTimeoutMs ?? DEFAULT_SEAT_CONNECT_TIMEOUT_MS);
@@ -448,9 +516,10 @@ export class Event {
     }
   }
 
-  private forfeit(s: AgentSeat, o: Offer, idleMs: number, reason: 'inactive' | 'decision_limit' = 'inactive'): void {
+  private forfeit(s: AgentSeat, o: Offer, idleMs: number, reason: 'inactive' | 'decision_limit' | 'pick_clock' = 'inactive'): void {
     const first = !s.inactive;
-    s.inactive = true;
+    // A pick past the clock is one pick: the seat is still drafting, so its next picks are its own.
+    if (reason !== 'pick_clock') s.inactive = true;
     const stage = o.phase;
     const details = o.forfeit!();
     this.log('forfeit', { seat: s.name, stage, reason, idle_ms: idleMs, decision: o.id, kind: o.kind, ...details });
@@ -460,6 +529,10 @@ export class Event {
     const minutes = (ms: number) => Math.round(ms / 60_000) || 1;
     const mins = minutes(reason === 'decision_limit' ? (this.cfg.decisionMaxMs ?? DEFAULT_DECISION_MAX_MS) : this.seatTimeoutMs);
     const plural = mins === 1 ? '' : 's';
+    if (reason === 'pick_clock') {
+      s.notify(`Your pick ${o.draftPick?.pack}-${o.draftPick?.pick} ran past the ${Math.round(this.draftPickMs / 1000)}-second pick clock, so the Director picked ${String(details.pick ?? 'a card')} for you by the bot policy. Answer each pick within ${Math.round(this.draftPickMs / 1000)} seconds.`);
+      return;
+    }
     if (reason === 'decision_limit') {
       s.notify(`A decision stayed open for over ${mins} minute${plural} without an answer, so the Director settled it for you (a draft pick by the bot policy, your deck by the reference builder, between games you keep your deck, an open game is conceded). Answer each decision when you have it.`);
       if (stage === 'game') s.notify(`Game ${details.game_number} of your match was conceded for you (a decision open for ${mins}+ minute${plural}). The match goes on.`);
@@ -481,7 +554,7 @@ export class Event {
     this.log('event_start', {
       id: this.id, set: info, seed: this.seed, seats: this.seats.map((s) => ({ name: s.name, kind: s.kind, position: s.index, ...(this.cfg.agentMeta?.[s.name] ?? {}) })),
       ...(this.cfg.boosters ? { boosters: this.cfg.boosters } : {}),
-      seat_timeout_ms: this.seatTimeoutMs, ...(this.cfg.startExtras ?? {}),
+      seat_timeout_ms: this.seatTimeoutMs, draft_pick_ms: this.draftPickMs, first_pick_ms: this.firstPickMs, ...(this.cfg.startExtras ?? {}),
       pairing: this.plan, ...(this.seats.some((s) => s.kind === 'bot') ? { dev_bot_fill: true } : {}),
       // Agents in request order: agent i sits at the seed's positions[i], which the Hub checks seat by seat.
       agent_order: this.cfg.agents,
@@ -524,6 +597,7 @@ export class Event {
     const resume = this.resume;
     this.stage = 'draft';
     const draft = new Draft(set, this.factory, this.cards, this.ratings, this.seats, this.rng, this.log, this.knowledge, 3, resume?.draft);
+    draft.pickClock = { firstMs: this.firstPickMs, ms: this.draftPickMs };
     const pools = await draft.run();
     this.pools = pools;
 
@@ -914,7 +988,7 @@ export class Event {
       other(chooser).setStatus(`Between games: your opponent is choosing whether to play or draw in game ${g}.`);
       const r = await askPlayDraw(chooser, { game: g, roundLabel, score: score(chooser), reason: last?.winnerName ? 'lost' : 'draw' }, this.log, meta);
       play = { onPlay: r.choice === 'play' ? chooser.name : other(chooser).name, chooser: chooser.name };
-      this.log('play_draw', { ...meta, on_play: play.onPlay, by: r.by, chooser: chooser.name, choice: r.choice, ...(r.note ? { note: r.note } : {}), latency_ms: r.latency_ms });
+      this.log('play_draw', { ...meta, on_play: play.onPlay, by: r.by, chooser: chooser.name, choice: r.choice, latency_ms: r.latency_ms });
       other(chooser).notify(`Your opponent chose to ${r.choice} in game ${g}: ${play.onPlay === chooser.name ? 'they play first' : 'you play first'}.`);
     }
     if (g === 1 || this.aborted) return play;
@@ -972,7 +1046,7 @@ export class Event {
       // The seed regenerates the packs: public only once the event is over.
       id: this.id, stage: this.aborted ? 'aborted' : this.stage, ...(this.stage === 'done' ? { seed: this.seed } : {}), knowledge: this.knowledge.level,
       format: this.plan.format, rounds: this.plan.rounds, ...(this.stage === 'games' ? { round: this.round + 1 } : {}),
-      ...(this.aborted ? { abort_reason: this.aborted } : {}),
+      ...(this.aborted ? { abort_reason: this.aborted, ...(this.abortDetail ? { abort_detail: this.abortDetail } : {}) } : {}),
       agents: this.agents.map((s) => ({
         name: s.name, status: s.done ? 'done' : s.pending ? `deciding (${s.pending.phase})` : 'waiting',
         ...(s.inactive ? { inactive: true } : {}),

@@ -121,8 +121,6 @@ const E = '2026-10-22-14-39-42-sos-909e';
 const list: ModerationList = {
   version: 'v1', takedowns: ['2026-10-01-00-00-00-fra-dead'],
   hides: [
-    { kind: 'note', event: E, seat: 'seat-a', item: 'G42' },
-    { kind: 'note', event: E, seat: 'seat-a', item: 'pick-3' },
     { kind: 'note', event: E, seat: 'seat-b', item: 'deck' },
     { kind: 'deck_name', event: E, seat: 'seat-b', item: '' },
     { kind: 'note', event: E, seat: 'seat-b', item: 'rules-1700' },
@@ -140,24 +138,30 @@ assert.deepEqual(ms.seats, [{ name: 'seat-a', contributor_id: '7' }, { name: 'se
 assert.deepEqual(ms.organizer, { kind: 'contributor', contributor_id: 'erased-abc123' });
 assert.equal(start.seats[0]!.contributor, 'rudehandle', 'the input record is never changed');
 
+// Public records carry choices only: a note or analysis on a pick, deck, decision, play/draw or sideboarding record
+// (an older log, or a harness that sent one anyway) is dropped; the input record is never changed.
 const dec = { t: 5, type: 'agent_decision', game: 'g1', seat: 'seat-a', id: 'G42', choice: 'Attack', note: 'a rude note' };
-assert.equal(moderateRecord(dec, E, c).note, REMOVED_TEXT);
-assert.equal(moderateRecord({ ...dec, id: 'G43' }, E, c).note, 'a rude note', 'other decisions keep their note');
-assert.equal(moderateRecord(dec, 'another-event', c).note, 'a rude note', 'hides are per event');
-assert.equal(moderateRecord({ t: 6, type: 'draft_pick', seat: 'seat-a', overall_pick: 3, pick: 'X', note: 'n' }, E, c).note, REMOVED_TEXT);
+assert.deepEqual(moderateRecord(dec, E, c), { t: 5, type: 'agent_decision', game: 'g1', seat: 'seat-a', id: 'G42', choice: 'Attack' });
+assert.equal(dec.note, 'a rude note');
+assert.ok(!('note' in moderateRecord(dec, 'another-event', c)), 'in every event, hides or not');
+assert.ok(!('note' in moderateRecord({ t: 6, type: 'draft_pick', seat: 'seat-a', overall_pick: 3, pick: 'X', note: 'n' }, E, c)));
+for (const type of ['play_draw', 'sideboarded']) assert.ok(!('note' in moderateRecord({ t: 6, type, seat: 'seat-a', note: 'n' }, E, c)), type);
 const deck = moderateRecord({ t: 7, type: 'deck_built', seat: 'seat-b', deck_name: 'Bad Name', archetype: 'UW', analysis: 'long', note: 'plan', main: [] }, E, c);
-assert.deepEqual([deck.deck_name, deck.archetype, deck.analysis, deck.note], [REMOVED_TEXT, REMOVED_TEXT, REMOVED_TEXT, REMOVED_TEXT]);
+assert.deepEqual([deck.deck_name, deck.archetype, 'analysis' in deck, 'note' in deck], [REMOVED_TEXT, REMOVED_TEXT, false, false]);
+assert.equal(moderateRecord({ t: 7, type: 'deck_built', seat: 'seat-c', deck_name: 'Fine', archetype: 'UW', main: [] }, E, c).archetype, 'UW', 'other decks keep theirs');
 assert.equal(moderateRecord({ t: 1700, type: 'rules_issue', seat: 'seat-b', card: 'Heated Argument', note: 'x' }, E, c).note, REMOVED_TEXT);
+assert.equal(moderateRecord({ t: 1701, type: 'rules_issue', seat: 'seat-b', card: 'Heated Argument', note: 'x' }, E, c).note, 'x', 'other rules reports are kept');
 // Scrubbing applies to agent text everywhere, hides or not.
-assert.equal(moderateRecord({ t: 8, type: 'agent_decision', seat: 'seat-c', id: 'G1', note: 'my key sk-ant-api03-Zx9kQ2mN7pLr4TvW8yB1cD5fG3hJ' }, E, c).note, 'my key [secret]');
+assert.equal(moderateRecord({ t: 8, type: 'rules_issue', seat: 'seat-c', card: 'X', note: 'my key sk-ant-api03-Zx9kQ2mN7pLr4TvW8yB1cD5fG3hJ' }, E, c).note, 'my key [secret]');
+assert.equal(moderateRecord({ t: 8, type: 'deck_built', seat: 'seat-c', deck_name: 'mail me at a@b.example', main: [] }, E, c).deck_name, 'mail me at [email]');
 const plain = { t: 9, type: 'turn_snapshot', game: 'g1' };
 assert.equal(moderateRecord(plain, E, c), plain, 'records without agent text are returned as they are');
-assert.deepEqual(noteItem({ type: 'play_draw', t: 12, chooser: 'seat-a', on_play: 'seat-b' }), { seat: 'seat-a', item: 'play-draw-12' });
-assert.deepEqual(noteItem({ type: 'sideboarded', t: 13, seat: 'seat-b' }), { seat: 'seat-b', item: 'sideboard-13' });
+assert.deepEqual(noteItem({ type: 'rules_issue', t: 12, seat: 'seat-a' }), { seat: 'seat-a', item: 'rules-12' });
+assert.equal(noteItem({ type: 'agent_decision', id: 'G1', seat: 'seat-a' }), undefined, 'a decision holds no text to hide');
 // A whole log: the event id comes from event_start; untouched logs come back as the same string.
 const log = [JSON.stringify(start), JSON.stringify(dec), 'not json', JSON.stringify(plain)].join('\n') + '\n';
 const mlog = moderateLog(log, c).split('\n');
-assert.equal(JSON.parse(mlog[1]!).note, REMOVED_TEXT);
+assert.ok(!('note' in JSON.parse(mlog[1]!)));
 assert.equal(mlog[2], 'not json');
 const clean = [JSON.stringify({ t: 1, type: 'event_start', id: 'x', seats: [] }), JSON.stringify(plain)].join('\n');
 assert.equal(moderateLog(clean, c), clean);

@@ -6,6 +6,7 @@
  * flows in through `board()` / `logLines()`; seat clocks through `seatPending()`. Nothing private is ever put
  * into the released history before its release condition holds. The HTTP side lives in spectate-http.ts.
  */
+import { withoutUnpublishedText } from './public-text.js';
 import { describePolicy, isHiddenChoice, redactCards, type SpectatePolicy } from './spectate-policy.js';
 
 export const SPECTATE_PROTOCOL = 1;
@@ -80,6 +81,8 @@ export class Spectator {
   // Event facts the release conditions need.
   private meta: Record<string, unknown> = {};
   private seats: Array<{ name: string; kind: string; position: number; harness?: string; model?: string }> = [];
+  /** The draft's pick clocks from event_start (0: none logged). */
+  private pickClock = { first: 0, ms: 0 };
   private agents: string[] = [];
   private seed?: string;
   private stage = 'created';
@@ -375,7 +378,9 @@ export class Spectator {
   // Inputs
 
   /** Every record the Director logs (full and private). */
-  ingest(r: Record<string, unknown> & { t: number; type: string }): void {
+  ingest(raw: Record<string, unknown> & { t: number; type: string }): void {
+    // Agent notes are never streamed (an older log, or a seat that sent one anyway); rules reports keep theirs.
+    const r = withoutUnpublishedText(raw);
     const t = r.t;
     switch (r.type) {
       case 'event_start': {
@@ -385,6 +390,7 @@ export class Spectator {
           best_of: r.best_of, mana: r.mana, knowledge: (r.knowledge as { level?: string } | undefined)?.level, started_at: t,
           pod_size: (r.seats as unknown[] | undefined)?.length,
         };
+        this.pickClock = { first: Number(r.first_pick_ms) || 0, ms: Number(r.draft_pick_ms) || 0 };
         this.seed = typeof r.seed === 'string' ? r.seed : undefined;
         this.seats = ((r.seats as Array<Record<string, unknown>>) ?? []).map((s) => ({
           name: String(s.name), kind: String(s.kind), position: Number(s.position),
@@ -634,7 +640,9 @@ export class Spectator {
         this.stage = 'done';
         this.flush();
         this.emit({ type: 'stage', t, stage: 'done' }, 'stage');
-        this.emit({ type: 'event_end', t, aborted: r.type !== 'event_end', standings: this.standingsRows() });
+        // A stopped event says why (the Director's own words: a stalled draft names its seats, never what they decided).
+        const why = r.type === 'event_abort' ? { reason: String(r.reason ?? ''), ...(typeof r.detail === 'string' ? { detail: r.detail } : {}) } : {};
+        this.emit({ type: 'event_end', t, aborted: r.type !== 'event_end', ...why, standings: this.standingsRows() });
         break;
       }
     }
@@ -707,7 +715,9 @@ export class Spectator {
       const n = (this.picksBySeat.get(seat) ?? 0) + 1;
       const pack = this.packSize ? Math.ceil(n / this.packSize) : undefined;
       const pick = this.packSize ? n - (pack! - 1) * this.packSize : undefined;
-      this.emit({ type: 'seat_status', t, seat, state: 'thinking', stage: 'draft', kind: 'pick', pack, pick, since: offer.createdAt }, `clock:${seat}`);
+      // The pick clock (event_start, from 2026-10-26): how long this pick may take, for a countdown.
+      const limit = n === 1 ? this.pickClock.first : this.pickClock.ms;
+      this.emit({ type: 'seat_status', t, seat, state: 'thinking', stage: 'draft', kind: 'pick', pack, pick, since: offer.createdAt, ...(limit > 0 ? { limit_ms: limit } : {}) }, `clock:${seat}`);
     } else {
       this.emit({ type: 'seat_status', t, seat, state: 'thinking', stage: 'build', kind: 'deck', since: offer.createdAt }, `clock:${seat}`);
     }

@@ -125,8 +125,6 @@ const CHECKLIST: Item[] = [
   { id: 'check.count-running-total', mtgdt: 'otherwise add the quantities one at a time, writing out the running total. Do NOT estimate', bench: /one at a time, writing the running total \(use a tool or script if you have one\)\. Do NOT estimate/ },
   { id: 'check.count-exact', mtgdt: 'The grand total MUST equal exactly 40', bench: /The total must be exactly 40/ },
   { id: 'check.land-base', mtgdt: '**Land base:** Every land passes the Step 3 audit', bench: /\*\*Land base:\*\* every land passes the Step 3 audit/ },
-  { id: 'output.thought-process', mtgdt: '"deckbuildingThoughtProcess" is REQUIRED', bench: /`analysis`: your deckbuilding thought process for THIS pool/ },
-  { id: 'output.alternatives', mtgdt: '"alternativeDecksConsidered" is OPTIONAL', bench: /the options you compared and why this one won/ },
   { id: 'output.verification', mtgdt: '"totalCount": 40', bench: /`total_count`: your own sum from the final check/ },
   { id: 'output.deck-name', mtgdt: 'The "deckName" field must be a creative, thematic name for the deck', bench: /`deck_name` \(creative and thematic\)/ },
   { id: 'output.archetype', mtgdt: '"archetype": "The primary archetype (e.g., Aggro, Control, Midrange, Combo, Tempo)."', bench: /`archetype` \(Aggro, Control, Midrange, Tempo, Combo…\)/ },
@@ -147,6 +145,8 @@ const NOT_PORTED: Array<{ mtgdt: string; why: string }> = [
   { mtgdt: 'UPDATES AND RATIONALE SECTION (Optional)', why: 'Debate/feedback regeneration is a deck builder feature; the bench review allows one resubmission instead.' },
   { mtgdt: 'CRITICAL: Deck Name Rules', why: 'Revision-indicator rules only matter when a deck is regenerated after feedback.' },
   { mtgdt: '"set":"', why: 'Every pool card comes from the event\'s set.' },
+  { mtgdt: '"deckbuildingThoughtProcess" is REQUIRED', why: 'Seats answer with their choice only: the deck, its count, name and archetype, never a written thought process.' },
+  { mtgdt: '"alternativeDecksConsidered" is OPTIONAL', why: 'Seats answer with their choice only; the comparison of approaches is something to do, not to write down.' },
   // MTG Deck Tools tier scores: the deck builder's rules with tier scores on (set-context-tiers.txt). Not at any level.
   { mtgdt: 'treat its effective `tierScore` as 3 unless your pool actually meets those conditions', why: TIER_WHY },
   { mtgdt: 'Tier Score Guide (0-10 Scale for 40-Card Limited Decks)', why: TIER_WHY },

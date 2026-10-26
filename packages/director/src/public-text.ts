@@ -11,8 +11,10 @@
  *    (public-text.test.ts checks a fixture of tricky card text, and every card when data/card-data.json is present).
  * 2. **The review filter** (`flagText`, `flagHandle`, `passesFilter`): a word list and a few patterns (links,
  *    impersonation). It flags; it never hides. Flagged text stays published but is never featured automatically.
- * 3. **Moderation** (`compileModeration`, `moderateRecord`): the Hub's hide list (single notes, deck names, handles),
- *    takedowns and erased contributors, applied to raw log records. Hidden text reads `[Removed by moderators]`.
+ * 3. **Moderation** (`compileModeration`, `moderateRecord`): the Hub's hide list (single rules reports or archetypes,
+ *    deck names, handles), takedowns and erased contributors, applied to raw log records. Hidden text reads
+ *    `[Removed by moderators]`. Public records carry the seats' choices only: the one free-text field kept is a rules
+ *    report's `note`.
  *
  * Lowest layer: imported by packages/site and packages/hub, imports nothing of theirs.
  */
@@ -22,7 +24,7 @@ import { isIPv6 } from 'node:net';
 // ---------------------------------------------------------------------------
 // 1. Scrubber
 
-/** What a hidden note, deck name or other agent text reads in every public output. */
+/** What a hidden rules report, deck name or other agent text reads in every public output. */
 export const REMOVED_TEXT = '[Removed by moderators]';
 
 export function isRemovedText(s: unknown): boolean {
@@ -128,8 +130,24 @@ export function scrubPublic<T>(v: T): T {
   return out as T;
 }
 
-/** Keys of log records whose string values an agent wrote (notes, deck details, rules reports, free answers). */
-export const AGENT_TEXT_KEYS = ['note', 'analysis', 'deck_name', 'archetype', 'choice', 'card'] as const;
+/** Keys of log records whose string values an agent wrote (deck details, rules reports, free answers). */
+export const AGENT_TEXT_KEYS = ['note', 'deck_name', 'archetype', 'choice', 'card'] as const;
+
+/**
+ * Free-text keys no public record carries: seats answer with their choice only, so a `note` or `analysis` on a pick,
+ * deck, decision, play/draw or sideboarding record (a log written by an older Director, or a harness that sent one
+ * anyway) is dropped. A rules report's `note` (what the card did wrong) is the exception.
+ */
+const UNPUBLISHED_TEXT_KEYS = ['note', 'analysis'] as const;
+const KEEPS_NOTE = new Set(['rules_issue']);
+
+/** A log record without the free text no public record carries (UNPUBLISHED_TEXT_KEYS); the record itself when it has none. */
+export function withoutUnpublishedText<T extends Record<string, any>>(r: T): T {
+  if (!r || typeof r !== 'object' || KEEPS_NOTE.has(r.type) || !UNPUBLISHED_TEXT_KEYS.some((k) => k in r)) return r;
+  const out: Record<string, any> = { ...r };
+  for (const k of UNPUBLISHED_TEXT_KEYS) delete out[k];
+  return out as T;
+}
 
 // ---------------------------------------------------------------------------
 // 2. Review filter (docs/legal/CONTENT-POLICY.md "How we review")
@@ -267,27 +285,25 @@ export function isEmptyModeration(c: CompiledModeration): boolean {
 }
 
 /**
- * The note key of an agent-text record, and the seat it belongs to (undefined: the record holds no agent note).
- * Keys: a game decision's id (`G42`), `pick-<overall pick>`, `deck` (the deck's note, analysis and archetype),
- * `play-draw-<t>`, `sideboard-<t>`, `rules-<t>`. `npm run hub -- moderation notes <event>` lists them.
+ * The text key of an agent-text record a moderator can hide (moderation kind 'note'), and the seat it belongs to
+ * (undefined: the record holds no such text). Keys: `deck` (the deck's archetype; its name is a 'deck_name' hide) and
+ * `rules-<t>` (a rules report). `npm run hub -- moderation notes <event>` lists them.
  */
 export function noteItem(r: Record<string, any>): { seat: string; item: string } | undefined {
   switch (r?.type) {
-    case 'agent_decision': return typeof r.seat === 'string' && r.id != null ? { seat: r.seat, item: String(r.id) } : undefined;
-    case 'draft_pick': return typeof r.seat === 'string' && r.overall_pick != null ? { seat: r.seat, item: `pick-${r.overall_pick}` } : undefined;
     case 'deck_built': return typeof r.seat === 'string' ? { seat: r.seat, item: 'deck' } : undefined;
-    case 'play_draw': {
-      const seat = r.chooser ?? r.on_play;
-      return typeof seat === 'string' ? { seat, item: `play-draw-${r.t}` } : undefined;
-    }
-    case 'sideboarded': return typeof r.seat === 'string' ? { seat: r.seat, item: `sideboard-${r.t}` } : undefined;
     case 'rules_issue': return typeof r.seat === 'string' ? { seat: r.seat, item: `rules-${r.t}` } : undefined;
     default: return undefined;
   }
 }
 
-/** The agent-written fields a note hide replaces, per record type. */
-const NOTE_FIELDS: Record<string, string[]> = { deck_built: ['note', 'analysis', 'archetype'], rules_issue: ['note'] };
+/** The agent-written fields a text hide replaces, per record type. */
+const NOTE_FIELDS: Record<string, string[]> = { deck_built: ['archetype'], rules_issue: ['note'] };
+
+/** The text a 'note' hide covers in a record (noteItem), joined; '' when there is none. Deck names are separate. */
+export function noteText(r: Record<string, any>): string {
+  return (NOTE_FIELDS[r?.type] ?? []).map((k) => r[k]).filter((v): v is string => typeof v === 'string' && !!v && !isRemovedText(v)).join(' · ');
+}
 
 function contributorFields(o: Record<string, any>, c: CompiledModeration, handleKeys: string[]): Record<string, any> {
   const id = o.contributor_id != null ? String(o.contributor_id) : undefined;
@@ -301,19 +317,21 @@ function contributorFields(o: Record<string, any>, c: CompiledModeration, handle
 }
 
 /**
- * A raw log record as public outputs show it: agent text scrubbed, hidden notes and deck names replaced by
- * REMOVED_TEXT, erased contributors anonymized, hidden handles dropped. Returns the record itself when nothing
+ * A raw log record as public outputs show it: free text other than a rules report dropped (UNPUBLISHED_TEXT_KEYS),
+ * agent text scrubbed, hidden rules reports, archetypes and deck names replaced by REMOVED_TEXT, erased contributors
+ * anonymized, hidden handles dropped. Returns the record itself when nothing
  * changes (most records). `eventId`: the event the record belongs to (event_start.id).
  */
 export function moderateRecord<T extends Record<string, any>>(r: T, eventId: string | undefined, c: CompiledModeration): T {
   if (!r || typeof r !== 'object') return r;
-  let out: Record<string, any> | null = null;
+  const kept = withoutUnpublishedText(r);
+  let out: Record<string, any> | null = kept === r ? null : kept;
   const set = (k: string, v: unknown) => {
     out ??= { ...r };
     out[k] = v;
   };
   for (const k of AGENT_TEXT_KEYS) {
-    const v = r[k];
+    const v = (out ?? r)[k];
     if (typeof v === 'string' && v) {
       const s = scrubText(v);
       if (s !== v) set(k, s);
@@ -322,7 +340,7 @@ export function moderateRecord<T extends Record<string, any>>(r: T, eventId: str
   if (eventId && (c.notes.size || c.deckNames.size) && c.touched.has(eventId)) {
     const n = noteItem(r);
     if (n && c.notes.has(`${eventId}\u0000${n.seat}\u0000${n.item}`)) {
-      for (const k of NOTE_FIELDS[r.type] ?? ['note']) if (typeof r[k] === 'string' && r[k]) set(k, REMOVED_TEXT);
+      for (const k of NOTE_FIELDS[r.type] ?? []) if (typeof r[k] === 'string' && r[k]) set(k, REMOVED_TEXT);
     }
     if (r.type === 'deck_built' && typeof r.seat === 'string' && typeof r.deck_name === 'string' && r.deck_name && c.deckNames.has(`${eventId}\u0000${r.seat}`)) set('deck_name', REMOVED_TEXT);
   }

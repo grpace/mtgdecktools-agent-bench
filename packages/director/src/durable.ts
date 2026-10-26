@@ -95,6 +95,8 @@ export interface EventCheckpoint {
   admitted_at?: number;
   ended_at?: number;
   abort_reason?: string;
+  /** The reason in words, for the organizer (a stalled draft names its seats). */
+  abort_detail?: string;
   request: EventRequest;
   /** Seat name → the token in its MCP URL. */
   tokens: Record<string, string>;

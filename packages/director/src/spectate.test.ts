@@ -59,7 +59,7 @@ function draft(sp: Spectator, rounds = 2, size = 2): void {
   assert.equal(of('draft_progress').length, 0, 'progress superseded by the picks');
 }
 
-// --- decks and notes ---------------------------------------------------------------------------------
+// --- decks, and notes never streamed (an older log carries them) ---------------------------------------------------------------------------------
 {
   const { sp, of } = pod();
   sp.ingest(rec('event_start', { set: { code: 'fra', name: 'Test' }, seed: 's', seats, best_of: 3 }));
@@ -80,14 +80,13 @@ function draft(sp: Spectator, rounds = 2, size = 2): void {
   const dec = of('decision');
   assert.equal(dec.length, 1, 'released two turns later');
   assert.equal(dec[0]!.full, false);
-  assert.equal(dec[0]!.redacted, true);
-  assert.ok(!String(dec[0]!.note).includes('Shock') && !String(dec[0]!.note).includes('Giant Growth'), `hidden cards blanked: ${dec[0]!.note}`);
-  assert.ok(!String(dec[0]!.note).includes('#5'), 'object id of a hidden card blanked');
+  assert.equal('note' in dec[0]!, false, 'a logged note is never streamed');
+  assert.ok(!JSON.stringify(of('decision')).includes('Giant Growth'), 'nor what it said');
   sp.ingest(rec('game_over', { game: G, winner: 'alice', turns: 6 }));
   assert.equal(of('decision')[0]!.full, false, 'default policy: game over is not enough while alice still has games');
   sp.ingest(rec('match_end', { a: 'alice', b: 'bob', wins: { alice: 2, bob: 0 } }));
-  assert.equal(of('decision')[0]!.full, true, 'seat done: full note');
-  assert.ok(String(of('decision')[0]!.note).includes('Shock'));
+  assert.equal(of('decision')[0]!.full, true, 'seat done: released in full');
+  assert.equal('note' in of('decision')[0]!, false, 'still without a note');
   assert.equal(of('deck').length, 2, 'decks released when the seats are done');
   assert.equal(of('deck_submitted').length, 0, 'superseded by the decklists');
 }

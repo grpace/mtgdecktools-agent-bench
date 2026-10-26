@@ -48,7 +48,7 @@ function answerer(seats: AgentSeat[], stopAfter = Infinity): { stop: () => void;
         }
         const h = [...o.options.map((x) => x.label).join('|')].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
         picks++;
-        await s.decide({ decision_id: o.id, option: String((h % o.options.length) + 1), note: 'test' });
+        await s.decide({ decision_id: o.id, option: String((h % o.options.length) + 1) });
       }
     })();
   }

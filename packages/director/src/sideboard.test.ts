@@ -160,11 +160,11 @@ test('a deck above 40 is legal, and a land swap that leaves a card uncastable is
 test('"keep" keeps the deck; the watchdog\'s forfeit keeps it too, logged by forfeit', async () => {
   let h = harness();
   let done = askSideboard(h.seat, pool, registered, cards, ctx(), h.log, meta);
-  assert.match(await h.seat.decide({ decision_id: h.seat.pending!.id, option: 'keep', note: 'my deck is fine' }), /^Deck kept for game 2: 40 cards\./);
+  assert.match(await h.seat.decide({ decision_id: h.seat.pending!.id, option: 'keep' }), /^Deck kept for game 2: 40 cards\./);
   let res = await done;
   assert.deepEqual([res.kept, res.deck], [true, registered]);
   let rec = h.records.find((x) => x.type === 'sideboarded')!;
-  assert.deepEqual([rec.kept, rec.in, rec.out, rec.by, rec.note], [true, [], [], 'agent', 'my deck is fine']);
+  assert.deepEqual([rec.kept, rec.in, rec.out, rec.by, 'note' in rec], [true, [], [], 'agent', false]);
   h = harness();
   done = askSideboard(h.seat, pool, registered, cards, ctx(), h.log, meta);
   const details = h.seat.pending!.forfeit!();
@@ -215,8 +215,8 @@ test('the play-or-draw decision takes "play" or "draw" only; the watchdog plays 
   assert.match(o.text, /^PLAY OR DRAW — your best-of-3 match \(Round 2 of 3\), score: you 0–1 opponent\. You lost game 1, so you choose who plays first in game 2\./);
   assert.match(await h.seat.decide({ decision_id: o.id, option: 'first' }), /answer with option "play"/);
   assert.match(await h.seat.decide({ decision_id: o.id, option: 'draw', cards: [1] }), /doesn't take `cards`/);
-  assert.match(await h.seat.decide({ decision_id: o.id, option: 'draw', note: 'slow deck' }), /^Your opponent plays first in game 2; you draw\./);
-  assert.deepEqual((({ choice, by, note }) => ({ choice, by, note }))(await done), { choice: 'draw', by: 'agent', note: 'slow deck' });
+  assert.match(await h.seat.decide({ decision_id: o.id, option: 'draw' }), /^Your opponent plays first in game 2; you draw\./);
+  assert.deepEqual(await done, { choice: 'draw', by: 'agent', latency_ms: (await done).latency_ms });
   assert.ok(h.records.some((x) => x.type === 'play_draw_offered' && x.id === o.id));
   const h2 = harness();
   done = askPlayDraw(h2.seat, pctx, h2.log, meta);
@@ -260,13 +260,13 @@ test('spectators: "sideboarded" with the deck size after the delay; what went in
   const pd = msgs().find((m) => m.type === 'play_draw')!;
   assert.deepEqual([pd.on_play, pd.choice, 'note' in pd], ['seat-a', 'play', false]);
   assert.ok(JSON.stringify(msgs()).indexOf('Plummet') < 0, 'no card name while the seat plays');
-  // The seat's last match ends: its swaps and notes are released (after the delay, like its results).
+  // The seat's last match ends: its swaps are released (after the delay, like its results); a note never is.
   sp.ingest({ t: now, type: 'match_end', a: 'seat-a', b: 'seat-b', wins: { 'seat-a': 2, 'seat-b': 0 } });
   now += 91_000;
   sp.flush();
   const full = msgs().find((m) => m.type === 'sideboarded')!;
-  assert.deepEqual([full.full, full.in, full.note], [true, [{ name: 'Plummet', qty: 2 }], 'Plummet for their fliers']);
-  assert.equal(msgs().find((m) => m.type === 'play_draw')!.note, 'my curve is low');
+  assert.deepEqual([full.full, full.in, 'note' in full], [true, [{ name: 'Plummet', qty: 2 }], false]);
+  assert.equal('note' in msgs().find((m) => m.type === 'play_draw')!, false);
 });
 
 // --- the event: between games of a match ------------------------------------------------------------------------------
@@ -298,7 +298,7 @@ test('a match: game 1 from the seed; the loser chooses; then both seats sideboar
   assert.equal(pend(b)?.kind, 'play_draw');
   assert.equal(pend(a), undefined);
   assert.match(a.status, /your opponent is choosing whether to play or draw in game 2/);
-  await b.decide({ decision_id: pend(b)!.id, option: 'draw', note: 'long game' });
+  await b.decide({ decision_id: pend(b)!.id, option: 'draw' });
   // Both sideboard at once: both offers are open before either answers, each with the other's deck as it was.
   assert.equal(pend(a)?.kind, 'sideboard');
   assert.equal(pend(b)?.kind, 'sideboard');
@@ -308,14 +308,14 @@ test('a match: game 1 from the seed; the loser chooses; then both seats sideboar
   assert.match(pend(a)!.text, /\{"seen":1,"name":"Sky Knight"/, 'match memory from game 1');
   const bText = pend(b)!.text;
   const all16 = Array.from({ length: 16 }, (_, i) => i + 1);
-  await a.decide({ decision_id: pend(a)!.id, cards: [...all16.slice(0, 14), 21, 22], basics: registered.basics, note: 'Plummet for fliers' });
+  await a.decide({ decision_id: pend(a)!.id, cards: [...all16.slice(0, 14), 21, 22], basics: registered.basics });
   // b's open decision is unchanged by a's answer: it never learns what a changed.
   assert.equal(pend(b)!.text, bText);
   assert.ok(!bText.includes('Plummet for fliers'));
   await b.decide({ decision_id: pend(b)!.id, option: 'keep' });
   await match;
   const g2 = logged.find((x) => x.type === 'play_draw' && x.game_number === 2)!;
-  assert.deepEqual([g2.by, g2.chooser, g2.choice, g2.on_play, g2.note], ['agent', 'seat-b', 'draw', 'seat-a', 'long game']);
+  assert.deepEqual([g2.by, g2.chooser, g2.choice, g2.on_play, 'note' in g2], ['agent', 'seat-b', 'draw', 'seat-a', false]);
   const sb = logged.filter((x) => x.type === 'sideboarded');
   assert.deepEqual(sb.map((x) => [x.seat, x.game_number, x.kept]), [['seat-a', 2, false], ['seat-b', 2, true]]);
   assert.deepEqual(sb[0]!.in, [{ name: 'Plummet', qty: 2 }]);
