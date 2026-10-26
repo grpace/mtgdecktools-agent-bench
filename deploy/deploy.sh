@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deploy a commit of the Agent Bench stack (phase-server + Director + Hub + Hub Postgres) on Coolify (gr3g-server) by
+# Deploy a commit of the Agent Bench stack (phase-server + Director + Hub + Hub Postgres) on Coolify by
 # promoting it: the commit is pushed to the instance's deploy branch (deploy/dev, deploy/prod; deploy/instance.sh), and
 # Coolify, which deploys that branch from GitHub (deploy/coolify-setup.sh created the application), builds the image
 # from the commit and restarts the stack. A push from anywhere, or Coolify's Deploy button, takes the same path: this
@@ -27,7 +27,7 @@
 # the repository is private. A change of the engine pin (engine/phase.lock.json) or of the active card overrides
 # (engine/overrides/) while any event is live or queued is refused unless --drain-events waits it out or --force says
 # so (docs/UPGRADING.md). It also installs scripts/ops-check.sh from the commit on the server, with its 5-minute cron.
-# Needs: git push access to origin, and SSH to gr3g-server (Host gr3g-server) for the engine check, --redeploy, the
+# Needs: git push access to origin, and SSH to the Coolify host (SSH_HOST) for the engine check, --redeploy, the
 # deployment's status and the ops check; nothing secret except the admin token for --drain.
 # Body is wrapped in main() so bash parses the whole file before running.
 main() {
@@ -74,8 +74,9 @@ if [ "$instance" = prod ] && ! git merge-base --is-ancestor "$sha" origin/main; 
   echo "refusing: $short is not on origin/main (production deploys only merged commits)"; return 1
 fi
 current="$(git ls-remote origin "refs/heads/$branch" | cut -f1)"
-# The instance's Coolify application (empty: none yet, or gr3g-server can't be reached).
-on_host() { ssh -o BatchMode=yes -o ConnectTimeout=15 gr3g-server "$@"; }
+# The instance's Coolify application (empty: none yet, or the host can't be reached).
+if [ -z "${SSH_HOST:-}" ]; then echo "set SSH_HOST to the SSH alias of the Coolify host"; return 2; fi
+on_host() { ssh -o BatchMode=yes -o ConnectTimeout=15 "$SSH_HOST" "$@"; }
 app_id() { on_host "docker exec coolify-db psql -U coolify -d coolify -Atc \"select a.id from applications a join environments e on e.id = a.environment_id join projects p on p.id = e.project_id where p.name = '$name' and a.name = '$name' and a.deleted_at is null\""; }
 id="$(app_id 2>/dev/null || true)"
 if [ "$current" = "$sha" ] && [ -z "$redeploy" ] && [ -n "$id" ]; then
@@ -206,7 +207,7 @@ fi
 # Coolify service from before git deploys: docs/OPERATIONS.md "Moving Dev to Git Deploys").
 if [ -z "$id" ]; then
   if [ -n "$(on_host "docker ps -aq --filter label=coolify.projectName=$name" 2>/dev/null)" ]; then
-    echo "refusing: containers of $name run on gr3g-server, but there is no Coolify application $name (the old service?)."
+    echo "refusing: containers of $name run on $SSH_HOST, but there is no Coolify application $name (the old service?)."
     echo "  Move it over first: docs/OPERATIONS.md \"Moving Dev to Git Deploys\". The branch $branch is at $short; nothing else changed."
     return 1
   fi
@@ -216,7 +217,7 @@ if [ -z "$id" ]; then
 fi
 deployment() { [ -n "$id" ] && on_host "docker exec coolify-db psql -U coolify -d coolify -Atc \"select status || ' ' || deployment_uuid from application_deployment_queues where application_id = '$id' and commit = '$sha' and created_at >= to_timestamp($1) at time zone 'UTC' order by id desc limit 1\"" 2>/dev/null || true; }
 if [ -n "$redeploy" ]; then
-  [ -n "$id" ] || { echo "refusing: no Coolify application $name on gr3g-server (deploy/coolify-setup.sh creates it)"; return 1; }
+  [ -n "$id" ] || { echo "refusing: no Coolify application $name on $SSH_HOST (deploy/coolify-setup.sh creates it)"; return 1; }
   echo "== ask Coolify to deploy $branch again"
   on_host "docker exec coolify php artisan tinker --execute='\$a = App\\Models\\Application::find($id); \$r = queue_application_deployment(application: \$a, deployment_uuid: new_public_id(), commit: \"$sha\", no_questions_asked: true, is_api: true); echo \$r[\"status\"], PHP_EOL;'"
 fi
@@ -235,7 +236,7 @@ for i in $(seq 1 240); do
     case "$st" in
       failed*|cancelled*)
         echo "Coolify's deployment of $short ${st%% *} (if the build failed, the stack before it keeps running). Its log: Coolify > $name > Deployments, or"
-        echo "  ssh gr3g-server \"docker exec coolify-db psql -U coolify -d coolify -Atc \\\"select logs from application_deployment_queues where deployment_uuid = '${st#* }'\\\"\" | tail -c 4000"
+        echo "  ssh $SSH_HOST \"docker exec coolify-db psql -U coolify -d coolify -Atc \\\"select logs from application_deployment_queues where deployment_uuid = '${st#* }'\\\"\" | tail -c 4000"
         return 1 ;;
     esac
     if [ -z "$st" ] && [ "$i" = 37 ]; then
@@ -250,16 +251,16 @@ for i in $(seq 1 240); do
 done
 if [ "$(version_at "$domain")" != "$short" ]; then
   echo "The Director is not answering as $short after 20 min (answers: '$(version_at "$domain")'). Check Coolify > $name > Deployments, and"
-  echo "  ssh gr3g-server 'docker ps | grep director-; docker logs --tail 50 <director container>'"
+  echo "  ssh $SSH_HOST 'docker ps | grep director-; docker logs --tail 50 <director container>'"
   return 1
 fi
 deployed=1
 echo "LIVE: https://$domain  (director $short, $phase_image)"
 for _ in $(seq 1 60); do [ "$(version_at "$hub_domain")" = "$short" ] && break; sleep 5; done
 if [ "$(version_at "$hub_domain")" = "$short" ]; then
-  echo "HUB: https://$hub_domain  (hub $short; data at /data/index.json; admin: ssh gr3g-server docker exec <hub container> npm run hub -- …)"
+  echo "HUB: https://$hub_domain  (hub $short; data at /data/index.json; admin: ssh $SSH_HOST docker exec <hub container> npm run hub -- …)"
 else
-  echo "Hub not answering as $short yet (answers: '$(version_at "$hub_domain")'). Check: ssh gr3g-server 'docker ps | grep hub-; docker logs --tail 50 <hub container>'"
+  echo "Hub not answering as $short yet (answers: '$(version_at "$hub_domain")'). Check: ssh $SSH_HOST 'docker ps | grep hub-; docker logs --tail 50 <hub container>'"
   return 1
 fi
 
@@ -267,20 +268,23 @@ fi
 # 5 minutes and e-mails on failure (docs/OPERATIONS.md "Monitoring"). Idempotent; never touches other cron lines. Not for
 # the test instance. A deploy that doesn't go through this script leaves the installed check as it was.
 [ "$instance" != test ] || return 0
-echo "== ops check: install ~/documents/agent-bench-ops/ops-check.sh and its 5-minute cron on gr3g-server"
-if git show "$sha:scripts/ops-check.sh" | on_host 'set -e; d=~/documents/agent-bench-ops; mkdir -p "$d"; cat > "$d/ops-check.sh.new"; chmod 755 "$d/ops-check.sh.new"; mv "$d/ops-check.sh.new" "$d/ops-check.sh"' \
-  && on_host bash -s -- "$instance" "$name" "$domain" "$hub_domain" <<'CRON'
+echo "== ops check: install it and its 5-minute cron on $SSH_HOST"
+# OPS_DIR, when set, is an absolute path on the host. Unset: the host uses its own home.
+if [ -n "${OPS_DIR:-}" ]; then ops_remote=$(printf '%q' "$OPS_DIR"); else ops_remote='$HOME/.local/share/mtgdt-ops'; fi
+if git show "$sha:scripts/ops-check.sh" | on_host "set -e; d=$ops_remote; mkdir -p \"\$d\"; cat > \"\$d/ops-check.sh.new\"; chmod 755 \"\$d/ops-check.sh.new\"; mv \"\$d/ops-check.sh.new\" \"\$d/ops-check.sh\"" \
+  && on_host bash -s -- "$instance" "$name" "$domain" "$hub_domain" "${OPS_DIR:-}" <<'CRON'
 set -e
-instance="$1"; name="$2"; domain="$3"; hub="$4"; d=~/documents/agent-bench-ops
+instance="$1"; name="$2"; domain="$3"; hub="$4"; d="${5:-$HOME/.local/share/mtgdt-ops}"
+mark="# ops:$name"
 if [ "$instance" = prod ]; then
-  mark="# ops:$name"
   line="*/5 * * * * SSH_HOST=local DIRECTOR_URL=https://$domain HUB_URL=https://$hub PROJECT=$name OPS_STATE_DIR=\$HOME/.local/state/$name-ops $d/ops-check.sh --server --alert >/dev/null 2>&1 $mark"
-  present=$(crontab -l 2>/dev/null | grep -cF -- "$mark" || true)
 else
-  line="*/5 * * * * SSH_HOST=local $d/ops-check.sh --server --alert >/dev/null 2>&1"
-  present=$(crontab -l 2>/dev/null | grep -F "agent-bench-ops/ops-check.sh" | grep -cvF "# ops:" || true)
+  line="*/5 * * * * SSH_HOST=local $d/ops-check.sh --server --alert >/dev/null 2>&1 $mark"
 fi
-if [ "$present" = 0 ]; then (crontab -l 2>/dev/null; echo "$line") | crontab -; echo "  cron line added"; else echo "  cron line present"; fi
+current="$(crontab -l 2>/dev/null || true)"
+kept="$(printf '%s\n' "$current" | awk -v mark="$mark" 'index($0, mark) { next } /ops-check\.sh --server --alert/ && index($0, "# ops:") == 0 { next } { print }')"
+printf '%s\n' "$kept" | { cat; echo "$line"; } | crontab -
+echo "  cron line set"
 CRON
 then :
 else echo "  warning: could not install the ops check (docs/OPERATIONS.md, \"Monitoring\")"; fi

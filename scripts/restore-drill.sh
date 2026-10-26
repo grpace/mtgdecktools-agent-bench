@@ -5,12 +5,12 @@
 # Prints the timings. Removes the container and the dump copy at the end (the dump holds account data).
 #   scripts/restore-drill.sh            the newest /dumps/hub-<Day>.dump
 #   scripts/restore-drill.sh <file>     another dump in /dumps (e.g. pre-<sha>.dump)
-# Env: SSH_HOST (gr3g-server), CONTAINER_ENGINE (podman, else docker), DRILL_PG_PORT (15499).
+# Env: SSH_HOST (the Coolify host's SSH alias), CONTAINER_ENGINE (podman, else docker), DRILL_PG_PORT (15499).
 # Body is wrapped in main() so bash parses the whole file before running.
 main() {
 set -euo pipefail
 repo="$(cd "$(dirname "$0")/.." && pwd)"
-ssh_host="${SSH_HOST:-gr3g-server}"
+ssh_host="${SSH_HOST:?Set SSH_HOST to the SSH alias of the Coolify host}"
 engine="${CONTAINER_ENGINE:-$(command -v podman >/dev/null && echo podman || echo docker)}"
 port="${DRILL_PG_PORT:-15499}"
 pg_image="$(sed -n 's/^ *image: \(docker.io\/library\/postgres:[^ ]*\)$/\1/p' "$repo/deploy/compose.yaml" | head -1)"

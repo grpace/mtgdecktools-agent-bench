@@ -200,7 +200,7 @@ test('the saved contributor token goes only to the hosted Director and Hub', () 
     assert.equal(core.contributorToken(undefined, core.DEFAULT_HUB_URL), 'saved-token');
     assert.equal(core.contributorToken(undefined, 'http://127.0.0.1:8787'), 'saved-token');
     assert.equal(core.contributorToken(undefined, 'https://community-director.example'), undefined);
-    assert.equal(core.contributorToken(undefined, 'https://agent-bench.dev.greg.tech.evil.example'), undefined);
+    assert.equal(core.contributorToken(undefined, 'https://bench.mtgdecktools.com.evil.example'), undefined);
     // A token you give explicitly goes where you send it (with a warning).
     assert.equal(core.contributorToken('their-token', 'https://community-director.example'), 'their-token');
     process.env.BENCH_TOKEN_ORIGINS = 'https://staging.example';

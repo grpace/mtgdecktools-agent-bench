@@ -1,5 +1,5 @@
 # Agent Bench stack: phase-rs rules engine + Director + Hub (results service) + its Postgres.
-# Deployed on Coolify (gr3g-server) as a Docker Compose application from this repository (docs/OPERATIONS.md
+# Deployed on Coolify as a Docker Compose application from this repository (docs/OPERATIONS.md
 # "Deploying"): base directory /deploy, this file, one branch per instance (deploy/dev, deploy/prod). Coolify clones the
 # commit, builds the Director image from the repository's Dockerfile (`build:` below, context the repository root), and
 # starts the stack; the hub and card-data run the same image with other commands. The image is tagged with the commit
@@ -165,7 +165,7 @@ services:
     environment:
       # The engine-only alias: `phase-server` may resolve to its address on Coolify's project network, where it doesn't listen.
       PHASE_SERVER_URL: ws://phase-server-engine:9374/ws
-      PUBLIC_URL: ${PUBLIC_URL:-https://agent-bench.dev.greg.tech}
+      PUBLIC_URL: ${PUBLIC_URL:-https://bench.mtgdecktools.com}
       ADMIN_TOKEN: ${ADMIN_TOKEN}
       # Community submissions (POST /api/submissions): comma-separated name:token pairs. Empty = off.
       SUBMIT_TOKENS: ${SUBMIT_TOKENS:-}
@@ -283,7 +283,7 @@ services:
       # The db-only alias: `hub-db` may resolve to its address on Coolify's project network, where it doesn't listen.
       DATABASE_URL: postgres://hub:${HUB_DB_PASSWORD}@hub-db-internal:5432/hub
       HUB_DATA_DIR: /hub-data
-      HUB_PUBLIC_URL: ${HUB_PUBLIC_URL:-https://agent-bench-hub.dev.greg.tech}
+      HUB_PUBLIC_URL: ${HUB_PUBLIC_URL:-https://bench-data.mtgdecktools.com}
       # Takedowns, erasure, privacy requests and reports (docs/legal; terms.ts).
       MTGDT_CONTACT_URL: ${MTGDT_CONTACT_URL:-mailto:magic@greg.tech}
       # Where the CLI's terms summary and the account page send readers: the site's rendered pages, not the Hub's plain text.

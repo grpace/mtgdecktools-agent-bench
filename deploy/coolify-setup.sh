@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Create or update an instance's Coolify application (gr3g-server): a Docker Compose application built from
+# Create or update an instance's Coolify application: a Docker Compose application built from
 # github.com/grpace/mtgdecktools-agent-bench (deploy/compose.yaml), deployed from the instance's branch
 # (deploy/instance.sh: dev -> deploy/dev, prod -> deploy/prod), domains, secrets and settings as Coolify variables.
 # Run it once to create an instance, and again after changing what it sets (a secret, a domain, the branch). Deploying
@@ -20,9 +20,8 @@
 # every contributor in the public exports, a new hub-db-password locks the Hub out of its database.
 # The GitHub OAuth variables are set only from those files; values set in Coolify's UI are kept otherwise.
 #
-# Over SSH (Host gr3g-server, see ~/Coding Projects/Server Config), through `php artisan tinker` like the server-ops
-# tooling, so no Coolify API token is needed. Before it changes anything it takes a verified dump of Coolify's
-# database (Server Config rule). Body is wrapped in main() so bash parses the whole file before running.
+# Over SSH (SSH_HOST), through `php artisan tinker`, so no Coolify API token is needed. Before it changes
+# anything it takes a verified dump of Coolify's database. Body is wrapped in main() so bash parses the whole file before running.
 main() {
 set -euo pipefail
 deploy=""; recover=""; delete=""
@@ -31,7 +30,7 @@ while [ $# -gt 0 ]; do
     --deploy) deploy=1 ;;
     --recover-secrets) recover=1 ;;
     --delete) delete=1 ;;
-    -h|--help) sed -n '2,25p' "$0"; return 0 ;;
+    -h|--help) sed -n '2,24p' "$0"; return 0 ;;
     *) echo "unknown option: $1 (see --help)"; return 2 ;;
   esac
   shift
@@ -46,7 +45,8 @@ if [ -n "$delete" ] && [ "$instance" != test ]; then echo "--delete removes only
 repository="grpace/mtgdecktools-agent-bench"
 echo "== instance $instance: Coolify application $name from $repository@$branch, Director $domain, Hub $hub_domain"
 
-ssh_q() { ssh -o BatchMode=yes -o ConnectTimeout=15 gr3g-server "$@"; }
+if [ -z "${SSH_HOST:-}" ]; then echo "set SSH_HOST to the SSH alias of the Coolify host"; return 2; fi
+ssh_q() { ssh -o BatchMode=yes -o ConnectTimeout=15 "$SSH_HOST" "$@"; }
 exists="$(ssh_q "docker exec coolify-db psql -U coolify -d coolify -Atc \"select a.uuid from applications a join environments e on e.id = a.environment_id join projects p on p.id = e.project_id where p.name = '$name' and a.name = '$name' and a.deleted_at is null\"")"
 running="$(ssh_q "docker ps -aq --filter label=coolify.projectName=$name | head -1")"
 
@@ -75,7 +75,7 @@ if [ -z "$delete" ]; then
         if [ -s "$secrets/$f.tmp" ]; then mv "$secrets/$f.tmp" "$secrets/$f"; echo "  recovered $f"; else rm -f "$secrets/$f.tmp"; echo "  could not recover $f (is $svc running?)"; return 1; fi
       done
     else
-      echo "refusing: $name exists on gr3g-server, but $secrets is missing: ${missing[*]}."
+      echo "refusing: $name exists on $SSH_HOST, but $secrets is missing: ${missing[*]}."
       echo "  A new value would break it (contributor-salt re-keys every contributor; hub-db-password no longer matches the"
       echo "  database). Restore the files from your backup, or: INSTANCE=$instance deploy/coolify-setup.sh --recover-secrets"
       return 1
@@ -115,20 +115,20 @@ staged=""
 on_exit() {
   local code=$?
   if [ -n "$staged" ]; then ssh_q 'docker exec -u root coolify rm -rf /tmp/agent-bench-setup; rm -rf ~/.agent-bench-setup' 2>/dev/null || true; fi
-  [ "$code" = 0 ] || echo "coolify-setup stopped (exit $code); Coolify's database dump from before it is in ~/documents/backup/pre-clone/ on gr3g-server"
+  [ "$code" = 0 ] || echo "coolify-setup stopped (exit $code); Coolify's database dump from before it is in the host backup directory (COOLIFY_BACKUP_DIR, or ~/coolify-db-backups)"
 }
 trap on_exit EXIT
 staged=1
 ssh_q 'umask 077; rm -rf ~/.agent-bench-setup; mkdir -p ~/.agent-bench-setup'
-scp -q deploy/coolify-app.php gr3g-server:.agent-bench-setup/
+scp -q deploy/coolify-app.php "$SSH_HOST":.agent-bench-setup/
 printf '%s' "$cfg" | ssh_q 'umask 077; cat > ~/.agent-bench-setup/config.json'
 
 echo "== Coolify DB backup (verified), then $([ -n "$delete" ] && echo delete || echo 'create or update') the application"
-ssh_q bash -s -- "$name" <<'REMOTE'
+ssh_q bash -s -- "$name" "${COOLIFY_BACKUP_DIR:-}" <<'REMOTE'
 set -euo pipefail
 umask 077 # the dump holds every Coolify secret
 name="$1"
-dir=~/documents/backup/pre-clone
+dir="${2:-$HOME/coolify-db-backups}"
 mkdir -p "$dir"
 final="$dir/coolify-$(date +%Y%m%d-%H%M%S)-pre-$name.sql.gz"
 partial="$final.partial"
@@ -155,7 +155,7 @@ if [ -n "$delete" ]; then
     ssh_q "for n in \$(docker network ls -q --filter name=^${exists}_); do [ \"\$(docker network inspect -f '{{len .Containers}}' \$n)\" = 0 ] && docker network rm \$n >/dev/null; done; true"
   fi
   left="$(ssh_q "docker ps -aq --filter label=coolify.projectName=$name; docker volume ls -q | grep -F '${exists:-no-such-uuid}_'; docker network ls --format '{{.Name}}' | grep -F '${exists:-no-such-uuid}'; true")"
-  [ -z "$left" ] || { echo "warning: left behind on gr3g-server: $left"; return 1; }
+  [ -z "$left" ] || { echo "warning: left behind on $SSH_HOST: $left"; return 1; }
   [ -z "$exists" ] || echo "   no containers, volumes or networks of $exists left"
   return 0
 fi

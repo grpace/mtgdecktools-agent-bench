@@ -5,7 +5,7 @@
 //
 //   DIRECTOR_URL=http://127.0.0.1:18880 ADMIN_TOKEN=… [DIRECTOR_PID=…] [RUNS_DIR=…] node scripts/security/fuzz-mcp.mjs
 //
-// Loopback only: it refuses any other host. Never point it at a hosted Director (*.mtgdecktools.com, *.dev.greg.tech).
+// Loopback only: it refuses any other host. Never point it at a hosted Director.
 // Exit code 1 when a check fails. Output: one line per check, PASS or FAIL.
 import { connect } from 'node:net';
 import { existsSync, readFileSync } from 'node:fs';

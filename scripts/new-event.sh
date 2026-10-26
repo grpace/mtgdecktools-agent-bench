@@ -3,7 +3,7 @@
 # Usage: scripts/new-event.sh <set> <name[=harness/model[/effort]],...> [knowledge] [seed]
 #   The harness is the part before the first '/'; the last part is the effort only when it is an effort word
 #   (minimal|low|medium|high|xhigh|max|default), so model ids with slashes work: a=opencode/anthropic/claude-sonnet-5-5/high
-#   DIRECTOR=https://agent-bench.dev.greg.tech (default) or http://127.0.0.1:8787
+#   DIRECTOR=http://127.0.0.1:8787 (default) or the URL of a Director you run
 # Admin token: $ADMIN_TOKEN or ~/.config/mtgdt/admin-token.
 # Seat names are neutral at every table: a name that isn't seat-<6 hex> is replaced (the answer's `renamed` and
 # `seats` say how), so names never reveal a model.
@@ -11,7 +11,7 @@
 main() {
 set -euo pipefail
 set_code="${1:?set code}"; agents="${2:?agents}"; knowledge="${3:-none}"; seed="${4:-}"
-director="${DIRECTOR:-https://agent-bench.dev.greg.tech}"
+director="${DIRECTOR:-http://127.0.0.1:8787}"
 token="${ADMIN_TOKEN:-$(cat "$HOME/.config/mtgdt/admin-token")}"
 body="$(python3 -I -c "
 import json, sys

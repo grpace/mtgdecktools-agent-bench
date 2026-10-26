@@ -69,7 +69,7 @@ for (const p of ['/home/greg/agents/run', '/Users/greg/Library/x.json', '~/work/
 for (const keep of [
   'sha256:23355427c25fc38e27b7138dd3b2c51f7b50a942a40b4c3e6db6cdb98c8fbce7', '2026-10-22-14-39-42-sos-909e', 'seat-4ff9a3', 'c-1a2b3c4d5e6f',
   'claude-haiku-5-5/medium', 'prompt=sha256:0123456789abcdef;knowledge=primer', 'https://www.17lands.com/public_datasets',
-  'https://github.com/phase-rs/phase/issues/10205', 'https://agent-bench-hub.dev.greg.tech/data/open/latest.json', 'v0.115.0', '1.2.3',
+  'https://github.com/phase-rs/phase/issues/10205', 'https://bench-data.mtgdecktools.com/data/open/latest.json', 'v0.115.0', '1.2.3',
 ]) assert.equal(scrubText(keep), keep, keep);
 
 // Card text is never touched: a fixture of tricky rules text (P/T, mana, colons, loyalty, URLs in flavor-free text).

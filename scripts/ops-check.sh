@@ -2,39 +2,38 @@
 # Health check of the hosted stack, and its alerts (docs/OPERATIONS.md, "Monitoring"). Read-only; never needs a token.
 # Prints one line per check; exits 1 when any check fails, 0 otherwise.
 #   scripts/ops-check.sh                 Director and Hub /health, intake, open-data build, capacity, TLS expiry
-#   scripts/ops-check.sh --server        also the host (over `ssh gr3g-server`, or locally on it: SSH_HOST=local): disk
+#   scripts/ops-check.sh --server        also the host (SSH_HOST, or SSH_HOST=local when already on it): disk
 #                                        use, the stack's volume sizes, container log caps, the newest Hub database dump,
 #                                        and the nightly volume backup
-#   scripts/ops-check.sh --alert         e-mail the owner when checks fail twice in a row (a deploy's restart doesn't
+#   scripts/ops-check.sh --alert         e-mail when checks fail twice in a row (a deploy's restart doesn't
 #                                        alert), again every ALERT_REPEAT_HOURS while they keep failing or when a different
-#                                        check fails, and once when everything is back. Runs on gr3g-server: mail goes to
-#                                        Postal on 127.0.0.1:25 with Coolify's saved SMTP login, like the server's own
-#                                        nightly checks (Server Config: wordpress-ops check.sh). State in OPS_STATE_DIR.
+#                                        check fails, and once when everything is back. On the host, mail goes through
+#                                        its local mail server with Coolify's saved SMTP login. State in OPS_STATE_DIR.
 #   scripts/ops-check.sh --test-email    send a test alert and stop
-# Installed on gr3g-server by deploy/deploy.sh as ~/documents/agent-bench-ops/ops-check.sh, run by the owner's crontab every
-# 5 minutes: `*/5 * * * * SSH_HOST=local ~/documents/agent-bench-ops/ops-check.sh --server --alert >/dev/null 2>&1`.
+# Installed on the host by deploy/deploy.sh, with a 5-minute crontab line (SSH_HOST=local).
 # Log: journalctl -t agent-bench-ops; the last run's output: $OPS_STATE_DIR/last-run.txt.
-# Env: DIRECTOR_URL (https://agent-bench.dev.greg.tech), HUB_URL (https://agent-bench-hub.dev.greg.tech),
+# Env: DIRECTOR_URL (https://bench.mtgdecktools.com), HUB_URL (https://bench-data.mtgdecktools.com),
 #      OPEN_DATA_MAX_HOURS (30), TLS_MIN_DAYS (14), DISK_MAX_PCT (80), DUMP_MAX_HOURS (30), BACKUP_MAX_HOURS (30),
 #      VOLUME_MAX_GB (phase-data 5, director-runs 40, hub-data 40, hub-pgdata 10, others 5; e.g. VOLUME_MAX_GB_HUB_DATA=60),
-#      SSH_HOST (gr3g-server; `local` on the host itself), ALERT_TO (else the address in ~/.config/agent-bench-ops/alert-to on the host), ALERT_AFTER (2 runs),
-#      ALERT_REPEAT_HOURS (6), OPS_STATE_DIR (~/.local/state/agent-bench-ops), PROJECT (agent-bench, the Coolify project).
+#      SSH_HOST (required with --server unless already on the host: SSH_HOST=local), ALERT_TO (else the address in ~/.config/agent-bench-ops/alert-to on the host), ALERT_AFTER (2 runs),
+#      ALERT_REPEAT_HOURS (6), OPS_STATE_DIR (~/.local/state/agent-bench-ops), PROJECT (the Coolify project name).
 # Body is wrapped in main() so bash parses the whole file before running.
 main() {
 set -uo pipefail
 server=""; alert=""; test_email=""
 for a in "$@"; do case "$a" in
   --server) server=1 ;; --alert) alert=1 ;; --test-email) test_email=1 ;;
-  -h|--help) sed -n '2,24p' "$0"; return 0 ;;
+  -h|--help) sed -n '2,20p' "$0"; return 0 ;;
   *) echo "unknown option: $a"; return 2 ;;
 esac; done
-director="${DIRECTOR_URL:-https://agent-bench.dev.greg.tech}"
-hub="${HUB_URL:-https://agent-bench-hub.dev.greg.tech}"
-ssh_host="${SSH_HOST:-gr3g-server}"
+director="${DIRECTOR_URL:-https://bench.mtgdecktools.com}"
+hub="${HUB_URL:-https://bench-data.mtgdecktools.com}"
+ssh_host="${SSH_HOST:-}"
+if [ -n "$server" ] && [ -z "$ssh_host" ]; then echo "set SSH_HOST to the Coolify host, or SSH_HOST=local on the host itself"; return 2; fi
 project="${PROJECT:-agent-bench}"
 state="${OPS_STATE_DIR:-$HOME/.local/state/agent-bench-ops}"
 to="${ALERT_TO:-$(cat "$HOME/.config/agent-bench-ops/alert-to" 2>/dev/null)}"
-host_name="$( [ "$ssh_host" = local ] && hostname || echo "$ssh_host")"
+if [ -z "$ssh_host" ] || [ "$ssh_host" = local ]; then host_name="$(hostname)"; else host_name="$ssh_host"; fi
 
 if [ -n "$test_email" ]; then
   send_mail "agent-bench: test of the ops check e-mail" "A test from the Agent Bench ops check on $(hostname) (scripts/ops-check.sh, docs/OPERATIONS.md \"Monitoring\"). When a check of the hosted stack fails twice in a row, an e-mail like this arrives with the failing checks and a prompt to paste into an agent. Nothing to do."
@@ -141,11 +140,11 @@ fi
 return $failed
 }
 
-# E-mail through Postal on this host with Coolify's saved SMTP login (the credentials go from Coolify straight into python
-# on a pipe, never printed or on a command line). Only on gr3g-server.
+# E-mail through the host's local mail server with Coolify's saved SMTP login (the credentials go from Coolify straight into python
+# on a pipe, never printed or on a command line). Only where Coolify is installed.
 send_mail() { # send_mail <subject> <body>   (to $to: ALERT_TO, or ~/.config/agent-bench-ops/alert-to on the host)
   if [ -z "$to" ]; then logger -t agent-bench-ops "no alert address (ALERT_TO or ~/.config/agent-bench-ops/alert-to): $1" 2>/dev/null; echo "send_mail: no alert address set"; return 1; fi
-  if ! docker inspect coolify > /dev/null 2>&1; then echo "send_mail: no Coolify here; alerts are sent from gr3g-server"; return 2; fi
+  if ! docker inspect coolify > /dev/null 2>&1; then echo "send_mail: no Coolify here; alerts are sent from the host"; return 2; fi
   docker exec coolify php artisan tinker --execute='$s = instanceSettings(); echo json_encode(["user" => $s->smtp_username, "pass" => $s->smtp_password, "from" => $s->smtp_from_address, "name" => $s->smtp_from_name]);' \
     | MAIL_TO="$to" MAIL_SUBJECT="$1" MAIL_BODY="$2" python3 -I -c '
 import json, os, smtplib, sys
@@ -153,7 +152,7 @@ from email.message import EmailMessage
 from email.utils import formataddr
 c = json.loads(sys.stdin.read().strip().splitlines()[-1])
 m = EmailMessage()
-m["From"] = formataddr((c["name"] or "gr3g-server", c["from"]))
+m["From"] = formataddr((c["name"] or "agent-bench", c["from"]))
 m["To"] = os.environ["MAIL_TO"]
 m["Subject"] = os.environ["MAIL_SUBJECT"]
 m.set_content(os.environ["MAIL_BODY"])
@@ -189,14 +188,10 @@ $out" && rm -f "$state/alerted-keys"
   logger -t agent-bench-ops "FAIL ($count in a row): $cur" 2>/dev/null || true
   [ "$count" -ge "${ALERT_AFTER:-2}" ] || return 0
   if [ "$cur" != "$last_keys" ] || [ $((now - last_alert)) -ge $(( ${ALERT_REPEAT_HOURS:-6} * 3600 )) ]; then
-    send_mail "agent-bench: $(wc -w <<<"$cur") check(s) failing on $host_name: $cur" "The Agent Bench ops check (scripts/ops-check.sh, every 5 minutes on gr3g-server) has failed $count times in a row.
+    send_mail "agent-bench: $(wc -w <<<"$cur") check(s) failing on $host_name: $cur" "The Agent Bench ops check (scripts/ops-check.sh) has failed $count times in a row.
 
 $out
-Runbook: docs/OPERATIONS.md (\"Failures\") in the mtgdecktools-agent-bench repository.
-
-Prompt for an agent (Claude Code in ~/Coding Projects/mtgdecktools-agent-bench):
-
-The Agent Bench ops check on gr3g-server is failing ($cur). Read its last output (~/.local/state/agent-bench-ops/last-run.txt on the server, or run scripts/ops-check.sh --server), find the cause with docs/OPERATIONS.md, and fix it. Don't deploy to production, rotate secrets or delete data without asking me." \
+Runbook: docs/OPERATIONS.md (\"Failures\") in the mtgdecktools-agent-bench repository. The last output is in the ops state directory on the host (last-run.txt)." \
       && { echo "$now" > "$state/last-alert"; echo "$cur" > "$state/alerted-keys"; }
   fi
 }
