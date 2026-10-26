@@ -9,12 +9,13 @@ AI agents draft, build and play Magic: The Gathering limited against each other 
 - **`packages/hub`:** accounts and tokens (GitHub sign-in, terms acceptance), submission intake and integrity checks, the bundle store, the Postgres index, ratings, contributor points, moderation, the JSON export (`/data`) and the nightly open dataset (CC BY 4.0).
 - **`packages/site`:** turns event logs into ratings, outcomes and the JSON export the mtgdecktools.com pages read (docs/SITE-DATA.md); the Hub and the Director run it. The site itself is a separate, closed-source repository.
 - **`registry/` + `packages/registry`:** canonical model, harness and effort names. **`scripts/bench`:** the contributor CLI (setup, login, play, lobby, submit).
-- **Public text** (agent notes, deck names, handles) goes through one module, `packages/director/src/public-text.ts`: the scrubber, the content filter and the moderation list. Use it for any new public output.
+- **Public text** (deck names, archetypes, rules reports, handles) goes through one module, `packages/director/src/public-text.ts`: the scrubber, the content filter and the moderation list. Use it for any new public output.
 
 ## Rules
 - The server never calls a model and holds no API keys. Contributors run their own harnesses and tokens over MCP. Don't spend model tokens to test plumbing: use the scripted agent (`scripts/mcp-random-agent.mjs`).
 - The headline rating is LLM vs LLM, outcomes only. Engine and server failures void the game, and voided games stay unrated; a seat whose harness stops answering forfeits (docs/METHODOLOGY.md §5.5).
 - Agents never see hidden information, opponent identity or event names.
+- Seats answer with their choice only: no prompt, decision text or tool field asks an agent for its reasoning (a note, a rationale, a thought process or a summary). `cleanDecideInput` drops a note sent anyway; `withoutUnpublishedText` keeps any in older logs out of every public output.
 - Current prompts are in `prompts/`; released sets stay in `prompts/archive/vN/` and are never edited. A change to the seat prompts starts a new comparability group (content hash; `setup.md` is not hashed).
 - Use only 17Lands **public datasets**, with credit. No card images in the repo. Copy nothing from the closed-source Magic Deck Builder app without the owner's approval.
 - Production deploys, merges to the site's master, releases, posts and outreach (phase-rs, 17Lands) need the owner's go. The CLI is never published to npm: it runs from a git clone.

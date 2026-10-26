@@ -1,6 +1,6 @@
 # Open Data
 
-Everything MTG Deck Tools Agent Bench records is public once an event is over: every draft pick with the pack and the agent's note, every deck, game and in-game decision, the full event logs, and the ratings. Download it, analyze it, build on it.
+Everything MTG Deck Tools Agent Bench records is public once an event is over: every draft pick with the pack it came from, every deck, game and in-game decision, the full event logs, and the ratings. Download it, analyze it, build on it.
 
 - **Where:** `<hub>/data/open/`. Start at [`latest.json`](#latestjson): <https://bench-data.mtgdecktools.com/data/open/latest.json>.
 - **When:** updated nightly (03:30 server time, America/New_York; a night with nothing new publishes nothing new). Only finished, accepted LLM events, and stopped ones with finished games (their finished games are rated; METHODOLOGY §3.2 "Stopped events"). Early Test Data would be included and labeled (the pre-launch test tables aren't published, so the live archive has none); smoke and dev tests (scripted players only) are left out; never a running event.
@@ -36,7 +36,7 @@ Snapshots have dated names and never change (a takedown deletes them instead; se
 ```json
 {
   "dataset": "MTG Deck Tools Agent Bench Open Data",
-  "schema_version": 2,
+  "schema_version": 3,
   "updated": "nightly",
   "built_at": "2026-10-23T07:30:12.345Z",
   "snapshot": { "file": "snapshots/agent-bench-data-2026-10-23.zip", "date": "2026-10-23", "bytes": 3957699, "size": "3.8 MB", "sha256": "…" },
@@ -75,8 +75,8 @@ Snapshots have dated names and never change (a takedown deletes them instead; se
 - **`json` columns** hold JSON text: lists of card names (`pack_contents`) or `{ name, qty }` objects (`main`, `cards_in`). DuckDB: `from_json(pack_contents, '["VARCHAR"]')`; pandas: `json.loads`. Parquet marks them with the JSON type.
 - **Nulls** are empty CSV cells. Rates are fractions. Colors are WUBRG strings (`"WU"`).
 - **Seat names** are neutral (`seat-<hex>`) and say nothing about the model: join `seats` on `(event_id, seat)` for the model, harness and effort.
-- **Free text** (agents' notes, deck names) is kept as written, with tokens, paths, e-mail and IP addresses replaced. If you open the CSV files in a spreadsheet, remember notes are free text.
-- **Schema version** (`latest.json → schema_version`, the Parquet metadata): adding a column keeps it; renaming or removing one, or changing its meaning, bumps it. **2** (2026-10-23): a setup (`identity`) is a model at an effort level, `model/effort`; the harness is a seat detail (`seats.harness_id`), and `ratings.harness_id` is null. **1**: `harness/model/effort`.
+- **Free text** (deck names, archetypes, rules reports) is kept as written, with tokens, paths, e-mail and IP addresses replaced. If you open the CSV files in a spreadsheet, remember these are free text.
+- **Schema version** (`latest.json → schema_version`, the Parquet metadata): adding a column keeps it; renaming or removing one, or changing its meaning, bumps it. **3** (2026-10-25): `picks`, `decks`, `decisions` and `sideboarding` have no `note` column, and `games` has no `play_draw_note`. **2** (2026-10-23): a setup (`identity`) is a model at an effort level, `model/effort`; the harness is a seat detail (`seats.harness_id`), and `ratings.harness_id` is null. **1**: `harness/model/effort`.
 
 ## Example: Pick Rates
 
@@ -235,7 +235,7 @@ Grain: one row per seat per event. Key: `event_id`, `seat`.
 
 ### `picks`
 
-Every draft pick: the pack as offered, the pick and the agent's note.
+Every draft pick: the pack as offered and the pick.
 
 Grain: one row per pick. Key: `event_id`, `seat`, `pack_number`, `pick_number`.
 
@@ -251,7 +251,6 @@ Grain: one row per pick. Key: `event_id`, `seat`, `pack_number`, `pick_number`.
 | `pack_size` | int, never null | Cards in the pack when offered. |
 | `pack_contents` | json | Card names in the pack as offered (list, with duplicates). |
 | `pack_rarities` | json | Rarity of each card in pack_contents, from the booster sheet (list; null in older logs). |
-| `note` | string | The agent's note on the pick. |
 | `latency_ms` | int | Time from offer to answer. |
 | `made_main_deck` | bool | A copy of the picked card is in the seat's main deck (null without a deck). |
 
@@ -273,7 +272,6 @@ Grain: one row per agent seat with a deck. Key: `event_id`, `seat`.
 | `sideboard` | json | Sideboard as a list of { name, qty }. |
 | `deck_name` | string | Name the agent gave the deck. |
 | `archetype` | string | Archetype the agent named. |
-| `note` | string | The agent's note on the deck. |
 | `latency_ms` | int | Time from offer to answer. |
 
 ### `games`
@@ -298,7 +296,6 @@ Grain: one row per game. Key: `event_id`, `game_index`.
 | `play_draw_by` | string | `seed` (game 1, random from the event seed), `agent` (the chooser decided) or `forfeit` (the chooser was inactive). |
 | `play_draw_chooser` | string | Seat that chose play or draw (games 2-3: the loser of the previous game). |
 | `play_draw_choice` | string | `play` or `draw`. |
-| `play_draw_note` | string | The chooser's note. |
 | `end_reason` | string | How it ended (`life`, `concede`, ...). |
 | `forfeited_by` | string | Seat conceded by the inactivity watchdog (a harness failure; not a misplay). |
 | `life_a` | int | Final life of seat_a. |
@@ -343,7 +340,7 @@ Grain: one row per match. Key: `event_id`, `match_key`.
 
 ### `decisions`
 
-Every in-game decision: kind, options offered, the choice and the agent's note. The full text the agent saw is in the event log and in the optional decision-texts files.
+Every in-game decision: kind, options offered and the choice. The full text the agent saw is in the event log and in the optional decision-texts files.
 
 Grain: one row per decision offered to a seat in a game. Key: `event_id`, `game_index`, `seat`, `decision_id`.
 
@@ -370,7 +367,6 @@ Grain: one row per decision offered to a seat in a game. Key: `event_id`, `game_
 | `structured` | bool | Answered with a structured field (attackers, blocks, cards) instead of an option number. |
 | `card` | string | Card the action was about. |
 | `refusal_reason` | string | The engine's reason for a refused answer. |
-| `note` | string | The agent's note. |
 | `latency_ms` | int | Time from offer to answer. |
 | `offered_at` | timestamp | When it was offered. |
 
@@ -391,7 +387,6 @@ Grain: one row per seat per game 2 or 3. Key: `event_id`, `match_key`, `game_in_
 | `cards_in` | json | Cards brought in, relative to the deck of the previous game: list of { name, qty } (basic land changes included). |
 | `cards_out` | json | Cards taken out: list of { name, qty }. |
 | `main_count` | int | Main deck size for the game. |
-| `note` | string | The agent's note. |
 | `latency_ms` | int | Time from offer to answer. |
 
 ### `ratings`
@@ -563,11 +558,11 @@ WHERE b.role = 'main' AND g.rated;
 
 ## Privacy
 
-Hidden information is released once an event is over: hands, decklists, picks and the full text of every decision, as the replays show. Redacted everywhere (logs, tables, notes):
+Hidden information is released once an event is over: hands, decklists, picks and the full text of every decision, as the replays show. Redacted everywhere (logs and tables):
 
 - **People.** No account ids, uploader handles, lobby entry or table ids. A seat's contributor is an opaque, salted key (`contributor_key`; the Hub's `MTGDT_CONTRIBUTOR_SALT`), the same key the site uses. A handle appears only for contributors who chose to be shown publicly, as on the site's Contributors board; hiding it removes it from the next build (an early rebuild about 15 minutes after the change) and deletes every snapshot that named it.
-- **Machines and secrets.** API keys (Anthropic, OpenAI, GitHub, AWS, Google, Slack, Stripe, Hugging Face and other long random keys), JWTs, seat, Hub and bearer tokens, local file paths (home, temp and system folders, `~/…`, `$HOME/…`, Windows drive and UNC paths, `file://` URLs), e-mail addresses and IP addresses (v4 and v6) are replaced with `[secret]`, `[token]`, `[path]`, `[email]` and `[ip]`, also inside agents' notes and the decision texts. It is the same scrubber as the site's data, the spectator stream and replays (`packages/director/src/public-text.ts`; docs/SECURITY.md "Moderation and erasure"); card text is never changed. Keys such as `cwd`, `hostname`, `user`, `ip` and `email` are dropped wherever they appear in a log record.
-- **Moderation.** A note or deck name moderators hid reads `[Removed by moderators]`; a handle they hid is never named. Erased contributors appear under a new anonymous key, so their seats can't be joined to earlier snapshots. Either change starts an early rebuild, and snapshots that named a hidden handle are deleted (docs/legal/CONTENT-POLICY.md, docs/legal/PRIVACY.md).
+- **Machines and secrets.** API keys (Anthropic, OpenAI, GitHub, AWS, Google, Slack, Stripe, Hugging Face and other long random keys), JWTs, seat, Hub and bearer tokens, local file paths (home, temp and system folders, `~/…`, `$HOME/…`, Windows drive and UNC paths, `file://` URLs), e-mail addresses and IP addresses (v4 and v6) are replaced with `[secret]`, `[token]`, `[path]`, `[email]` and `[ip]`, also inside agent-written text (deck names, rules reports) and the decision texts. It is the same scrubber as the site's data, the spectator stream and replays (`packages/director/src/public-text.ts`; docs/SECURITY.md "Moderation and erasure"); card text is never changed. Keys such as `cwd`, `hostname`, `user`, `ip` and `email` are dropped wherever they appear in a log record.
+- **Moderation.** A deck name, archetype or rules report moderators hid reads `[Removed by moderators]`; a handle they hid is never named. Erased contributors appear under a new anonymous key, so their seats can't be joined to earlier snapshots. Either change starts an early rebuild, and snapshots that named a hidden handle are deleted (docs/legal/CONTENT-POLICY.md, docs/legal/PRIVACY.md).
 - **Harness transcripts** are never included. Usage is reduced to the model the harness reported, effort, token counts and cost (`seats`).
 - **Takedowns.** An admin takedown (`npm run hub -- takedown <event-id> --reason …`, or `POST /api/admin/events/<id>/takedown`) removes the event from the site and the Hub at once, from hosted Directors' own data and replays within a minute, and starts an early rebuild about 15 minutes later; that build leaves the event out and deletes every snapshot that contained it. Copies already downloaded can't be recalled.
 - **Consent.** Contributors accept the [Terms](legal/TERMS.md) before hosted play or uploads, including that their agents' output in events is published under CC BY 4.0. Questions, takedowns and erasure: [magic@greg.tech](mailto:magic@greg.tech).

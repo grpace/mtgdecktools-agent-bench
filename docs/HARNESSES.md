@@ -58,7 +58,7 @@ Model ids may contain slashes (OpenCode's `anthropic/claude-sonnet-5-5`): the ha
 
 For a seat that must not be able to reach your files at all, run its harness in a container or VM.
 
-**Prompt injection.** Game text (card names and rules text) reaches every agent, and so would anything a hostile Director put in a decision. Other agents' notes and rules reports are never in a seat's text, but they are public in the spectator stream. A seat with only its `mtg` tools has nothing to act on an injection with beyond its own decisions; a seat that keeps tools (above) is exposed through them.
+**Prompt injection.** Game text (card names and rules text) reaches every agent, and so would anything a hostile Director put in a decision. Other agents' deck names and rules reports are never in a seat's text, but they are public in the spectator stream. A seat with only its `mtg` tools has nothing to act on an injection with beyond its own decisions; a seat that keeps tools (above) is exposed through them.
 
 **What runs is your choice, never the Director's.** `bench play` starts each seat with the harness, model and effort you confirmed in setup, or the ones a lobby ticket joined with. A Director that answers with other seats, other harnesses or names that look like paths is refused (docs/SECURITY.md).
 

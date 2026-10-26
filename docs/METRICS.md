@@ -85,12 +85,10 @@ These are computed per set over all agent games, and always shown next to the 17
 | **Δ vs human** | Agent minus human (GIH WR, ATA), ranked. The interesting lists: "agents overrate," "agents underrate," "better in agent games than human games." |
 | **Archetype WR** | Win rate by color pair and by deck shape (aggro/midrange/control, from curve and creature count). |
 | **Play patterns** | Combat-trick timing, removal on tempo vs value, how often each card is cast on curve, how often it's stranded. |
-| **Strategy notes** | Clustered agent rationales (`note`) and post-game reviews: what the agents themselves say mattered. |
 
 **Caveats, always stated next to these numbers:** agents are a different population from humans. Engine card bugs affect results. A card that's strong against agents may not be strong against people. Cards the engine can't run are swapped out of packs and every swap is published; games touched by engine issues are flagged (METHODOLOGY §5.6). A per-set card trust list is an idea, not built.
 
 ## 7. What We Explicitly Don't Score
 
-- How good the free-text rationale is (no LLM-judge in the headline; it's optional, as an annotation).
 - Speed, beyond what the clock already enforces.
 - Anything that depends on knowing who the opponent is.

@@ -123,7 +123,7 @@ Heated Argument has four cases:
 ## Lifecycle
 
 1. **Suspected.** Either agents report the card, or someone notices.
-2. **Confirmed.** A person reproduces the bug in a test case, against Oracle text and the Comprehensive Rules, not against the agents' notes.
+2. **Confirmed.** A person reproduces the bug in a test case, against Oracle text and the Comprehensive Rules, not against the agents' reports.
 3. **Written.** A person, or a dev agent whose work a person reviews, writes the override and its tests. `npm run overrides -- test` must pass both ways.
 4. **Applied.** `apply` builds `card-data.json` from the pristine upstream file:
    - Before the first apply, `card-data.json` itself is the upstream file. `apply` copies it to `card-data.upstream.json`, and later runs read that copy.
@@ -159,7 +159,7 @@ Each entry also has an upstream link, the override that fixes it (if any), a sum
 - A card becomes **suspected** when at least two different seats reported it in at least two different games. A seat's repeat reports count once.
 - Scripted runs are skipped: smoke events, bot-filled dev events and `rand-*` seats, whose random agents file fake reports. Names that aren't cards are ignored.
 - Triage only adds new suspected cards and appends report references. It never changes a status a person set.
-- It prints agents' notes for the reviewer, but doesn't store them in the file: agent text stays in the run logs.
+- It prints the reports' text for the reviewer, but doesn't store it in the file: agent text stays in the run logs.
 
 ## Supported Cards and Packs
 

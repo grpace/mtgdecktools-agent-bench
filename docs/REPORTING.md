@@ -24,13 +24,13 @@ event JSONL logs ──▶ export (packages/site, TypeScript) ──▶ site JSO
 - Later, with the win-probability model: "Signature mistakes" (decision kinds with the worst WPA, each linked to example replays) and "Best moments" (highest-WPA plays).
 
 ### Game Viewer (Replay)
-- A turn-by-turn board, with the game log on the side, stepping through **both agents' decisions with their notes**.
+- A turn-by-turn board, with the game log on the side, stepping through **both agents' decisions**, each with the text the agent saw.
 - Later: a **win-probability graph** across the game, with **key moments** marked (biggest WPA swings); clicking a moment jumps there.
 - Later: a counterfactual panel where it was computed: "Blocking with c18 instead: P(win) 41% → 63%."
 - Shareable deep links (`/game/<id>#t7`). This is the content-creator hook.
 
 ### Draft Viewer
-- Pack-by-pack picks with the agent's note and 17Lands GIH WR; later, the human top-quartile pick on the same pack (T1).
+- Pack-by-pack picks with 17Lands GIH WR; later, the human top-quartile pick on the same pack (T1).
 - Lane-reading visual: color flow from neighbors.
 
 ### Card Pages (Per Set)
@@ -42,18 +42,17 @@ event JSONL logs ──▶ export (packages/site, TypeScript) ──▶ site JSO
 - "Agents vs humans disagree" lists (over- and under-rated).
 - Top commons and uncommons by adjusted value.
 - What the winning decks have in common (curve, removal count, creature count, land count).
-- Recurring strategic themes pulled from agent notes and post-game reviews (clustered; representative quotes linked to games).
 - Auto-generated, then **edited by hand into a write-up**. This is the bridge to the MTG Deck Tools Set Contexts.
 
 ## 3. Insights During an Event (Live)
 
-- Live tables: matches in progress, open in the viewer while they play. **Built:** the Director's spectator stream (`GET /api/events/<id>/live`, SSE or polling) and the Watch page on mtgdecktools.com. What is shown and when (public board live; notes two turns later with hidden cards blanked; hands, decklists and pick details once nobody still playing could use them) is in [SPECTATING.md](SPECTATING.md).
+- Live tables: matches in progress, open in the viewer while they play. **Built:** the Director's spectator stream (`GET /api/events/<id>/live`, SSE or polling) and the Watch page on mtgdecktools.com. What is shown and when (public board live; decisions two turns later with hidden cards blanked; hands, decklists and pick details once nobody still playing could use them) is in [SPECTATING.md](SPECTATING.md).
 - Running standings (built) and, later, a running card-stats ticker ("Most-picked so far," "Biggest upset").
 - Later: an optional **commentary agent**: a cheap model watches finished games and writes 2–3 sentence recaps from the decision log and key moments. It's labeled as generated commentary and never feeds into scores.
 
 ## 4. Post-Game Agent Reflection (Optional, for T6)
 
-Later. After each game, a seat could write a short review ("what decided this game, what would I change"). In a Season mode (T6, also an idea) this would feed the seat's notes for the next pod. Measuring **rating vs pods played** with notes on and off is the "does it learn the format?" result.
+Later. After each game, a seat could write a short review ("what decided this game, what would I change"). In a Season mode (T6, also an idea) this would feed the seat's memory for the next pod. Measuring **rating vs pods played** with that memory on and off is the "does it learn the format?" result.
 
 ## 5. Results Bundle (For Sharing and Submissions)
 

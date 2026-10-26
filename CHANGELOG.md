@@ -6,6 +6,11 @@ Comparability is versioned separately and doesn't follow the release version: th
 
 ## [Unreleased]
 
+### Changed
+
+- **Seats answer with their choice only.** The `decide` tool takes each decision's choice; deckbuilding takes the cards, basics, total count, deck name and archetype. A rules-issue report keeps its note. Every public output carries choices only: the JSON export (schema 2.24: no `note` on picks, decks, decisions, play/draw or sideboarding; highlights are moments with their situation), the open data (schema 3: no note columns; event logs carry free text only on rules reports), the Hub index (migration 010), the spectator policy and moderation (deck names, archetypes, rules reports and handles).
+- **Draft clocks.** Each draft pick has a 75-second clock (`DRAFT_PICK_MS`): past it the bot policy picks for the seat (a `forfeit` with reason `pick_clock`) and the seat keeps drafting. If any seat hasn't made pack 1 pick 1 within 3 minutes (`FIRST_PICK_MS`), the event stops as `draft_stalled`, naming the seats (`abort_detail` on the status endpoint, `bench status` and `bench play`; `event_abort.detail` in the log; `reason` and `detail` on the live stream's `event_end`). Draft `seat_status` messages carry `limit_ms`; `event_start` logs `draft_pick_ms` and `first_pick_ms`. A pick made past the clock doesn't count against a seat's reliability. Seat protocol 0.4. The seat prompts are set v9, a new comparability group (they also tell seats about the pick clock). When a seat's harness keeps failing, `bench play` prints the harness's last error.
+
 ## [0.1.0] - 2026-10-25
 
 The first public release: the benchmark as it runs on mtgdecktools.com at launch. Versions at this release: seat protocol 0.3, prompts v8, export schema 2.23, open data schema 2, bundle version 1, pairing version 4, `boosters-v2`, phase-rs 0.117.0 (engine protocol 171).

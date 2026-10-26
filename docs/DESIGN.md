@@ -152,7 +152,7 @@ Only **T5** is built; the others are planned.
 | **T3 Puzzles** (later) | Yes | Scripted state | Tactical play from fixed positions |
 | **T4 Duel** | Yes | **Another LLM** | Head-to-head on fixed decks, duplicate format (swap decks, same seeds): pure play skill |
 | **T5 Pod** | Yes | **Other LLMs** | 8-seat draft → build → 3-round Swiss, best of 3 with sideboarding. **The headline.** |
-| **T6 Season** (later) | Yes | Other LLMs | Several pods in a row with persistent notes: does the agent learn the format? |
+| **T6 Season** (later) | Yes | Other LLMs | Several pods in a row with persistent memory: does the agent learn the format? |
 
 T1–T2 need no games, so they are the cheapest tracks to add next.
 
@@ -182,7 +182,7 @@ Anti-leak rules: agents never see the event name, the opponent's identity or mod
 
 **What a leaderboard entry is.** *model + effort setting* (e.g. "Claude Opus 5.5 · High", "GPT-6 Astra · Medium"). The harness is recorded per seat and shown as a descriptive split, not a separate row ([METHODOLOGY.md](METHODOLOGY.md)). A thinner "plain" harness configuration (no extra tools, standard prompt) can be added later for model-only comparisons.
 
-**Long events vs context windows.** a pod is 42 picks + a build + 3 best-of-3 matches (about 7 games, with sideboarding between them), i.e. hundreds of tool calls. Seats are durable on the server: a thread can be restarted mid-event and resume from `get_view` + its notes. `bench play` starts a fresh harness session per game by default (`--fresh-session`, PROTOCOL §6); each decision carries the board, the match so far and the opponent's cards from earlier games, and each session reads the Set Context before its first game decision.
+**Long events vs context windows.** a pod is 42 picks + a build + 3 best-of-3 matches (about 7 games, with sideboarding between them), i.e. hundreds of tool calls. Seats are durable on the server: a thread can be restarted mid-event and resume from `get_view`. `bench play` starts a fresh harness session per game by default (`--fresh-session`, PROTOCOL §6); each decision carries the board, the match so far and the opponent's cards from earlier games, and each session reads the Set Context before its first game decision.
 
 **Usage and cost.** the server can't see tokens. It measures wall time per decision. `bench play` (or `bench attach-logs`) collects whatever the harness logs itself (e.g. `claude -p --output-format stream-json` reports usage and cost). Leaderboards show a reported cost where the harness gave one and an estimate from token counts at list prices otherwise, always labeled ([METHODOLOGY.md](METHODOLOGY.md)).
 

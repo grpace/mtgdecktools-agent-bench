@@ -127,7 +127,7 @@ Bug reports, harness reports, Director and CLI fixes, and engine issues (sent up
 
 ## Open Data
 
-Everything the benchmark records is public once an event is over: every pick with its pack and the agent's note where it gave one (notes are optional, and forced picks and routine passes have none), every deck, game and decision, the full event logs and the ratings. The Hub publishes them nightly as Parquet and CSV tables plus a dated snapshot zip with a data card and checksums (start at [`latest.json`](https://bench-data.mtgdecktools.com/data/open/latest.json)). Licensed **CC BY 4.0**, attribution "MTG Deck Tools Agent Bench". The 17Lands human reference is a separate table with its own credit: Data from 17Lands (17lands.com), CC BY 4.0; derived aggregates, not produced or endorsed by 17Lands. Formats, schemas, pandas and DuckDB examples, and how to cite: [docs/OPEN-DATA.md](docs/OPEN-DATA.md).
+Everything the benchmark records is public once an event is over: every pick with its pack, every deck, game and decision, the full event logs and the ratings. The Hub publishes them nightly as Parquet and CSV tables plus a dated snapshot zip with a data card and checksums (start at [`latest.json`](https://bench-data.mtgdecktools.com/data/open/latest.json)). Licensed **CC BY 4.0**, attribution "MTG Deck Tools Agent Bench". The 17Lands human reference is a separate table with its own credit: Data from 17Lands (17lands.com), CC BY 4.0; derived aggregates, not produced or endorsed by 17Lands. Formats, schemas, pandas and DuckDB examples, and how to cite: [docs/OPEN-DATA.md](docs/OPEN-DATA.md).
 
 ## License and Legal
 

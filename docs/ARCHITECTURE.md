@@ -61,7 +61,7 @@ Measured 2026-10-21 on a 16-core workstation with `scripts/load-test.sh`: N conc
 
 **Raw layer (immutable, source of truth):** each event is a results bundle (`npm run bench -- bundle`, `bundle_version` 1; built by `packages/director/src/bundle.ts` for the CLI, `hub import` and the hand-off alike):
 - `bundle.json` (manifest: event id, seats, sha256 of every file)
-- `events.jsonl` (every pick, deck, decision with the text the agent saw, answer and note, turn snapshots, results, provenance)
+- `events.jsonl` (every pick, deck, decision with the text the agent saw and its answer, turn snapshots, results, provenance)
 - `summary.json`, `seats-meta.json`
 - per-seat harness usage (`usage-<seat>.json`, usage-only transcripts). Hosted seats have no bundle upload; `bench play` / `bench attach-logs` send their usage summary to the Hub after the event (`POST /api/usage`), and the Hub writes it into the run folder as `usage-<seat>.json`.
 
@@ -76,10 +76,10 @@ The Hub keeps the **original bundle bytes**, content-addressed by sha256 (`bundl
 | `submissions` | contributor, via (upload / director / import), bundle sha256 (unique), event id, label, status (received → validated → ingested / held / rejected / withdrawn), reasons, full check report, review note |
 | `events` | id, submission, label, set, seed, knowledge, mana, best-of, sideboarding, pod size, engine digest/version/protocol, Director version, prompt version, Set Context sha256 (`primer_sha256`), comparability group (null = unrated, with the reason, for example Early Test Data), pack regeneration result, exclusion |
 | `seats` | event, name, kind, position, LLM, harness, model, model id, effort, seat identity, final colors, decision-stream fingerprint |
-| `picks` | event, seat, pack/pick/overall, pack contents, pick, by, note, latency, context-eval fields (expert model p and rank, EV regret, in-lane, archetype regret, made the deck) |
+| `picks` | event, seat, pack/pick/overall, pack contents, pick, by, latency, context-eval fields (expert model p and rank, EV regret, in-lane, archetype regret, made the deck) |
 | `decks` | event, seat, main/side, basics, by (agent/auto), colors, deck-strength results |
 | `games` | event, game index, match, game no, seats, winner, turns, on_play, end_reason, final life, mulligans, play/draw choice, sideboarding per seat, deck sizes |
-| `seat_game_stats` | event, game, seat: decisions, auto-passes, forced, rejections, manual payments, auto-tapper, payment failures, median latency, notes |
+| `seat_game_stats` | event, game, seat: decisions, auto-passes, forced, rejections, manual payments, auto-tapper, payment failures, median latency |
 | `card_stats` | comparability group (`*` = all events) × set × card: agent picks, avg pick, seen, deck inclusion, deck win rate (refreshed for the ingested event's set) |
 | `ratings` | board (group × set or `*` × source) × seat identity: rating, CI, SE, rank, games, W/L, events, opponents, provisional flag and reasons, diagnostics (column `stages`, a historical name). The rating comes from game outcomes only; the diagnostics never feed it (METHODOLOGY §4, §5). |
 | `points_ledger` | event, seat, contributor, season, scheme, the points breakdown (derived: `hub points recompute` rebuilds it) |
@@ -127,7 +127,7 @@ Rows are derived with the same code as the JSON export (`packages/site`: `loadEv
 **Backups:** the server's nightly job tars every docker volume. Bundles are immutable files, so that covers them. Postgres also gets a nightly logical dump (`pg_dump -Fc` into the `hub-pgdump` volume at 02:20, seven rolling days, a Coolify scheduled task on `hub-db`), because a tar of a live data directory is only crash-consistent. Index tables can be rebuilt from bundles; contributors, tokens, submissions and review decisions only from the dump.
 
 **Moderation and privacy:**
-- Agent notes and post-game text are untrusted. The site renders them as escaped text, never HTML.
+- Agent-written text (deck names, archetypes, rules reports) is untrusted. The site renders it as escaped text, never HTML.
 - Takedown removes a submission from the index, the export and the open data (snapshots that held it are deleted; the bundle is kept unless purged) and triggers recomputation.
 - Transcripts aren't uploaded by default (usage only), and the open data never includes them.
 
@@ -152,7 +152,7 @@ Contributors bring their agents; the worker hosts the table. Events are created 
 - **FIFO queue** when full (`MAX_QUEUE` 50): `202` with `queue_position`; queued events start on their own when slots free, strictly in order (a small event doesn't overtake a big one at the head, so nothing starves). Seats of a queued event can already connect; they are told to keep waiting. `GET /api/capacity` (public) and `GET /api/admin/status` show load and queue.
 - **Per-contributor quotas** from the Hub, two of them, counted separately: Private Tables (`HUB_PLAY_CONCURRENT` 1 running or queued, `HUB_PLAY_DAILY` 6 per rolling 24 h) and lobby tables (`HUB_LOBBY_CONCURRENT` 2, `HUB_LOBBY_DAILY` 12; a lobby table counts for every contributor seated at it). `hub contributor quota` raises either: `429` with `Retry-After`. Daily counts survive restarts (rebuilt from checkpoints).
 - **Limits:** API requests 120/min per client IP (`API_RATE_PER_MIN`), event creation 10/min per IP, JSON bodies 64 KB; MCP 600 requests/min and 4 in flight per seat, 256 KB bodies, 30/min per IP for unknown seat URLs; the spectator stream keeps its own limits (SPECTATING.md).
-- **Abuse protections:** unguessable seat tokens (128-bit), the idle-seat watchdog (METHODOLOGY §5.5), events stopped after `EVENT_MAX_HOURS` (8), queued events dropped after `QUEUE_MAX_WAIT_HOURS` (4), events whose seats never connect stopped as `abandoned` after the connect grace (30 min, instead of letting them play themselves), finished events evicted from memory after an hour (served from disk). Stopped events log `event_abort` with the reason and are never handed to the Hub.
+- **Abuse protections:** unguessable seat tokens (128-bit), the idle-seat watchdog (METHODOLOGY §5.5), events stopped after `EVENT_MAX_HOURS` (8), queued events dropped after `QUEUE_MAX_WAIT_HOURS` (4), events where a seat hasn't made its first draft pick within 3 minutes stopped as `draft_stalled` (`FIRST_PICK_MS`, naming those seats; with that clock off, events whose seats never connect are stopped as `abandoned` after the connect grace of 30 min instead of letting them play themselves), finished events evicted from memory after an hour (served from disk). Stopped events log `event_abort` with the reason and are never handed to the Hub.
 
 ### Live Event Durability (`packages/director/src/durable.ts`)
 

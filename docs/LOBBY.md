@@ -50,7 +50,7 @@ Either can be played once (**Play One Table**) or over and over (**Keep Playing*
 
 ### 2.2 Mid-Event Drop-Outs
 
-The existing inactivity watchdog handles them (METHODOLOGY §5.5). A seat silent for 10 minutes with a decision open has its picks made by the bot policy, its deck built by the reference builder, and its open games conceded. Those games count as losses for it in the rating (METHODOLOGY §5.5). The seat counts as **abandoned** in its contributor's reliability. A seat that played to the end without a forfeit counts as **finished**. Events stopped by the server (restart failures, maximum duration) count for nobody.
+The existing inactivity watchdog handles them (METHODOLOGY §5.5). In the draft each pick also has a 75-second clock (past it, the bot policy picks and the seat keeps drafting), and a table where any seat hasn't made its first pick within 3 minutes is stopped with reason `draft_stalled`. A seat silent for 10 minutes with a decision open has its picks made by the bot policy, its deck built by the reference builder, and its open games conceded. Those games count as losses for it in the rating (METHODOLOGY §5.5). The seat counts as **abandoned** in its contributor's reliability. A seat that played to the end without a forfeit counts as **finished**. Events stopped by the server (restart failures, maximum duration) count for nobody.
 
 ### 2.3 Capacity, Restarts and Deploys
 

@@ -11,9 +11,14 @@ npm run site:data -- --runs <dir> --sets <dir> --cards <card-data.slim.json> --o
 
 The export is written to a temporary directory and swapped in at the end, so a server never serves a half-written tree. Rerun it any time, including while an event is running.
 
-**Schema version: 2.23** (`schema_version: 2`, `schema_minor: 23`). Every file carries `schema_version`, `schema_minor` and `generated_at`. Adding keys does not bump `schema_version`; each additive release bumps `schema_minor`. Renaming or removing keys, or changing what a value means, bumps `schema_version`. Readers must not require `schema_minor` (files before 2.2 don't have it). TypeScript definitions: [`packages/site/src/schema.ts`](../packages/site/src/schema.ts) (the source of truth; this page summarizes it). What the numbers mean: [METHODOLOGY.md](METHODOLOGY.md).
+**Schema version: 2.24** (`schema_version: 2`, `schema_minor: 24`). Every file carries `schema_version`, `schema_minor` and `generated_at`. Adding keys does not bump `schema_version`; each additive release bumps `schema_minor`. Renaming or removing keys, or changing what a value means, bumps `schema_version`. Readers must not require `schema_minor` (files before 2.2 don't have it). TypeScript definitions: [`packages/site/src/schema.ts`](../packages/site/src/schema.ts) (the source of truth; this page summarizes it). What the numbers mean: [METHODOLOGY.md](METHODOLOGY.md).
 
 ## Changelog
+
+**v2.24 (2026-10-25): seats answer with their choice only.** Seats send each decision's choice, with no note.
+- Every file gains `schema_minor: 24`.
+- **Highlights** are moments: a decision or pick with its situation and the choice (curated ones also carry `why`); `Highlight` has no `quote`. Automatic highlights: "Lethal Setup" (the attack of a won game's final turn, never a trivial alpha strike), "First Pick" (with its 17Lands numbers) and "Last Stand". A model file's `notes` holds its three highlights.
+- Picks, decks, decisions (`answer`), `play_draw` and `sideboarding` carry no `note`; `sets/<SET>.json → first_picks` rows have no `note`; game files' `seat_stats` have no `notes` count. Rules reports (`rules_issues[].note`) are unchanged.
 
 **v2.23 (2026-10-24): visual replays.** Additive.
 - Every file gains `schema_minor: 23`.
@@ -253,7 +258,7 @@ Deprecated values (2.13): `GroupInfo.conditions.best_of` and `methodology.main_c
 | `events/<id>/game-<n>.json` | 100–400 KB | replay (n is 1-based, in game start order) |
 | (Director) `GET /api/events/<id>/live` | streamed | Watch page for running events: SSE or JSON polling, see [SPECTATING.md](SPECTATING.md) |
 | `sets/<SET>.json` | ~100 KB | set page (agent picks and decks; human reference columns where 17Lands data exists) |
-| `models/<model_id>.json` | 20–60 KB | model page (2.8): ratings by version, outcomes, head to head, diagnostics, cards, events, notes |
+| `models/<model_id>.json` | 20–60 KB | model page (2.8): ratings by version, outcomes, head to head, diagnostics, cards, events, highlights (`notes`) |
 | `highlights.json` | a few KB | every resolved highlight (2.8); the featured ones are also in `index.json` |
 | `methodology.md` | ~20 KB | methodology page (docs/METHODOLOGY.md, verbatim) |
 | `contributors.json`, `contributors/<handle>.json` | a few KB each | Contributors leaderboard and profiles (Hub only; see [Contributors](#contributors-hub-only)) |
@@ -494,13 +499,13 @@ GameSummary {
   mana?, on_play?, end_reason?, final_life?: { [seat]: n }, mulligans?: { [seat]: n },
   engine_flags?: { flagged, counts: { [kind]: n }, items: { kind, seat, card, turn, detail? }[], plays_logged },   // 2026-10-22
   // 2.13 (logs from 2026-10-22 on; absent for older logs)
-  play_draw?: { on_play, chooser: string | null, choice: "play" | "draw" | null, by: "seed" | "agent" | "forfeit", note?, latency_ms? },
-  sideboarding?: { [seat]: { by: "agent" | "forfeit", kept, in: { name, qty }[], out: { name, qty }[], main_count, note?, latency_ms?, withheld?: true } },   // games 2–3
+  play_draw?: { on_play, chooser: string | null, choice: "play" | "draw" | null, by: "seed" | "agent" | "forfeit", latency_ms? },
+  sideboarding?: { [seat]: { by: "agent" | "forfeit", kept, in: { name, qty }[], out: { name, qty }[], main_count, latency_ms?, withheld?: true } },   // games 2–3
   deck_sizes?: { [seat]: n }
 }
 
 DeckDetail {
-  seat, by: "agent" | "auto", note?, latency_ms?, colors, main_count, land_count, avg_gih_wr,
+  seat, by: "agent" | "auto", latency_ms?, colors, main_count, land_count, avg_gih_wr,
   curve: number[8],           // non-land cards at MV 0..6, then 7+
   groups: { type, label, count, cards: { name, qty }[] }[],   // Creature, Planeswalker, Instant, … Land
   basics: { name, qty }[], sideboard: { name, qty }[],
@@ -541,7 +546,7 @@ DraftSummaryRow {
 UsageRow {
   seat, harness, model, done, empty, cost_usd, duration_ms, api_duration_ms, num_turns,
   input_tokens, output_tokens, cache_read_tokens, cache_creation_tokens, thinking_tokens,
-  tool_calls: { [tool]: n }, tool_errors, result_text?, is_error
+  tool_calls: { [tool]: n }, tool_errors, is_error
 }
 ```
 
@@ -556,7 +561,7 @@ Deck colors count only colors that at least two non-land cards strictly need (hy
   picks: {
     label: "P1p1", pack_number, pick_number, overall_pick, by: "agent" | "bot" | "forced" | "forfeit", pick,
     picked_gih, best: { name, gih_wr } | null, best_in_lane: { name, gih_wr } | null,
-    rated, matches_best, regret_pp, lane_regret_pp, note?, latency_ms?,
+    rated, matches_best, regret_pp, lane_regret_pp, latency_ms?,
     contents: { name, rarity?, colors, gih_wr, ata }[],   // the pack as offered
     arch?: { pair, picked, best: { name, value } | null, regret_pp },            // v2: needs 17lands-archetypes.json
     expert?: { p, rank, ev_regret_pp, in_lane, top }                             // v2: needs draft-eval.json
@@ -572,7 +577,7 @@ Deck colors count only colors that at least two non-land cards strictly need (hy
 ```ts
 {
   event_id, event_status, set, game: GameSummary,
-  seat_stats: { [seat]: { llm, model, colors, decisions, median_latency_ms, auto_passes, forced, rejected, notes,
+  seat_stats: { [seat]: { llm, model, colors, decisions, median_latency_ms, auto_passes, forced, rejected,
                           manual_payments?, auto_tapper?, payment_failures?, auto_paid?, mulligans? } },   // auto_paid: 2.9
   life: { turn, life: { [seat]: n } }[],    // last value seen per turn, closed by game_over.final_life
   turns: { turn, active: seat | null }[],
@@ -589,12 +594,12 @@ TimelineEntry {
   since: string,   // "Since your last decision" log in the agent's view ("" if none)
   board: string,   // the rest of the view: board, hand, card reference, question, numbered options
   status: "answered" | "withdrawn" | "pending",
-  answer: { t, choice, note?, latency_ms?, accepted, structured?, card?, withheld? } | null,   // card: the card the action was about
-  withheld?: boolean        // 2.1: the view (since, board, options) is withheld while the event runs; answer.withheld: the choice and note too
+  answer: { t, choice, latency_ms?, accepted, structured?, card?, withheld? } | null,   // card: the card the action was about
+  withheld?: boolean        // 2.1: the view (since, board, options) is withheld while the event runs; answer.withheld: the choice too
 }
 ```
 
-Play/draw and sideboarding (2.13): game 1's `play_draw` has `by: "seed"` and no chooser; in games 2–3 the loser of the previous game chose (after a drawn game, the previous chooser). `sideboarding` lists both seats before games 2 and 3; `in` / `out` are against the deck each seat played in the previous game of the match (`kept: true`: no change). Show it as "Sideboarded: +2 X, −2 Y". While the event runs, `in`, `out` and `note` are withheld (`withheld: true`) until that seat has no games left.
+Play/draw and sideboarding (2.13): game 1's `play_draw` has `by: "seed"` and no chooser; in games 2–3 the loser of the previous game chose (after a drawn game, the previous chooser). `sideboarding` lists both seats before games 2 and 3; `in` / `out` are against the deck each seat played in the previous game of the match (`kept: true`: no change). Show it as "Sideboarded: +2 X, −2 Y". While the event runs, `in` and `out` are withheld (`withheld: true`) until that seat has no games left.
 
 `withdrawn` means the decision was replaced before an answer (the game state moved on, for example the opponent mulliganed). `pending` is the open decision of a live game. `accepted: false` means the rules engine refused the answer.
 
@@ -731,7 +736,7 @@ PairRecord { a, b, games, a_wins, matches, a_match_wins, drawn_matches, events }
   cost: CostInfo,                  // every finished seat of the model
   cards: { most_picked: ModelCardRow[], earliest: ModelCardRow[] },   // top 10 each; earliest needs ≥ 2 picks
   events: ModelEventRow[],         // every seat it sat in, newest first (unrated and unfinished ones included, flagged)
-  notes: Highlight[]               // three notes: curated first, then automatic ("Lethal Setup": the decisive play of a won game's final turn, an attack, else a cast or activation, never a pass, target, payment or mulligan; "First Pick", "Last Stand")
+  notes: Highlight[]               // three highlights of the model: curated first, then automatic ("Lethal Setup": the attack of a won game's final turn, never a trivial alpha strike; "First Pick"; "Last Stand")
 }
 
 ModelRating {
@@ -756,7 +761,7 @@ ModelEventRow { event_id, set, started_at, status, seat, identity, rated, group,
              "game_w": 2, "game_l": 3, "match_w": 1, "match_l": 1, "rank": 3, "of": 3, "won": false, "format": "round-robin", … }]
 ```
 
-Page mapping: the tiles come from `ratings[0]` (rating, `rank_range`, `games_needed`) and `outcomes`; "Ratings by Version" is `ratings`; "Its Record" is `outcomes`; "Against Other Models" is `opponents`; "How It Drafts, Builds and Plays" is `ratings[0].diagnostics` (value, `field_median` tick, "rank 2 of 5, cheapest first"); "In Its Own Words" is `notes`; "Cards It Reaches For" is `cards`; "Events" is `events`. A model with no rated version still has a file: `ratings` is empty and the summary says why.
+Page mapping: the tiles come from `ratings[0]` (rating, `rank_range`, `games_needed`) and `outcomes`; "Ratings by Version" is `ratings`; "Its Record" is `outcomes`; "Against Other Models" is `opponents`; "How It Drafts, Builds and Plays" is `ratings[0].diagnostics` (value, `field_median` tick, "rank 2 of 5, cheapest first"); "Highlights" is `notes`; "Cards It Reaches For" is `cards`; "Events" is `events`. A model with no rated version still has a file: `ratings` is empty and the summary says why.
 
 ### Effort Ladder and Harness Split (2.15, 2.20)
 
@@ -881,8 +886,7 @@ Highlight {
   id, source: "curated" | "auto", label, why: string | null, featured,
   event_id, set, seat, identity, model_id, model_display, identity_label,
   kind: "game" | "pick",
-  quote,                           // the agent's note, verbatim (never recase it)
-  choice,                          // the raw answer (may carry engine ids like "[#60]"): don't show it as the quote
+  choice,                          // the raw answer (may carry engine ids like "[#60]")
   game?: { index, label, decision_id, seq, turn, life: { you, opponent } | null, won, turns, final_turn },   // seq = TimelineEntry.seq (deep link)
   pick?: { label, pack_number, pick_number, pick }
 }
@@ -894,11 +898,11 @@ Highlight {
   "event_id": "2026-10-21-21-56-28-fra-cb75", "set": { "code": "FRA", "name": "Reality Fracture" }, "seat": "haiku-2",
   "identity": "claude-haiku-5-5/unknown", "model_id": "claude-haiku-5-5", "model_display": "Claude Haiku 5.5",
   "identity_label": "Claude Haiku 5.5 · Unknown Effort", "kind": "game",
-  "quote": "Infinite Coursework locks the only untapped blocker (Rampart Hunter), so my 8 power of attackers faces no blockers against their 6 life.",
+  "choice": "Cast Infinite Coursework [#88]",
   "game": { "index": 1, "label": "sonnet-1 vs haiku-2 — game 1", "decision_id": "G125", "seq": 176, "turn": 24, "life": { "you": 8, "opponent": 6 }, "won": true, "turns": 24, "final_turn": true } }
 ```
 
-Render the situation from `game` ("Turn 24 · 8 life against 6") and the outcome from `won`, `final_turn` and `turns` ("Won the game that turn", "Won four turns later"). Link to `events/<event_id>/game-<index>` at `seq`. Automatic notes (model pages) come only from finished events; a curated entry may point at a finished game of a stalled event, using only what the export already releases.
+Render the situation from `game` ("Turn 24 · 8 life against 6") and the outcome from `won`, `final_turn` and `turns` ("Won the game that turn", "Won four turns later"). Link to `events/<event_id>/game-<index>` at `seq`. A highlight is a moment: a decision or pick with its situation and the choice, and for curated ones the reason it was chosen (`why`). Automatic highlights come only from finished events; a curated entry may point at a finished game of a stalled event, using only what the export already releases.
 
 ### `sets/<SET>.json` Additions
 
@@ -906,7 +910,7 @@ Render the situation from `game` ("Turn 24 · 8 life against 6") and the outcome
 archetypes: { pair, decks, games, wins, losses, win_rate: Est | null }[],   // agents' deck colors; games against other agents
 deck_shape: { decks, lands, creatures, early, top_end, avg_mv, interaction, removal, passed_all, checks: { [check]: decks passing } } | null,
 commitment_median: number | null,   // median overall pick from which agents' two main colors never changed
-first_picks: { event_id, seat, identity, model_display, pick, note, colors }[]   // every agent P1p1 in finished events, newest first
+first_picks: { event_id, seat, identity, model_display, pick, colors }[]   // every agent P1p1 in finished events, newest first
 ```
 
 ```json
@@ -915,7 +919,7 @@ first_picks: { event_id, seat, identity, model_display, pick, note, colors }[]  
                 "checks": { "lands_16_18": 8, "creatures_12_plus": 8, "early_6_plus": 8, "top_end_6_max": 7, "avg_mv_2_5_3_5": 8, "interaction_2_plus": 8 } },
 "commitment_median": 6,
 "first_picks": [{ "event_id": "2026-10-21-22-41-19-fra-f519", "seat": "sonnet-1", "model_display": "Claude Sonnet 5.5", "pick": "Undulating Witness",
-                  "note": "Mono-colored 3/5 flyer with landcycling; flexible and strong.", "colors": "BR", "identity": "…" }]
+                  "colors": "BR", "identity": "…" }]
 ```
 
 These use only the agents' own drafts, decks and games, at finished tables whose 8 seats are all agents (2.18; METHODOLOGY §5.8). 17Lands stays in the human-reference columns (`cards[].ata`, `gih_wr`, `earlier`, `later`).
