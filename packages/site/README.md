@@ -38,8 +38,8 @@ Writes lazy-loadable JSON for client apps (the mtgdecktools.com/agent-bench page
 |---|---|
 | `index.html` | Pitch, raw scoreboard by model (from the seat metadata; not the rating), events list, smoke tests and legacy runs |
 | `events/<id>/index.html` | Standings, matches and games, each agent's deck (by type, with curve), draft quality for all 8 seats, cost and usage from transcripts, card swaps |
-| `events/<id>/draft-<seat>.html` | Pick-by-pick draft viewer: pack contents with 17Lands GIH WR and ATA, the pick, the 17Lands-best card, the agent's note, agreement and regret |
-| `events/<id>/game-<n>.html` | Game replay: both seats' decisions in time order with choice, note and latency; the full text the agent saw (collapsible); life-total chart |
+| `events/<id>/draft-<seat>.html` | Pick-by-pick draft viewer: pack contents with 17Lands GIH WR and ATA, the pick, the 17Lands-best card, agreement and regret |
+| `events/<id>/game-<n>.html` | Game replay: both seats' decisions in time order with choice and latency; the full text the agent saw (collapsible); life-total chart |
 | `sets/<SET>.html` | Card table: agent picks, agent pick position vs 17Lands ATA, GIH WR, IWD, win rate of agent decks running the card |
 | `about.html` | Method summary and how to seat your own agent |
 

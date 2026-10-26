@@ -10,18 +10,11 @@ import type { EventData } from './data.js';
 /** Hide, anonymize and scrub one event in place (call before building any export from it). */
 export function moderateEvent(ev: EventData, c: CompiledModeration): void {
   const hidden = (seat: string | null | undefined, item: string) => !!seat && c.notes.has(`${ev.id}\u0000${seat}\u0000${item}`);
-  const text = (seat: string | null | undefined, item: string, note: string | undefined): string | undefined =>
-    note == null || note === '' ? note : hidden(seat, item) ? REMOVED_TEXT : scrubText(note);
-  // Every note is scrubbed; hidden ones are replaced.
-  for (const p of ev.picks) p.note = text(p.seat, `pick-${p.overallPick}`, p.note);
-  for (const d of ev.decks.values()) d.note = text(d.seat, 'deck', d.note);
-  for (const g of ev.games) {
-    for (const d of g.decisions) if (d.answer) d.answer.note = text(d.seat, d.id, d.answer.note);
-    for (const r of g.rulesIssues) r.note = text(r.seat, `rules-${r.t}`, r.note) ?? '';
-  }
-  for (const r of ev.rulesIssues) r.note = text(r.seat, `rules-${r.t}`, r.note) ?? '';
-  for (const pd of ev.playDraws ?? []) pd.note = text(pd.chooser ?? pd.onPlay, `play-draw-${pd.t}`, pd.note);
-  for (const sb of ev.sideboards ?? []) sb.note = text(sb.seat, `sideboard-${sb.t}`, sb.note);
+  const text = (seat: string | null | undefined, item: string, note: string): string =>
+    note === '' ? note : hidden(seat, item) ? REMOVED_TEXT : scrubText(note);
+  // Every rules report is scrubbed; hidden ones are replaced.
+  for (const g of ev.games) for (const r of g.rulesIssues) r.note = text(r.seat, `rules-${r.t}`, r.note);
+  for (const r of ev.rulesIssues) r.note = text(r.seat, `rules-${r.t}`, r.note);
   // Handles moderators hid are dropped; erased contributors are named by their anonymous id, with no handle.
   for (const s of ev.seats) {
     if (!s.contributorId) continue;

@@ -49,7 +49,7 @@ describe('terms, moderation and erasure (database)', { skip }, () => {
   let eventId = '';
   let seatA = '';
   let seatB = '';
-  let decisionId = '';
+  let noteKey = '';
   let bundle: Buffer;
 
   const admin = (path: string, body: unknown) => fetch(`${base}${path}`, {
@@ -90,12 +90,16 @@ describe('terms, moderation and erasure (database)', { skip }, () => {
       Object.assign(agents[0]!, { contributor_id: String(alice), contributor: 'alice' });
       Object.assign(agents[1]!, { contributor_id: String(bob), contributor: 'bob' });
       events[0]!.table = { kind: 'lobby' };
+      // A note on a decision (an older log, or a harness that sent one anyway) is never published; a rules report is.
       const d = events.find((e) => e.type === 'agent_decision' && e.seat === seatA)!;
-      d.note = RUDE;
-      decisionId = String(d.id);
+      d.note = 'Decision note: never published';
+      const end = events.findIndex((e) => e.type === 'event_end');
+      const t = Number(events[end - 1]!.t);
+      events.splice(end, 0, { t, type: 'rules_issue', seat: seatA, card: 'Heated Argument', note: RUDE, stage: 'game' });
+      noteKey = `rules-${t}`;
       const deck = events.find((e) => e.type === 'deck_built' && e.seat === seatB)!;
       deck.deck_name = 'Fuck Yeah Aggro';
-      deck.note = 'Curve out and attack; key sk-ant-api03-Zx9kQ2mN7pLr4TvW8yB1cD5fG3hJ6kL0';
+      deck.archetype = 'Curve out and attack; key sk-ant-api03-Zx9kQ2mN7pLr4TvW8yB1cD5fG3hJ6kL0';
     });
     eventId = JSON.parse(files.get('events.jsonl')!.toString('utf8').split('\n', 1)[0]!).id;
     bundle = pack(files);
@@ -167,11 +171,12 @@ describe('terms, moderation and erasure (database)', { skip }, () => {
     assert.ok(!ex.includes('/home/alice'), 'no file path in the export');
     assert.ok(!ex.includes('sk-ant-api03'), 'no API key in the export');
     assert.ok(ex.includes('[path]'));
+    assert.ok(!ex.includes('Decision note') && !runLog().includes('Decision note'), 'no decision note in the export or the stored log');
   });
 
-  test('the review queue flags the rude note and the deck name; flagged text is never auto-featured', async () => {
+  test('the review queue flags the rude rules report and the deck name; flagged text is never auto-featured', async () => {
     const q = await (await fetch(`${base}/api/admin/moderation/queue`, { headers: { Authorization: `Bearer ${ADMIN}` } })).json();
-    const note = q.find((f: any) => f.kind === 'note' && f.seat === seatA && f.item === decisionId);
+    const note = q.find((f: any) => f.kind === 'note' && f.seat === seatA && f.item === noteKey);
     const deck = q.find((f: any) => f.kind === 'deck_name' && f.seat === seatB);
     assert.ok(note, JSON.stringify(q));
     assert.ok(note.reasons.includes('word:shit'));
@@ -181,9 +186,9 @@ describe('terms, moderation and erasure (database)', { skip }, () => {
     assert.equal((await fetch(`${base}/api/admin/moderation/queue`)).status, 401, 'admin token required');
   });
 
-  test('hide a note: every public output shows the placeholder; logged; the bundle keeps the original; undo restores it', async () => {
-    assert.equal((await admin('/api/admin/moderation/notes/hide', { event: eventId, seat: seatA, item: decisionId })).status, 400, 'a reason is required');
-    const r = await admin('/api/admin/moderation/notes/hide', { event: eventId, seat: seatA, item: decisionId, reason: 'profanity', actor: 'greg' });
+  test('hide a rules report: every public output shows the placeholder; logged; the bundle keeps the original; undo restores it', async () => {
+    assert.equal((await admin('/api/admin/moderation/notes/hide', { event: eventId, seat: seatA, item: noteKey })).status, 400, 'a reason is required');
+    const r = await admin('/api/admin/moderation/notes/hide', { event: eventId, seat: seatA, item: noteKey, reason: 'profanity', actor: 'greg' });
     assert.equal(r.status, 200, await r.text());
     await hub.idle();
     assert.ok(runLog().includes(REMOVED_TEXT) && !runLog().includes('What a shit draw'), 'the stored run folder (open data reads it)');
@@ -194,9 +199,9 @@ describe('terms, moderation and erasure (database)', { skip }, () => {
     const [f] = await sql`select status, reviewed_by from moderation_flags where kind = 'note' and event_id = ${eventId} and seat = ${seatA}`;
     assert.deepEqual([f!.status, f!.reviewed_by], ['hidden', 'admin-api:greg']);
     const [l] = await sql`select actor, action, reason, target from moderation_log where action = 'hide_note'`;
-    assert.deepEqual([l!.actor, l!.reason, (l!.target as any).item], ['admin-api:greg', 'profanity', decisionId]);
+    assert.deepEqual([l!.actor, l!.reason, (l!.target as any).item], ['admin-api:greg', 'profanity', noteKey]);
     const list = await service('/api/internal/moderation');
-    assert.deepEqual(list.hides, [{ kind: 'note', event: eventId, seat: seatA, item: decisionId }]);
+    assert.deepEqual(list.hides, [{ kind: 'note', event: eventId, seat: seatA, item: noteKey }]);
     // Undo.
     const [h] = await sql`select id from moderation_hides where kind = 'note'`;
     assert.equal((await admin(`/api/admin/moderation/hides/${h!.id}/undo`, { reason: 'mistake' })).status, 200);
@@ -211,7 +216,7 @@ describe('terms, moderation and erasure (database)', { skip }, () => {
     await hub.idle();
     const deck = runLog().split('\n').filter(Boolean).map((l) => JSON.parse(l)).find((x) => x.type === 'deck_built' && x.seat === seatB);
     assert.equal(deck.deck_name, REMOVED_TEXT);
-    assert.ok(!deck.note.includes('sk-ant'), 'agent text in the stored log is scrubbed too');
+    assert.ok(!deck.archetype.includes('sk-ant') && !('note' in deck), 'agent text in the stored log is scrubbed too');
   });
 
   test('force-hide a handle: gone from the logs, the boards and the Director-facing APIs; the contributor cannot show it', async () => {

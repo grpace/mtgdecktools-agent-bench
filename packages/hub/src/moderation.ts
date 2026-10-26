@@ -1,12 +1,13 @@
 /**
  * Moderation and erasure on the Hub (docs/legal/CONTENT-POLICY.md, docs/SECURITY.md "Moderation and erasure").
  *
- * - **Hides:** a single agent note (event, seat, note key), a deck name, or a contributor's handle (force-hidden: the
+ * - **Hides:** a single rules report or archetype (event, seat, note key), a deck name, or a contributor's handle (force-hidden: the
  *   contributor can't show it again). Public outputs show `[Removed by moderators]` (public-text.ts) or no handle.
  * - **Rebuild:** every hide re-materializes the events it touches from their stored bundles (hub.ts applies the list
  *   when it writes a run folder), re-exports them and asks for an early open-data rebuild. Hosted Directors pick the
  *   list up from GET /api/internal/moderation within a minute and drop or rewrite what they serve.
- * - **Review queue:** the filter (public-text.ts flagText / flagHandle) flags notes, deck names and handles. Flagged
+ * - **Review queue:** the filter (public-text.ts flagText / flagHandle) flags deck names, archetypes, rules reports and
+ *   handles. Flagged
  *   text stays published but is never featured automatically; a reviewer keeps it or hides it.
  * - **Erasure:** a contributor's identity is removed from the Hub (GitHub id, login, avatar, handle, tokens) and their
  *   Hub id is replaced in every event log by an anonymous id, so earlier exports can't be joined to the new ones.
@@ -15,7 +16,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { compileModeration, flagHandle, flagText, isRemovedText, noteItem, type CompiledModeration, type ModerationList } from '../../director/src/public-text.js';
+import { compileModeration, flagHandle, flagText, isRemovedText, noteItem, noteText, type CompiledModeration, type ModerationList } from '../../director/src/public-text.js';
 import type { Sql } from './db.js';
 import type { Hub } from './hub.js';
 
@@ -61,13 +62,13 @@ export async function loadModeration(sql: Sql): Promise<CompiledModeration> {
 const excerpt = (s: string) => (s.length > 300 ? `${s.slice(0, 297)}…` : s);
 
 /**
- * Flag what the filter catches in one event's log (notes, deck details, rules reports, deck names). Idempotent: a flag
+ * Flag what the filter catches in one event's log (archetypes, rules reports, deck names). Idempotent: a flag
  * that exists keeps its review status. Returns how many items the filter flagged (new or not).
  */
 export async function scanLog(sql: Sql, eventId: string, logText: string): Promise<number> {
   const rows: Array<Record<string, unknown>> = [];
   for (const line of logText.split('\n')) {
-    if (!line || !/"(note|analysis|archetype|deck_name)"/.test(line)) continue;
+    if (!line || !/"(note|archetype|deck_name)"/.test(line)) continue;
     let r: Record<string, any>;
     try {
       r = JSON.parse(line);
@@ -76,7 +77,7 @@ export async function scanLog(sql: Sql, eventId: string, logText: string): Promi
     }
     const n = noteItem(r);
     if (!n) continue;
-    const text = ['note', 'analysis', 'archetype'].map((k) => r[k]).filter((v): v is string => typeof v === 'string' && !!v && !isRemovedText(v)).join(' · ');
+    const text = noteText(r);
     const reasons = flagText(text);
     if (reasons.length) rows.push({ key: `note|${eventId}|${n.seat}|${n.item}`, kind: 'note', event_id: eventId, seat: n.seat, item: n.item, excerpt: excerpt(text), reasons });
     if (r.type === 'deck_built' && typeof r.deck_name === 'string' && !isRemovedText(r.deck_name)) {
@@ -227,7 +228,8 @@ async function requireEvent(hub: Hub, eventId: string): Promise<void> {
 }
 
 /**
- * Every agent note of one event with its key (for `hub moderation notes`), read from the stored run folder.
+ * Every hideable agent text of one event (deck names, archetypes, rules reports) with its key (for `hub moderation
+ * notes`), read from the stored run folder.
  * Optionally only one seat's, or only text containing `grep`.
  */
 export function eventNotes(hub: Hub, eventId: string, opts: { seat?: string; grep?: string } = {}): Array<{ seat: string; item: string; type: string; text: string; flagged: string[] }> {
@@ -240,11 +242,11 @@ export function eventNotes(hub: Hub, eventId: string, opts: { seat?: string; gre
   }
   const g = opts.grep?.toLowerCase();
   for (const line of raw.split('\n')) {
-    if (!line || !/"(note|analysis|deck_name)"/.test(line)) continue;
+    if (!line || !/"(note|archetype|deck_name)"/.test(line)) continue;
     const r = JSON.parse(line) as Record<string, any>;
     const n = noteItem(r);
     if (!n || (opts.seat && n.seat !== opts.seat)) continue;
-    const parts = [r.deck_name ? `deck name: ${r.deck_name}` : '', ...['note', 'analysis', 'archetype'].map((k) => (typeof r[k] === 'string' && r[k] ? String(r[k]) : ''))].filter(Boolean);
+    const parts = [r.type === 'deck_built' && r.deck_name ? `deck name: ${r.deck_name}` : '', noteText(r)].filter(Boolean);
     const text = parts.join(' · ');
     if (!text || (g && !text.toLowerCase().includes(g))) continue;
     out.push({ seat: n.seat, item: n.item, type: String(r.type), text, flagged: flagText(text) });

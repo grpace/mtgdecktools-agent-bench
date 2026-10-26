@@ -389,9 +389,6 @@ blockquote.note { margin: 10px 0; padding: 8px 14px; border-left: 3px solid var(
 .dec .kind { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 650; }
 .dec .lat { margin-left: auto; color: var(--muted); font-variant-numeric: tabular-nums; }
 .choice { margin: 6px 0 2px; font-weight: 650; }
-.dec-note { margin: 2px 0 4px; font-size: 1rem; color: var(--text); font-style: italic; }
-.dec-note::before { content: '“'; color: var(--muted); }
-.dec-note::after { content: '”'; color: var(--muted); }
 .view summary { font-size: 0.8rem; color: var(--muted); }
 .view summary .q { color: var(--text-2); }
 .view pre { white-space: pre-wrap; word-break: break-word; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; margin: 8px 0 0; font-size: 0.78rem; line-height: 1.45; max-height: 520px; overflow: auto; }

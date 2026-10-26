@@ -71,18 +71,18 @@ export interface Provenance {
 interface RawPacksOpened extends RawBase { round: number; packs: string[][]; swaps?: Array<{ from: string; to: string }> }
 interface RawPick extends RawBase {
   seat: string; pack_number: number; pick_number: number; overall_pick?: number; pack: string[]; pack_rarities?: string[]; pick: string; by: string;
-  note?: string; latency_ms?: number;
+  latency_ms?: number;
 }
-interface RawDeck extends RawBase { seat: string; by: string; main: string[]; sideboard: string[]; note?: string; latency_ms?: number }
+interface RawDeck extends RawBase { seat: string; by: string; main: string[]; sideboard: string[]; latency_ms?: number }
 interface RawGameStart extends RawBase { game: string; game_code?: string; seats: string[]; mana?: string; deck_sizes?: Record<string, number> }
 /** play_draw: who started a game, and who chose (games 2–3: the previous game's loser). One per game of a match. */
 interface RawPlayDraw extends RawBase {
-  match: string; game_number: number; on_play: string; by: string; chooser?: string | null; choice?: string | null; note?: string; latency_ms?: number;
+  match: string; game_number: number; on_play: string; by: string; chooser?: string | null; choice?: string | null; latency_ms?: number;
 }
 /** sideboarded: a seat's deck for games 2–3 of a match (in/out relative to its deck in the previous game). */
 interface RawSideboarded extends RawBase {
   seat: string; match: string; game_number: number; by: string; kept?: boolean; in?: unknown; out?: unknown; main?: unknown; sideboard?: unknown;
-  basics?: unknown; main_count?: number; note?: string; latency_ms?: number;
+  basics?: unknown; main_count?: number; latency_ms?: number;
 }
 interface RawOffered extends RawBase {
   game: string; seat: string; id: string; kind: string; turn: number; text: string;
@@ -90,7 +90,7 @@ interface RawOffered extends RawBase {
   phase?: string; active?: 'you' | 'opponent'; life?: { you?: number; opponent?: number }; hand?: { you?: number; opponent?: number }; options?: string[];
 }
 interface RawDecision extends RawBase {
-  game: string; seat: string; id: string; kind: string; turn: number; latency_ms?: number; choice?: unknown; note?: string; accepted?: boolean; structured?: boolean;
+  game: string; seat: string; id: string; kind: string; turn: number; latency_ms?: number; choice?: unknown; accepted?: boolean; structured?: boolean;
   /** Newer logs: the card the action was about, and for refused answers the action type and the engine's reason. */
   card?: string; action?: string; reason?: string;
   /** Newer logs: "auto" = the engine paid the mana itself (no plan); "manual+auto" = it tapped more after the agent's plan. */
@@ -142,10 +142,10 @@ export interface Seat {
 
 export interface Pick {
   seat: string; packNumber: number; pickNumber: number; overallPick?: number; contents: string[]; rarities?: string[]; pick: string; by: string;
-  note?: string; latencyMs?: number; t: number;
+  latencyMs?: number; t: number;
 }
 
-export interface Deck { seat: string; by: string; main: string[]; sideboard: string[]; note?: string; latencyMs?: number; t: number }
+export interface Deck { seat: string; by: string; main: string[]; sideboard: string[]; latencyMs?: number; t: number }
 
 /** A game's play/draw decision (play_draw records, logs from 2026-10-22 on). */
 export interface PlayDraw {
@@ -157,7 +157,6 @@ export interface PlayDraw {
   /** The seat that chose (the previous game's loser; after a draw, the previous chooser); null in game 1. */
   chooser: string | null;
   choice: 'play' | 'draw' | null;
-  note?: string;
   latencyMs?: number;
   t: number;
 }
@@ -180,20 +179,19 @@ export interface Sideboarding {
   basics: Record<string, number>;
   /** Public: the main deck size for the game. */
   mainCount: number;
-  note?: string;
   latencyMs?: number;
   t: number;
-  /** Live redaction: in, out, main, sideboard, basics and note are withheld until the seat has no games left. */
+  /** Live redaction: in, out, main, sideboard and basics are withheld until the seat has no games left. */
   withheld?: boolean;
 }
 
 export interface Answer {
-  t: number; latencyMs?: number; choice: string; rawChoice: unknown; note?: string; accepted: boolean; structured?: boolean;
+  t: number; latencyMs?: number; choice: string; rawChoice: unknown; accepted: boolean; structured?: boolean;
   card?: string; action?: string; reason?: string;
   /** "auto": the engine paid the mana itself; "manual+auto": it topped up the agent's plan (never the agent's own tapping). */
   payment?: 'auto' | 'manual+auto';
-  /** Withheld from spectators while the event runs (live redaction): 'note' = choice and note, 'all' = also the view. */
-  withheld?: 'note';
+  /** Withheld from spectators while the event runs (live redaction): the choice (the view: Decision.withheld). */
+  withheld?: 'choice';
 }
 
 export interface Decision {
@@ -249,7 +247,7 @@ export interface Game {
   unimplemented: UnimplementedHit[];
   rulesIssues: RulesIssue[];
   refusedAuto: RefusedAuto[];
-  /** Card names seen in public zones (turn snapshots, cards played): never redacted from released notes. */
+  /** Card names seen in public zones (turn snapshots, cards played): never redacted from released rules reports. */
   publicNames: Set<string>;
   /** game_start.deck_sizes: each seat's main deck size for this game (public; logs from 2026-10-22 on). */
   deckSizes?: Record<string, number>;
@@ -296,7 +294,6 @@ export interface Transcript {
   calls?: Array<{ input: number; output: number; cache_read: number; cache_write: number; cache_write_1h?: number }>;
   toolCalls: Record<string, number>;
   toolErrors: number;
-  resultText?: string;
   isError?: boolean;
   lines: number;
 }
@@ -657,7 +654,6 @@ function readTranscript(seat: string, file: string): Transcript {
     }
     if (o.type === 'result') {
       session().result = o;
-      tr.resultText = typeof o.result === 'string' ? o.result : undefined;
       tr.isError = Boolean(o.is_error);
       if (!tr.model && o.modelUsage) {
         const models = Object.entries(o.modelUsage as Record<string, { costUSD?: number }>).sort((a, b) => (b[1].costUSD ?? 0) - (a[1].costUSD ?? 0));
@@ -860,7 +856,7 @@ export function loadEvent(dir: string, now: number): EventData | null {
         ev.picks.push({
           seat: p.seat, packNumber: p.pack_number, pickNumber: p.pick_number, overallPick: p.overall_pick, contents: p.pack, rarities: p.pack_rarities,
           pick: p.pick, by: p.by,
-          note: p.note, latencyMs: p.latency_ms, t: p.t,
+          latencyMs: p.latency_ms, t: p.t,
         });
         break;
       }
@@ -868,7 +864,7 @@ export function loadEvent(dir: string, now: number): EventData | null {
         const d = e as RawDeck;
         ev.stage = 'build';
         ev.draftEnded = true;
-        ev.decks.set(d.seat, { seat: d.seat, by: d.by, main: d.main ?? [], sideboard: d.sideboard ?? [], note: d.note, latencyMs: d.latency_ms, t: d.t });
+        ev.decks.set(d.seat, { seat: d.seat, by: d.by, main: d.main ?? [], sideboard: d.sideboard ?? [], latencyMs: d.latency_ms, t: d.t });
         break;
       }
       case 'game_start': {
@@ -902,7 +898,7 @@ export function loadEvent(dir: string, now: number): EventData | null {
         const d = offered.get(`${a.game}|${a.seat}|${a.id}`);
         if (d) {
           d.answer = {
-            t: a.t, latencyMs: a.latency_ms, rawChoice: a.choice, choice: choiceLabel(a.choice, d.text), note: a.note, accepted: a.accepted !== false,
+            t: a.t, latencyMs: a.latency_ms, rawChoice: a.choice, choice: choiceLabel(a.choice, d.text), accepted: a.accepted !== false,
             structured: a.structured,
           };
           if (a.card) d.answer.card = a.card;
@@ -960,7 +956,7 @@ export function loadEvent(dir: string, now: number): EventData | null {
       }
       // turn_snapshot never makes a name public (SPEC-1): it is the host seat's projection, and logs written before
       // 2026-10-22 name that seat's face-down permanents in it. Public names come from cards played only; anything
-      // else stays redacted in live notes until the event's hidden information is released.
+      // else stays redacted in live rules reports until the event's hidden information is released.
       case 'draft_end':
         ev.draftEnded = true;
         break;
@@ -1046,7 +1042,6 @@ export function loadEvent(dir: string, now: number): EventData | null {
           by: p.by === 'agent' || p.by === 'forfeit' ? p.by : 'seed',
           chooser: typeof p.chooser === 'string' ? p.chooser : null,
           choice: p.choice === 'play' || p.choice === 'draw' ? p.choice : null,
-          ...(typeof p.note === 'string' && p.note ? { note: p.note } : {}),
           ...(intOpt(p.latency_ms) != null ? { latencyMs: intOpt(p.latency_ms) } : {}),
           t: p.t,
         });
@@ -1066,7 +1061,6 @@ export function loadEvent(dir: string, now: number): EventData | null {
           in: inn, out, main, sideboard: strList(r.sideboard),
           basics: Object.fromEntries(Object.entries(intRecord<Record<string, number>>(r.basics) ?? {}).filter((kv): kv is [string, number] => typeof kv[1] === 'number')),
           mainCount: intOpt(r.main_count) ?? main.length,
-          ...(typeof r.note === 'string' && r.note ? { note: r.note } : {}),
           ...(intOpt(r.latency_ms) != null ? { latencyMs: intOpt(r.latency_ms) } : {}),
           t: r.t,
         });

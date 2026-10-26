@@ -1,6 +1,5 @@
 /**
- * The Hub's moderation list on parsed events (a Director's own /data export), and automatic features skipping
- * flagged or hidden notes.
+ * The Hub's moderation list on parsed events (a Director's own /data export): hidden rules reports and handles.
  *   npx tsx packages/site/src/moderation.test.ts
  */
 import assert from 'node:assert/strict';
@@ -9,7 +8,6 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { compileModeration, REMOVED_TEXT } from '../../director/src/public-text.js';
 import { loadEvent } from './data.js';
-import { quotable } from './highlights.js';
 import { moderateEvent, moderateEvents } from './moderation.js';
 
 const E = '2026-10-22-10-00-00-sos-abcd';
@@ -35,18 +33,14 @@ try {
   const c = compileModeration({
     version: 't', takedowns: [],
     hides: [
-      { kind: 'note', event: E, seat: 'seat-aaaaaa', item: 'pick-1' },
-      { kind: 'note', event: E, seat: 'seat-aaaaaa', item: 'G1' },
-      { kind: 'note', event: E, seat: 'seat-bbbbbb', item: 'deck' },
       { kind: 'note', event: E, seat: 'seat-bbbbbb', item: 'rules-8' },
     ],
     hiddenHandles: ['7'], erased: [{ id: '9', anon: 'erased-0011' }],
   });
   moderateEvent(ev, c);
-  assert.equal(ev.picks.find((p) => p.seat === 'seat-aaaaaa')!.note, REMOVED_TEXT);
-  assert.equal(ev.picks.find((p) => p.seat === 'seat-bbbbbb')!.note, 'Saved my list to [path]', 'other notes are scrubbed');
-  assert.equal(ev.decks.get('seat-bbbbbb')!.note, REMOVED_TEXT);
-  assert.equal(ev.games[0]!.decisions.find((d) => d.id === 'G1')!.answer!.note, REMOVED_TEXT);
+  // Free text on picks, decks and decisions in a log is never read: only the choice is.
+  for (const x of [ev.picks[0], ev.picks[1], ev.decks.get('seat-bbbbbb'), ev.games[0]!.decisions[0]!.answer]) assert.ok(x && !('note' in x));
+  assert.ok(!JSON.stringify(ev.picks).includes('rude') && !JSON.stringify(ev.games).includes('decision note'));
   assert.equal([...ev.rulesIssues, ...ev.games.flatMap((g) => g.rulesIssues)][0]!.note, REMOVED_TEXT);
   const a = ev.seats.find((s) => s.name === 'seat-aaaaaa')!;
   const b = ev.seats.find((s) => s.name === 'seat-bbbbbb')!;
@@ -59,11 +53,5 @@ try {
 } finally {
   rmSync(root, { recursive: true, force: true });
 }
-
-// Automatic features (event highlights, model pages) need the filter's pass; hidden text is never quoted.
-assert.ok(quotable('Bitter Triumph answers their best threat for two mana, and I keep my curve intact.'));
-assert.ok(!quotable('This draw is total shit but Bitter Triumph still answers their best threat for two.'), 'flagged words');
-assert.ok(!quotable('Read my full draft write-up at https://example.com/draft before the next game, please.'), 'links');
-assert.ok(!quotable(REMOVED_TEXT));
 
 console.log('moderation: ok');

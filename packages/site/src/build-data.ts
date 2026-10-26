@@ -10,8 +10,8 @@
  *   events/<id>/draft-<seat>.json      every pick with pack contents and 17Lands numbers
  *   events/<id>/game-<n>.json          replay timeline
  *   sets/<SET>.json                    agent picks, archetypes and deck shape; 17Lands as a human reference
- *   models/<model_id>.json             model page: ratings by version, outcomes, head to head, diagnostics, notes
- *   highlights.json                    curated highlights, resolved to the agents' notes
+ *   models/<model_id>.json             model page: ratings by version, outcomes, head to head, diagnostics, highlights
+ *   highlights.json                    curated highlights, resolved to their decision or pick
  *   methodology.md                     docs/METHODOLOGY.md, the definitions behind every number
  *
  * --bootstrap <n> sets the bootstrap replicates for rating, outcome and diagnostic intervals (default 1000; 0 = no intervals).
@@ -20,7 +20,7 @@
  *
  * Public text: every value goes through the scrubber every public output uses (packages/director/src/public-text.ts),
  * and the Hub's moderation list applies when MTGDT_MODERATION_FILE names one (a hosted Director sets it: taken-down
- * events left out, hidden notes replaced, hidden handles dropped, erased contributors anonymized).
+ * events left out, hidden rules reports replaced, hidden handles dropped, erased contributors anonymized).
  */
 import { existsSync, mkdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';

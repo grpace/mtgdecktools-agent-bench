@@ -31,14 +31,14 @@
  *   GET  /legal/terms, /legal/privacy, /legal/content-policy   the documents (docs/legal/*.md, plain text)
  *   GET  /api/internal/moderation         (service token) takedowns, hidden text and handles, erasures (hosted Directors apply them)
  *   Moderation (admin token; every action needs a reason and is logged with who, when and why; body.actor names who):
- *   GET  /api/admin/moderation/queue?status=open|kept|hidden    flagged notes, deck names and handles
+ *   GET  /api/admin/moderation/queue?status=open|kept|hidden    flagged deck names, archetypes, rules reports and handles
  *   POST /api/admin/moderation/flags/:id/(keep|hide)            body { reason, actor? }
  *   POST /api/admin/moderation/notes/hide                       body { event, seat, item, reason, actor? }
  *   POST /api/admin/moderation/deck-names/hide                  body { event, seat, reason, actor? }
  *   GET  /api/admin/moderation/hides, POST /api/admin/moderation/hides/:id/undo   body { reason, actor? }
  *   POST /api/admin/moderation/handles/:handle/(hide|show)      body { reason, actor? }
  *   GET  /api/admin/moderation/log                              the last 100 actions
- *   GET  /api/admin/events/:id/notes?seat=&grep=                an event's agent notes with their keys
+ *   GET  /api/admin/events/:id/notes?seat=&grep=                an event's deck names, archetypes and rules reports with their keys
  *   POST /api/admin/contributors/:handle/erase                  body { reason, remove_events?, actor? }
  *   POST /api/admin/contributors/:handle/ban                    body { reason, actor? }: suspend, exclude their events and lobby seats
  */

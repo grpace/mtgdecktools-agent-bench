@@ -4,8 +4,11 @@
  * bump OPEN_DATA_SCHEMA_VERSION when a column is renamed or removed or its meaning changes (adding one is fine).
  */
 
-/** 2 (2026-10-23): identities are model/effort (the harness is a seat detail); 1: harness/model/effort. */
-export const OPEN_DATA_SCHEMA_VERSION = 2;
+/**
+ * 3 (2026-10-25): seats answer with their choice only (no note columns on picks, decks, games, decisions, sideboarding);
+ * 2 (2026-10-23): identities are model/effort (the harness is a seat detail); 1: harness/model/effort.
+ */
+export const OPEN_DATA_SCHEMA_VERSION = 3;
 
 /**
  * - string, int, double, bool: as named (CSV: empty cell for null; booleans as true/false).
@@ -151,7 +154,7 @@ export const TABLES: TableDef[] = [
   },
   {
     name: 'picks',
-    description: 'Every draft pick: the pack as offered, the pick and the agent\'s note.',
+    description: 'Every draft pick: the pack as offered and the pick.',
     grain: 'one row per pick',
     key: ['event_id', 'seat', 'pack_number', 'pick_number'],
     bySet: true,
@@ -166,7 +169,6 @@ export const TABLES: TableDef[] = [
       i('pack_size', 'Cards in the pack when offered.', true),
       j('pack_contents', 'Card names in the pack as offered (list, with duplicates).'),
       j('pack_rarities', 'Rarity of each card in pack_contents, from the booster sheet (list; null in older logs).'),
-      s('note', 'The agent\'s note on the pick.'),
       i('latency_ms', 'Time from offer to answer.'),
       b('made_main_deck', 'A copy of the picked card is in the seat\'s main deck (null without a deck).'),
     ],
@@ -188,7 +190,6 @@ export const TABLES: TableDef[] = [
       j('sideboard', 'Sideboard as a list of { name, qty }.'),
       s('deck_name', 'Name the agent gave the deck.'),
       s('archetype', 'Archetype the agent named.'),
-      s('note', 'The agent\'s note on the deck.'),
       i('latency_ms', 'Time from offer to answer.'),
     ],
   },
@@ -213,7 +214,6 @@ export const TABLES: TableDef[] = [
       s('play_draw_by', '`seed` (game 1, random from the event seed), `agent` (the chooser decided) or `forfeit` (the chooser was inactive).'),
       s('play_draw_chooser', 'Seat that chose play or draw (games 2-3: the loser of the previous game).'),
       s('play_draw_choice', '`play` or `draw`.'),
-      s('play_draw_note', 'The chooser\'s note.'),
       s('end_reason', 'How it ended (`life`, `concede`, ...).'),
       s('forfeited_by', 'Seat conceded by the inactivity watchdog (a harness failure; not a misplay).'),
       i('life_a', 'Final life of seat_a.'),
@@ -259,7 +259,7 @@ export const TABLES: TableDef[] = [
   },
   {
     name: 'decisions',
-    description: 'Every in-game decision: kind, options offered, the choice and the agent\'s note. The full text the agent saw is in the event log and in the optional decision-texts files.',
+    description: 'Every in-game decision: kind, options offered and the choice. The full text the agent saw is in the event log and in the optional decision-texts files.',
     grain: 'one row per decision offered to a seat in a game',
     key: ['event_id', 'game_index', 'seat', 'decision_id'],
     bySet: true,
@@ -285,7 +285,6 @@ export const TABLES: TableDef[] = [
       b('structured', 'Answered with a structured field (attackers, blocks, cards) instead of an option number.'),
       s('card', 'Card the action was about.'),
       s('refusal_reason', 'The engine\'s reason for a refused answer.'),
-      s('note', 'The agent\'s note.'),
       i('latency_ms', 'Time from offer to answer.'),
       t('offered_at', 'When it was offered.'),
     ],
@@ -306,7 +305,6 @@ export const TABLES: TableDef[] = [
       j('cards_in', 'Cards brought in, relative to the deck of the previous game: list of { name, qty } (basic land changes included).'),
       j('cards_out', 'Cards taken out: list of { name, qty }.'),
       i('main_count', 'Main deck size for the game.'),
-      s('note', 'The agent\'s note.'),
       i('latency_ms', 'Time from offer to answer.'),
     ],
   },

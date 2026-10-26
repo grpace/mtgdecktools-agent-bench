@@ -17,7 +17,7 @@ import { dirname, join } from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { gunzipSync } from 'node:zlib';
 import { CardDb as DirectorCardDb, overridesFingerprint } from '../../director/src/cards.js';
-import { compileModeration, flagText, moderateLog, noteItem, scrubPublic, type CompiledModeration } from '../../director/src/public-text.js';
+import { compileModeration, flagText, moderateLog, noteItem, noteText, scrubPublic, type CompiledModeration } from '../../director/src/public-text.js';
 import { unpackTarGz } from '../../director/src/submissions.js';
 import { makeContext, type Ctx } from '../../site/src/context.js';
 import { CardDb, loadEvent, type EventData } from '../../site/src/data.js';
@@ -110,8 +110,8 @@ export class Hub {
    */
   openData?: { privacyChange(why: string): void; nextAt: number | null; lastRun: { at: string; code: number | null; ms: number } | null };
   /**
-   * The moderation list (moderation.ts), applied whenever a run folder is written: hidden notes and deck names read
-   * `[Removed by moderators]`, hidden handles are dropped and erased contributors anonymized in the stored log, so the
+   * The moderation list (moderation.ts), applied whenever a run folder is written: free text other than rules reports is
+   * dropped, hidden rules reports, archetypes and deck names read `[Removed by moderators]`, hidden handles are dropped and erased contributors anonymized in the stored log, so the
    * export, the index and the open dataset all read the moderated text. The bundle store keeps the original.
    */
   private mod: CompiledModeration = compileModeration(null);
@@ -307,7 +307,7 @@ export class Hub {
     // HUB_MODERATION_HOLD=1: text the filter flags holds the bundle for a reviewer (default: publish, never feature it).
     if (this.cfg.moderationHold && via !== 'import') {
       const n = flaggedItems(files.get('events.jsonl')?.toString('utf8') ?? '');
-      if (n) reasons.push({ code: 'review.flagged_text', severity: 'hold', message: `${n} note(s) or deck name(s) matched the content filter; a reviewer checks them first` });
+      if (n) reasons.push({ code: 'review.flagged_text', severity: 'hold', message: `${n} deck name(s), archetype(s) or rules report(s) matched the content filter; a reviewer checks them first` });
     }
 
     const checks = this.checksJson(report);
@@ -374,7 +374,7 @@ export class Hub {
     const dir = this.materialize(eventId, files, source);
     const ev = loadEvent(dir, Date.now());
     if (!ev) throw new Error(`event ${eventId}: run folder did not load`);
-    // The review queue: notes and deck names the filter flags (moderation.ts). Never blocks an ingest.
+    // The review queue: deck names, archetypes and rules reports the filter flags (moderation.ts). Never blocks an ingest.
     await scanLog(this.sql, eventId, readFileSync(join(dir, 'events.jsonl'), 'utf8')).catch((e) => this.log(`moderation scan of ${eventId} failed: ${(e as Error).message}`));
     if (ev.id !== eventId) throw new Error(`event id mismatch: ${ev.id} vs ${eventId}`);
     const all = [...this.events.values()].filter((e) => e.id !== eventId).concat(ev);
@@ -706,15 +706,16 @@ export class Hub {
   }
 }
 
-/** How many notes or deck names in a log the content filter flags (public-text.ts flagText). */
+/** How many deck names, archetypes or rules reports in a log the content filter flags (public-text.ts flagText). */
 function flaggedItems(log: string): number {
   let n = 0;
   for (const line of log.split('\n')) {
-    if (!line || !/"(note|analysis|archetype|deck_name)"/.test(line)) continue;
+    if (!line || !/"(note|archetype|deck_name)"/.test(line)) continue;
     try {
       const r = JSON.parse(line) as Record<string, unknown>;
       if (!noteItem(r)) continue;
-      if (['note', 'analysis', 'archetype', 'deck_name'].some((k) => typeof r[k] === 'string' && flagText(r[k] as string).length)) n++;
+      const deckName = r.type === 'deck_built' && typeof r.deck_name === 'string' ? r.deck_name : '';
+      if (flagText(noteText(r)).length || flagText(deckName).length) n++;
     } catch {
       // malformed lines are the checks' business
     }

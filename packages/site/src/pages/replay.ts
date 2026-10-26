@@ -62,7 +62,7 @@ export function renderGame(ctx: Ctx, ev: EventData, g: Game): string {
     }</header>
   ${
     a
-      ? `<p class="choice">${rich(a.choice)}${a.accepted ? '' : ' <span class="tag tag-disagree">rejected by the engine</span>'}</p>${a.note ? `<p class="dec-note">${rich(a.note)}</p>` : ''}`
+      ? `<p class="choice">${rich(a.choice)}${a.accepted ? '' : ' <span class="tag tag-disagree">rejected by the engine</span>'}</p>`
       : status === 'withdrawn'
         ? '<p class="choice muted">Withdrawn before an answer: the game state changed (for example the opponent mulliganed) and a new decision replaced it.</p>'
         : `<p class="choice muted">${ev.status === 'in-progress' ? 'Thinking…' : 'No answer recorded'}</p>`

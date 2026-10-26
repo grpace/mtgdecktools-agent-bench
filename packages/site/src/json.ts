@@ -27,7 +27,7 @@ import {
 import { DIAGNOSTICS } from './diagnostics.js';
 import { provisionalRule } from './summary.js';
 import { isSwiss8, swissFinishes } from './outcomes.js';
-import { autoNotes, resolveCurated, type CuratedEntry } from './highlights.js';
+import { autoHighlights, resolveCurated, type CuratedEntry } from './highlights.js';
 import { activity, buildModels, mainBoardId, ratingHistory, setSummary } from './models.js';
 import { feedsSetFindings, isTestSet, PICK_GAP_RULE } from './set-findings.js';
 import { PRICES } from '../../registry/src/prices.js';
@@ -463,14 +463,12 @@ export class JsonBuilder {
     const pd = playDrawOf(ev, g);
     if (pd) {
       out.play_draw = { on_play: pd.onPlay, chooser: pd.chooser, choice: pd.choice, by: pd.by };
-      if (pd.note) out.play_draw.note = pd.note;
       if (pd.latencyMs != null) out.play_draw.latency_ms = pd.latencyMs;
     }
     const sbs = sideboardsOf(ev, g);
     if (sbs.length) {
       out.sideboarding = Object.fromEntries(sbs.map((sb) => {
         const row: GameSideboard = { by: sb.by, kept: sb.kept, in: sb.in, out: sb.out, main_count: sb.mainCount };
-        if (sb.note) row.note = sb.note;
         if (sb.latencyMs != null) row.latency_ms = sb.latencyMs;
         if (sb.withheld) row.withheld = true;
         return [sb.seat, row];
@@ -572,7 +570,6 @@ export class JsonBuilder {
         basics: qty(sum.basics),
         sideboard: qty(sum.sideboard),
       };
-      if (d.note) dd.note = d.note;
       if (d.latencyMs != null) dd.latency_ms = d.latencyMs;
       const bq = buildQualityOf(ev, s.name, ctx.cards, ratings, ctx.archetypesFor(ev.set.code), ctx.normsFor(ev.set.code));
       if (bq) dd.build_quality = deckBuildQuality(bq);
@@ -603,7 +600,6 @@ export class JsonBuilder {
         tool_errors: tr.toolErrors,
         is_error: tr.isError ?? false,
       };
-      if (tr.resultText) row.result_text = tr.resultText;
       usage.push(row);
     }
     const swaps = ev.packs.flatMap((p) => (p.swaps ?? []).map((s) => ({ round: p.round, from: s.from, to: s.to })));
@@ -685,7 +681,7 @@ export class JsonBuilder {
   eventHighlights(ev: EventData, n = 3): Highlight[] {
     const curated = this.derived().highlights.filter((h) => h.event_id === ev.id);
     const seats = ev.seats.filter((s) => s.llm).map((s) => ({ ev, seat: s.name }));
-    const auto = curated.length >= n || ev.status !== 'complete' ? [] : autoNotes(seats, this.identities, n - curated.length, this.ctx.ratingsFor);
+    const auto = curated.length >= n || ev.status !== 'complete' ? [] : autoHighlights(seats, this.identities, n - curated.length, this.ctx.ratingsFor);
     return [...curated.slice(0, n), ...auto.filter((h) => !curated.some((c) => c.id === h.id))];
   }
 
@@ -795,7 +791,6 @@ export class JsonBuilder {
             return pc;
           }),
         };
-        if (p.note) out.note = p.note;
         if (p.latencyMs != null) out.latency_ms = p.latencyMs;
         const pc = dc.picks.get(p);
         if (pc?.arch) out.arch = { pair: pc.arch.pair, picked: pc.arch.picked, best: pc.arch.best, regret_pp: pc.arch.regret };
@@ -837,7 +832,6 @@ export class JsonBuilder {
             auto_passes: st.autoPasses,
             forced: st.forced,
             rejected: st.rejected,
-            notes: st.notes,
           };
           if (st.manualPayments != null) row.manual_payments = st.manualPayments;
           if (st.autoTapper != null) row.auto_tapper = st.autoTapper;
@@ -888,7 +882,6 @@ export class JsonBuilder {
         if (d.life) out.life = d.life;
         if (d.hand) out.hand = d.hand;
         if (a && out.answer) {
-          if (a.note) out.answer.note = a.note;
           if (a.latencyMs != null) out.answer.latency_ms = a.latencyMs;
           if (a.structured != null) out.answer.structured = a.structured;
         }
@@ -970,7 +963,7 @@ export class JsonBuilder {
   setHighlights(code: string, n = 6): Highlight[] {
     const curated = this.derived().highlights.filter((h) => h.set.code.toUpperCase() === code.toUpperCase());
     const seats = this.ctx.events.filter((e) => e.set.code.toUpperCase() === code.toUpperCase() && finished(e)).flatMap((ev) => ev.seats.filter((s) => s.llm).map((s) => ({ ev, seat: s.name })));
-    const auto = curated.length >= n ? [] : autoNotes(seats, this.identities, n - curated.length, this.ctx.ratingsFor);
+    const auto = curated.length >= n ? [] : autoHighlights(seats, this.identities, n - curated.length, this.ctx.ratingsFor);
     return [...curated.slice(0, n), ...auto.filter((h) => !curated.some((c) => c.id === h.id))];
   }
 

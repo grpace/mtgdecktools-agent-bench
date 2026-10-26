@@ -120,7 +120,6 @@ export interface SeatGameStats {
   autoPasses: number;
   forced: number;
   rejected: number;
-  notes: number;
   manualPayments?: number;
   autoTapper?: number;
   paymentFailures?: number;
@@ -138,7 +137,6 @@ export function seatGameStats(g: Game, seat: string): SeatGameStats {
     autoPasses: st?.auto_passes ?? g.autoPasses[seat] ?? 0,
     forced: st?.forced ?? g.forced[seat] ?? 0,
     rejected: st?.rejections ?? answered.filter((d) => !d.answer!.accepted).length,
-    notes: answered.filter((d) => d.answer!.note).length,
     manualPayments: st?.manual_payments,
     autoTapper: st?.auto_tapper,
     paymentFailures: st?.payment_failures,

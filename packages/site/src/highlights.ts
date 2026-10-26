@@ -1,13 +1,13 @@
 /**
- * Highlights (SITE-DATA 2.8): moments worth showing, each an agent's own note at a decision or a pick. Hand-curated
- * entries (highlights/curated.json) come first; model pages fill up with automatic picks from recent finished events.
- * Automatic notes come from finished events only. A curated entry may point into an event that never finished (stalled),
- * but only at a finished game whose note the export already releases, so nothing withheld from spectators can leak.
+ * Highlights (SITE-DATA 2.8): moments worth showing, each an agent's decision or pick with its situation and the choice
+ * it made. Hand-curated entries (highlights/curated.json) come first, with the curator's `why`; model pages fill up with
+ * automatic moments from recent finished events. Automatic moments come from finished events only. A curated entry may
+ * point into an event that never finished (stalled), but only at a finished game the export already releases, so nothing
+ * withheld from spectators can leak.
  */
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { isRemovedText, passesFilter } from '../../director/src/public-text.js';
 import { BASICS, loadRatings, type Decision, type EventData, type Game, type Ratings } from './data.js';
 import { lastTurn, sortedDecisions } from './replay-data.js';
 import type { Identities } from './scoring.js';
@@ -61,8 +61,7 @@ export function gameHighlight(ev: EventData, g: Game, decisionId: string, seat: 
   if (seq < 0) return `decision ${decisionId} of ${seat} not found`;
   const d = ds[seq]!;
   const a = d.answer;
-  if (!a?.note) return `decision ${decisionId} has no note`;
-  if (isRemovedText(a.note)) return `decision ${decisionId}: its note was removed by moderators`;
+  if (!a) return `decision ${decisionId} has no answer`;
   if (a.withheld) return `decision ${decisionId} is withheld (event still running)`;
   const last = lastTurn(g);
   return {
@@ -73,7 +72,6 @@ export function gameHighlight(ev: EventData, g: Game, decisionId: string, seat: 
     featured: meta.featured,
     ...base(ev, seat, ids),
     kind: 'game',
-    quote: a.note,
     choice: a.choice,
     game: {
       index: g.index,
@@ -131,8 +129,6 @@ export function pickHighlight(
   if (!m) return `bad pick label ${label}`;
   const p = ev.picks.find((x) => x.seat === seat && x.packNumber === Number(m[1]) && x.pickNumber === Number(m[2]));
   if (!p) return `pick ${label} of ${seat} not found`;
-  if (!p.note) return `pick ${label} has no note`;
-  if (isRemovedText(p.note)) return `pick ${label}: its note was removed by moderators`;
   return {
     id: meta.id,
     source: meta.source,
@@ -141,7 +137,6 @@ export function pickHighlight(
     featured: meta.featured,
     ...base(ev, seat, ids),
     kind: 'pick',
-    quote: p.note,
     choice: p.pick,
     pick: { label, pack_number: p.packNumber, pick_number: p.pickNumber, pick: p.pick, human: humanReference(p.contents, p.pick, ratingsFor(ev.set.code)) },
   };
@@ -172,22 +167,12 @@ export function resolveCurated(
   return { highlights, unresolved };
 }
 
-/**
- * Notes that read well out of context: a sentence or two, no option numbers or internal ids. Automatic features
- * (event highlights, model pages) also need the content filter's pass (public-text.ts passesFilter: no flagged words or
- * links) and never show text moderators hid. Curated highlights skip the filter (a person chose them), not hiding.
- */
-export function quotable(note: string): boolean {
-  const n = note.trim();
-  return n.length >= 40 && n.length <= 240 && !/#\d|\[#|\boption\b|pool number|\bseq\b|\bid\b/i.test(n) && passesFilter(n);
-}
-
 /** Decision kinds that carry out a plan rather than make it: never the "Lethal Setup". */
 const NOT_DECISIVE_KINDS = /^(ManaPayment|TargetSelection|TriggerTargetSelection|MulliganDecision|OrderTriggers|AssignCombatDamage|ManaColorChoice|ChooseManaColor)$/;
 const NOT_DECISIVE_CHOICES = /^(Pass priority|No attack|No blocks|Let the auto-tapper|Tap |Target |Keep this hand|Mulligan|Select:)/;
 
 /**
- * The note behind a won game's decisive play on its final turn: the attack, else a spell or ability cast that turn,
+ * A won game's decisive play on its final turn: the attack, else a spell or ability cast that turn,
  * else another real choice. Passes, targets, payments and mulligans only carry out a plan made earlier (the audit's
  * "No blockers; pass to combat damage" after "Attack with everything for exactly 8"), so they never count. Among
  * equals, the earliest: the decision that set up lethal, not the follow-through. Undefined when there is none.
@@ -276,30 +261,15 @@ export function trivialAttack(d: Pick<Decision, 'kind' | 'text' | 'life'> & { an
 }
 
 /**
- * A note that ties a spell or ability to the kill: lethal, removing or tapping a blocker, or damage to the face. Notes
- * that say the board was already empty ("no creatures", "no blockers") don't: the play didn't set anything up.
+ * The "Lethal Setup" of a won game's final turn: its decisive play (decisivePlay among real choices; forced and
+ * single-option decisions never count) when that is an attack the opponent could still answer in combat. A trivial
+ * alpha strike (trivialAttack) is no moment, and neither is a spell or ability on its own: the choice alone can't show
+ * that it set up the kill (a creature cast on the last turn may just be a blocker).
  */
-const BLOCKER_REMOVED = /\b(kill|kills|destroy|destroys|tap|taps|exile|exiles|remove|removes|clear|clearing|lock|locks|bounce|bounces)\b[^.;]*\bblockers?\b|\bblockers?\b[^.;]*\b(killed|destroyed|tapped|exiled|removed|locked|bounced)\b/i;
-const KILL_NOTE = /lethal|\b(face|damage|drain|drains)\b/i;
-const NO_BOARD = /\bno (creatures|blockers)\b/i;
-const tiedToKill = (note: string | undefined) => !!note && (BLOCKER_REMOVED.test(note) || (KILL_NOTE.test(note) && !NO_BOARD.test(note)));
-
-/**
- * The "Lethal Setup" of a won game's final turn (decisivePlay among real choices; forced and single-option decisions
- * never count):
- *   - an attack, unless it is a trivial alpha strike (trivialAttack); then only a cast or activation earlier that turn
- *     whose note ties it to the kill (it tapped or removed the blocker, say) is the moment, else there is none;
- *   - a spell or ability, only when its note ties it to the kill (a creature cast "as a blocker" on the last turn isn't).
- */
-export function lethalSetup<D extends Pick<Decision, 'kind' | 'turn' | 'text' | 'life'> & { options?: string[]; answer?: { choice?: string; note?: string } }>(mine: D[], finalTurn: number): D | undefined {
-  const real = mine.filter((d) => d.turn === finalTurn && isRealChoice(d));
-  const best = decisivePlay(real, finalTurn);
-  if (!best) return undefined;
-  const attack = best.kind === 'DeclareAttackers' && /^Attack with/.test(best.answer?.choice ?? '');
-  if (!attack) return tiedToKill(best.answer?.note) ? best : undefined;
-  if (!trivialAttack(best)) return best;
-  const at = real.indexOf(best);
-  return real.slice(0, at).find((d) => /^(Cast|Activate|Crew)\b/.test(d.answer?.choice ?? '') && tiedToKill(d.answer?.note));
+export function lethalSetup<D extends Pick<Decision, 'kind' | 'turn' | 'text' | 'life'> & { options?: string[]; answer?: { choice?: string } }>(mine: D[], finalTurn: number): D | undefined {
+  const best = decisivePlay(mine.filter((d) => d.turn === finalTurn && isRealChoice(d)), finalTurn);
+  if (!best || best.kind !== 'DeclareAttackers' || !/^Attack with/.test(best.answer?.choice ?? '')) return undefined;
+  return trivialAttack(best) ? undefined : best;
 }
 
 /**
@@ -314,25 +284,25 @@ export function lastStand<D extends Pick<Decision, 'kind' | 'turn' | 'life'> & {
 }
 
 /**
- * Automatic notes for a set of seats (a model's), newest event first: the note behind a won game's final-turn setup
+ * Automatic highlights for a set of seats (a model's), newest event first: a won game's final-turn attack
  * ("Lethal Setup", lethalSetup: never a trivial alpha strike), a first pick with its 17Lands numbers ("First Pick"), and a
  * real action at 3 life or less in a game the seat came back to win ("Last Stand", lastStand). One of each kind first, then
  * the rest of those, until `n`. Fewer (or none) is fine: no highlight beats a filler one.
  */
-export function autoNotes(seats: Array<{ ev: EventData; seat: string }>, ids: Identities, n: number, ratingsFor: (set: string) => Ratings | null = repoRatingsFor): Highlight[] {
+export function autoHighlights(seats: Array<{ ev: EventData; seat: string }>, ids: Identities, n: number, ratingsFor: (set: string) => Ratings | null = repoRatingsFor): Highlight[] {
   const done = seats.filter((s) => s.ev.status === 'complete').sort((a, b) => b.ev.startT - a.ev.startT || a.seat.localeCompare(b.seat));
   const lethal: Highlight[] = [];
   const first: Highlight[] = [];
   const stand: Highlight[] = [];
   for (const s of done) {
     const p1 = s.ev.picks.find((p) => p.seat === s.seat && p.packNumber === 1 && p.pickNumber === 1 && p.by === 'agent');
-    if (p1?.note && quotable(p1.note)) {
+    if (p1) {
       const h = pickHighlight(s.ev, s.seat, 'P1p1', ids, { id: `auto-${s.ev.id}-${s.seat}-p1p1`, source: 'auto', label: 'First Pick', why: null, featured: false }, ratingsFor);
       if (typeof h !== 'string') first.push(h);
     }
     for (const g of s.ev.games) {
       if (!g.over || !g.seats.includes(s.seat) || g.forfeitedBy) continue;
-      const mine = sortedDecisions(g).filter((d) => d.seat === s.seat && d.answer?.accepted && d.answer.note && quotable(d.answer.note));
+      const mine = sortedDecisions(g).filter((d) => d.seat === s.seat && d.answer?.accepted);
       const last = lastTurn(g);
       const won = g.winner === s.seat;
       if (won) {

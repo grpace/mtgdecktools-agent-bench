@@ -67,8 +67,10 @@ export const SCHEMA_VERSION = 2 as const;
  * 22 = test tables (docs/SITE-DATA.md "2.22"): a table with any scripted or bot seat is `table_kind: "test"`, in no group,
  *     with no rated game or Swiss finish, and its sentence never says it was won.
  * 23 = visual replays (docs/SITE-DATA.md "2.23"): `TimelineEntry.state`, the board at each decision.
+ * 24 = seats answer with their choice only (docs/SITE-DATA.md "2.24"): no `note` on picks, decks, decisions, play/draw or
+ *     sideboarding, no `notes` count in seat stats or `note` on set first picks; highlights are moments without a quote.
  */
-export const SCHEMA_MINOR = 23 as const;
+export const SCHEMA_MINOR = 24 as const;
 
 // ---------------------------------------------------------------------------
 // v2: provenance, conditions, identities, groups, ratings, diagnostics (docs/METHODOLOGY.md)
@@ -755,7 +757,7 @@ export interface IndexFile {
   models?: ModelIndexRow[];
   /** Live tables first, then finished events, agents' first rated games and ratings that became firm; newest first. */
   activity?: ActivityItem[];
-  /** Featured highlights (hand-curated), resolved to the agent's note and its situation. All highlights: highlights.json. */
+  /** Featured highlights (hand-curated), resolved to the decision or pick and its situation. All highlights: highlights.json. */
   highlights?: Highlight[];
   /** The main board (the largest comparability group, all sets, all sources): the default leaderboard view. */
   main_board?: string | null;
@@ -865,7 +867,6 @@ export interface GamePlayDraw {
   chooser: string | null;
   choice: 'play' | 'draw' | null;
   by: 'seed' | 'agent' | 'forfeit';
-  note?: string;
   latency_ms?: number;
 }
 
@@ -873,7 +874,7 @@ export interface GamePlayDraw {
  * 2.13: one seat's sideboarding before a game (games 2–3). `in` / `out` are relative to the deck it played in the
  * previous game of the match (basic land changes appear as the basic's name). `kept`: no change. `by: "forfeit"`: the
  * seat was inactive and kept its deck. Show "Sideboarded: +2 X, −2 Y" or "Kept Its Deck". While the event runs,
- * in, out and note are withheld until the seat has no games left (`withheld: true`, lists empty); kept, by and
+ * in and out are withheld until the seat has no games left (`withheld: true`, lists empty); kept, by and
  * main_count are public.
  */
 export interface GameSideboard {
@@ -882,7 +883,6 @@ export interface GameSideboard {
   in: CardQty[];
   out: CardQty[];
   main_count: number;
-  note?: string;
   latency_ms?: number;
   withheld?: true;
 }
@@ -974,7 +974,6 @@ export interface CardQty { name: string; qty: number }
 export interface DeckDetail {
   seat: string;
   by: string; // 'agent' | 'auto' (agent delegated to the reference builder)
-  note?: string;
   latency_ms?: number;
   colors: string;
   main_count: number;
@@ -1070,7 +1069,6 @@ export interface UsageRow {
   thinking_tokens: number | null;
   tool_calls: Record<string, number>;
   tool_errors: number;
-  result_text?: string;
   is_error: boolean;
 }
 
@@ -1149,7 +1147,6 @@ export interface PickDetail {
   matches_best: boolean;
   regret_pp: number | null;
   lane_regret_pp: number | null;
-  note?: string;
   latency_ms?: number;
   contents: PackCard[]; // pack as offered
   // v2
@@ -1196,8 +1193,8 @@ export interface TimelineEntry {
   since: string; // "Since your last decision" log the agent saw ("" if none)
   board: string; // the rest of the view: board, hand, card reference, the question and options
   status: DecisionStatus;
-  answer: { t: number; choice: string; note?: string; latency_ms?: number; accepted: boolean; structured?: boolean; card?: string; withheld?: boolean } | null;
-  /** v2 addition: the view (since/board/options) is withheld while the event runs; `answer.withheld`: the choice and note too. */
+  answer: { t: number; choice: string; latency_ms?: number; accepted: boolean; structured?: boolean; card?: string; withheld?: boolean } | null;
+  /** v2 addition: the view (since/board/options) is withheld while the event runs; `answer.withheld`: the choice too. */
   withheld?: boolean;
   /** 2.23: the board at this decision (visual replays), from the view; absent when the view is withheld or has no JSON. */
   state?: BoardState;
@@ -1212,7 +1209,6 @@ export interface SeatGameStatsRow {
   auto_passes: number;
   forced: number;
   rejected: number;
-  notes: number;
   manual_payments?: number;
   auto_tapper?: number;
   payment_failures?: number;
@@ -1315,7 +1311,7 @@ export interface SetFile {
   deck_shape?: SetDeckShape | null;
   /** 2.8: median overall pick from which agents' two main colors never changed (null without drafts). */
   commitment_median?: number | null;
-  /** 2.8: every agent first pick (P1p1) in finished events, with its note. */
+  /** 2.8: every agent first pick (P1p1) in finished events. */
   first_picks?: SetFirstPick[];
   /** 2.17: sample size behind archetypes and deck_shape, and whether it supports findings (IndexFile.sets[].insight). */
   insight?: SetInsight;
@@ -1602,7 +1598,7 @@ export interface ModelFile {
   played?: { games: number; mirror_games: number; events: number; seats: number; text: string };
   cards: { most_picked: ModelCardRow[]; earliest: ModelCardRow[] };
   events: ModelEventRow[]; // newest first
-  /** Three of its notes: curated highlights first, else recent automatic picks. */
+  /** Three of its highlights (moments): curated ones first, else recent automatic ones. */
   notes: Highlight[];
   /** 2.15: ratings, results and cost by effort (2.20: one ladder per model, across harnesses). */
   effort_ladder?: EffortLadder[];
@@ -1722,7 +1718,7 @@ export interface HarnessComparison {
   summary: string;
 }
 
-/** A moment worth showing: an agent's own note at a decision or pick, with its situation. */
+/** A moment worth showing: an agent's decision or pick, with its situation and the choice it made. */
 export interface Highlight {
   id: string;
   source: 'curated' | 'auto';
@@ -1737,7 +1733,6 @@ export interface Highlight {
   model_display: string | null;
   identity_label: string | null;
   kind: 'game' | 'pick';
-  quote: string; // the agent's note, verbatim
   choice: string;
   game?: { index: number; label: string; decision_id: string; seq: number; turn: number; life: { you: number | null; opponent: number | null } | null; won: boolean | null; turns: number | null; final_turn: boolean };
   pick?: {
@@ -1799,7 +1794,7 @@ export interface SetDeckShape {
   norms?: { set_pair: number; generic: number };
 }
 
-export interface SetFirstPick { event_id: string; seat: string; identity: string | null; model_display: string | null; pick: string; note: string | null; colors: string }
+export interface SetFirstPick { event_id: string; seat: string; identity: string | null; model_display: string | null; pick: string; colors: string }
 
 /** highlights.json */
 export interface HighlightsFile {

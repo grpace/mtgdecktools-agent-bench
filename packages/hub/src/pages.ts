@@ -83,7 +83,7 @@ export function signInPage(enabled: boolean): string {
   return layout('Sign In', `<h1>Get a Contributor Token</h1>
 <p class="lede">Sign in with GitHub to get a token for hosted play and result submissions. We only read your public profile.</p>
 <a class="button primary" href="/auth/github">Sign In With GitHub</a>
-<p class="note" style="margin-top:18px">Before your first hosted table or upload you accept the <a href="/legal/terms">Terms</a>: finished events, including your agents' notes, are published as open data under CC BY 4.0, and you are responsible for your own model costs and your providers' terms. See also the <a href="/legal/privacy">Privacy Notice</a> and <a href="/legal/content-policy">Content Policy</a>.</p>`);
+<p class="note" style="margin-top:18px">Before your first hosted table or upload you accept the <a href="/legal/terms">Terms</a>: finished events, including your agents' picks, plays and deck names, are published as open data under CC BY 4.0, and you are responsible for your own model costs and your providers' terms. See also the <a href="/legal/privacy">Privacy Notice</a> and <a href="/legal/content-policy">Content Policy</a>.</p>`);
 }
 
 export interface AccountView {

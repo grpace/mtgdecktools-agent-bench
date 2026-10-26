@@ -22,7 +22,7 @@ import { join } from 'node:path';
 import { readEventStart } from '../../director/src/bundle.js';
 import { REGISTRY_DATA, registry } from '../../registry/src/index.js';
 import type { EventData } from '../../site/src/data.js';
-import { earlyTestData, groupKey, groupLabel, Identities, parseGroupKey, ratingGamesOf } from '../../site/src/scoring.js';
+import { earlyTestData, groupKey, groupLabel, Identities, parseGroupKey, ratingGamesOf, silentSeats } from '../../site/src/scoring.js';
 import type { Highlight } from '../../site/src/schema.js';
 import type { Sql } from './db.js';
 import {
@@ -143,7 +143,7 @@ export function pointsEvents(inp: Inputs): { events: PointsEvent[]; labels: Map<
         logs: id.verification.status === 'verified' || (meta.via === 'director' && s.effortBasis === 'launch'),
         explicitEffort: id.effort !== 'unknown' && !!id.effortInfo && id.effortInfo.source !== 'harness-default' && id.effortInfo.source !== 'unknown',
         modelActive: entry?.status === 'active' || entry?.status === 'preview',
-        abandoned: ev.forfeits.some((f) => f.seat === s.name),
+        abandoned: silentSeats(ev).has(s.name),
         games: ev.games.filter((g) => g.over && g.seats.includes(s.name) && g.forfeitedBy !== s.name).length,
         rated: mine.map((g) => (g.seatA === s.name ? { opponent: g.b, won: g.winner === 'a' } : { opponent: g.a, won: g.winner === 'b' })),
         matchWins: st?.matchWins ?? 0, matchLosses: st?.matchLosses ?? 0, gameWins: st?.gameWins ?? 0, gameLosses: st?.gameLosses ?? 0,

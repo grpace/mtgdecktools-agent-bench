@@ -7,7 +7,7 @@
  * The database part needs HUB_TEST_DATABASE_URL (see contributors-db.test.ts).
  */
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import type { Server } from 'node:http';
 import { connect as tcp } from 'node:net';
 import type { AddressInfo } from 'node:net';
@@ -85,7 +85,7 @@ describe('hostile agent text in a hosted hand-off (database)', { skip }, () => {
     if (dataDir) rmSync(dataDir, { recursive: true, force: true });
   });
 
-  test('NUL, lone surrogates and escapes in notes, the set name and the seed: ingested, stored cleaned', async () => {
+  test('NUL, lone surrogates and escapes in agent text, the set name and the seed: ingested, stored cleaned', async () => {
     const files = rewrite(filesOf(run!), (events) => {
       const start = events[0]!;
       start.organizer = { kind: 'admin' };
@@ -109,10 +109,12 @@ describe('hostile agent text in a hosted hand-off (database)', { skip }, () => {
     const [ev] = await sql`select set_name, seed from events where id = ${eventId}`;
     assert.ok(ev, 'the event is indexed');
     assert.ok(!String(ev.set_name).includes('\u0000') && !String(ev.seed).includes('\u0000'));
-    const notes = await sql`select note from picks where event_id = ${eventId} and note is not null limit 5`;
-    assert.ok(notes.length > 0, 'pick notes are stored');
+    const stored = readFileSync(join(hub.runsDir, eventId, 'events.jsonl'), 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
+    const issue = stored.find((r) => r.type === 'rules_issue');
+    assert.ok(issue, 'the rules report is stored');
     // Bidi overrides are gone too: the public scrubber removes invisible and bidi characters (HUB-36).
-    for (const n of notes) assert.equal(n.note, 'oknul \ufffdlone \u001b[31mred\u001b[0m evil \u0007bell');
+    assert.equal(issue.note, 'oknul \ufffdlone \u001b[31mred\u001b[0m evil \u0007bell');
+    assert.ok(stored.every((r) => r.type === 'rules_issue' || !('note' in r)), 'notes on picks, decks and decisions are not kept in the run folder');
   });
 });
 

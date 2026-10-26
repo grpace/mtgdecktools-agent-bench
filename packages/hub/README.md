@@ -90,7 +90,7 @@ Defaults: `DATABASE_URL=postgres://hub:hub@127.0.0.1:5440/hub`, `HUB_DATA_DIR=tm
 | `HUB_TERMS_REQUIRED` | 1 | hosted play and uploads need the current terms accepted (`src/terms.ts`); `0` only for tests |
 | `MTGDT_CONTACT_URL` | none (a visible placeholder) | the contact for takedowns, privacy and conduct: in the data card and the served legal documents. Without it, the documents say requests can't be made yet |
 | `MTGDT_TERMS_URL`, `MTGDT_PRIVACY_URL`, `MTGDT_CONTENT_POLICY_URL` | the Hub's `/legal/*` (`deploy/compose.yaml`: the site's `/agent-bench/terms`, `/privacy`, `/content-policy`) | where `bench login` and the account page link the documents |
-| `HUB_MODERATION_HOLD` | 0 | `1`: hold bundles whose notes or deck names the content filter flags, for review (default: publish, never feature) |
+| `HUB_MODERATION_HOLD` | 0 | `1`: hold bundles whose deck names, archetypes or rules reports the content filter flags, for review (default: publish, never feature) |
 | `MTGDT_MODERATION_WORDLIST` | none | a private file of extra filter terms, one per line (`#` comments), added to the default list (public-text.ts) |
 | `HUB_TRUST_PROXY` | unset | `1`: client IP for sign-in rate limits from the last `X-Forwarded-For` hop (behind Traefik) |
 | `HUB_TRUST_CLOUDFLARE` | unset | `1`: when the address the proxy saw is a Cloudflare edge, the client is `CF-Connecting-IP` (any other sender's header is ignored). `HUB_CLOUDFLARE_IPS` (comma-separated CIDRs) replaces the built-in list of Cloudflare's ranges |
@@ -184,7 +184,7 @@ as Early Test Data: indexed and exported, never rated (`events.comparability_gro
     generator version, no seed). Never a failure by itself.
 - **Anomalies:** LLM seats answering faster than `HUB_MIN_LATENCY_MS` in more than `HUB_FAST_SHARE` of
   decisions (mana-payment continuations excluded); harness-reported model ids (`usage-<seat>.json`) not
-  matching the declared model; a seat's decision stream (picks, deck, every answer with its note) identical
+  matching the declared model; a seat's decision stream (picks, deck, every answer) identical
   to another seat's, in this or any ingested event.
 
 ### What the Director Logs for Full Verification
@@ -244,9 +244,9 @@ stack reports the commit Coolify deployed, `SOURCE_COMMIT`).
 | `GET /api/internal/moderation` | service token (`ingest`) | the moderation list hosted Directors apply: `{ version, takedowns, hides, hiddenHandles, erased }` |
 | `GET /api/admin/moderation/queue?status=open\|kept\|hidden`, `/hides`, `/log` | admin | the review queue, current hides, the last 100 actions |
 | `POST /api/admin/moderation/flags/:id/keep` / `hide` | admin | body `{ "reason": "…", "actor"?: "…" }` |
-| `POST /api/admin/moderation/notes/hide`, `/deck-names/hide` | admin | body `{ "event", "seat", "item" (notes), "reason", "actor"? }` |
+| `POST /api/admin/moderation/notes/hide`, `/deck-names/hide` | admin | body `{ "event", "seat", "item" (the text's key), "reason", "actor"? }` |
 | `POST /api/admin/moderation/hides/:id/undo`, `/handles/:handle/hide` / `show` | admin | body `{ "reason": "…" }` |
-| `GET /api/admin/events/:id/notes?seat=&grep=` | admin | an event's agent notes with their keys |
+| `GET /api/admin/events/:id/notes?seat=&grep=` | admin | an event's agent text (deck names, archetypes, rules reports) with their keys |
 | `POST /api/admin/contributors/:handle/erase` | admin | body `{ "reason": "…", "remove_events"?: true }` (docs/legal/PRIVACY.md "Erasure") |
 | `GET /data/*` | none | the JSON export: CORS, `Cache-Control: public, max-age=60` (index, sets, contributor files) or `300` (events), ETag / 304, gzip |
 | `GET /data/open/*` | none | the open dataset (docs/OPEN-DATA.md): prebuilt files only, streamed; `Range`, ETag / 304; snapshots `immutable`, `latest.json` 5 minutes, the rest 1 hour; per-IP rate and concurrency limits |
@@ -276,7 +276,7 @@ open-data status                         the current build, its snapshot and tab
 contributor terms <handle>               whether they accepted the current terms
 contributor erase <handle> --reason <text> [--remove-events]   erasure (docs/legal/PRIVACY.md)
 moderation queue [--status open|kept|hidden] | keep|hide <flag-id> --reason <text>
-moderation notes <event-id> [--seat s] [--grep text]      an event's agent notes with their keys
+moderation notes <event-id> [--seat s] [--grep text]      an event's agent text (deck names, archetypes, rules reports) with their keys
 moderation hide-note <event-id> <seat> <key> | hide-deck-name <event-id> <seat> | hide-handle|show-handle <handle>  (--reason)
 moderation hides | unhide <hide-id> --reason <text> | log
 ```

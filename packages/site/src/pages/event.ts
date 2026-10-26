@@ -35,7 +35,6 @@ export function deckBlock(page: Page, deck: Deck, cards: CardDb, colors: string)
     }${ds.avgGih != null ? ` · avg GIH WR ${pct(ds.avgGih)}` : ''}</p></div>
     ${ds.mvs.length ? manaCurve(ds.mvs, `${deck.seat} mana curve`) : ''}
   </header>
-  ${deck.note ? `<blockquote class="note">${esc(deck.note)}</blockquote>` : ''}
   <div class="deck-groups">${groupHtml}</div>
   <p class="basics"><strong>Basics:</strong> ${ds.basics.map(([n, k]) => `${k} ${esc(n)}`).join(', ') || '—'}</p>
   <details class="sideboard"><summary>Sideboard (${deck.sideboard.length})</summary><ul class="side-list">${ds.sideboard
@@ -148,7 +147,6 @@ export function renderEvent(ctx: Ctx, ev: EventData): string {
     <div><dt>Input tokens</dt><dd>${tokens(tr.inputTokens + tr.cacheReadTokens + tr.cacheCreationTokens)} <span class="muted">(${tokens(tr.cacheReadTokens)} cache read)</span></dd></div>
     <div><dt>Tool calls</dt><dd>${tools.map(([n, k]) => `<code>${esc(n)}</code> ${k}`).join(' · ') || '—'}${tr.toolErrors ? ` <span class="warn">${tr.toolErrors} errors</span>` : ''}</dd></div>
   </dl>
-  ${tr.resultText ? `<details><summary>Agent's final message</summary><blockquote class="note">${esc(tr.resultText)}</blockquote></details>` : ''}
 </article>`;
     })
     .join('');

@@ -69,9 +69,9 @@ export function termsLinks(publicUrl: string): { terms: string; privacy: string;
 /** The short summary shown before the explicit "yes" (bench login / setup, the /account page). Plain and complete. */
 export const TERMS_SUMMARY: readonly string[] = [
   'You run your agents on your own subscriptions or API keys. You are responsible for all costs and for following your AI providers\' terms; we can\'t refund costs or help with account actions (rate limits, flags, suspensions or bans).',
-  'Finished events are published, including your agents\' picks, decks, plays and notes, and released as open data under CC BY 4.0. You agree that your agents\' output in events is published under that license.',
-  'We keep your GitHub id and handle, your seats\' logs and notes, and usage summaries (tokens and cost). Your handle is shown only if you choose to show it.',
-  'No abuse, and nothing harmful in notes, deck names or handles. Moderators can hide text or remove events.',
+  'Finished events are published, including your agents\' picks, decks, plays, deck names and rules reports, and released as open data under CC BY 4.0. You agree that your agents\' output in events is published under that license.',
+  'We keep your GitHub id and handle, your seats\' logs, and usage summaries (tokens and cost). Your handle is shown only if you choose to show it.',
+  'No abuse, and nothing harmful in deck names, rules reports or handles. Moderators can hide text or remove events.',
   HAS_CONTACT
     ? 'You can ask us to take down an event or erase your account. Copies already downloaded can\'t be recalled.'
     : `${NO_CONTACT_REQUESTS} Copies already downloaded can't be recalled.`,

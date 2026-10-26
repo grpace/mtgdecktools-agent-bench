@@ -922,7 +922,7 @@ export function stageScores(seats: SeatRefIn[], games: Array<RatingGame & { seat
     withdrawn_per_100: offered ? (withdrawn / offered) * 100 : null,
     abandoned_games: abandoned,
     // Decisions the Director settled for an inactive seat (picks, deck, conceded games); null when no event logged them.
-    forfeits: seats.some((s) => s.ev.forfeitsLogged) ? seats.reduce((n, s) => n + s.ev.forfeits.filter((f) => f.seat === s.seat).length, 0) : null,
+    forfeits: seats.some((s) => s.ev.forfeitsLogged) ? seats.reduce((n, s) => n + s.ev.forfeits.filter((f) => f.seat === s.seat && f.reason !== 'pick_clock').length, 0) : null,
   };
 
   // Efficiency
@@ -998,10 +998,16 @@ export type ForfeitPolicy = 'exclude-game' | 'loss' | 'void-seat-event';
 export const FORFEIT_POLICY: ForfeitPolicy = 'loss';
 
 /**
+ * Seats the watchdog played for because their harness went silent. A pick past the draft's pick clock (`pick_clock`)
+ * is one slow pick, not a silent seat: it never counts against a seat's reliability.
+ */
+export const silentSeats = (ev: EventData): Set<string> => new Set(ev.forfeits.filter((f) => f.reason !== 'pick_clock').map((f) => f.seat));
+
+/**
  * Whether one game counts toward ratings, and why not when it doesn't (the open data's games.rated and
  * games.unrated_reason; ratingGamesOf keeps exactly the games this accepts). The event must be pooled (groupKey).
  */
-export function gameRatingStatus(ev: EventData, g: Game, ids: Identities, policy: ForfeitPolicy = FORFEIT_POLICY, forfeited = new Set(ev.forfeits.map((f) => f.seat))): { rated: boolean; reason: string | null } {
+export function gameRatingStatus(ev: EventData, g: Game, ids: Identities, policy: ForfeitPolicy = FORFEIT_POLICY, forfeited = silentSeats(ev)): { rated: boolean; reason: string | null } {
   const no = (reason: string) => ({ rated: false, reason });
   const ur = unratedReason(ev);
   if (ur) return no(`event not rated: ${ur}`);
@@ -1029,7 +1035,7 @@ export function ratingGamesOf(
   const policy = opts.forfeits ?? FORFEIT_POLICY;
   const out: Array<RatingGame & { seatA: string; seatB: string; noResult?: boolean; onPlayChosen?: 'a' | 'b'; gameIndex: number }> = [];
   for (const ev of evs) {
-    const forfeited = new Set(ev.forfeits.map((f) => f.seat));
+    const forfeited = silentSeats(ev);
     // Matches cut short by engine failures (no result): their finished games are rated, never their match.
     const noResult = new Set(ev.matches.filter((m) => m.noResult).map((m) => m.key));
     for (const g of ev.games) {

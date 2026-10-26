@@ -23,10 +23,10 @@
  *   npm run hub -- open-data status                          (the current build and snapshots)
  *
  * Moderation (docs/legal/CONTENT-POLICY.md; every action needs --reason and is logged with who, when and why):
- *   npm run hub -- moderation queue [--status open|kept|hidden]         flagged notes, deck names and handles
+ *   npm run hub -- moderation queue [--status open|kept|hidden]         flagged deck names, archetypes, rules reports and handles
  *   npm run hub -- moderation keep <flag-id> --reason text               published, never featured automatically
- *   npm run hub -- moderation hide <flag-id> --reason text               hide the flagged note, deck name or handle
- *   npm run hub -- moderation notes <event-id> [--seat s] [--grep text]  an event's agent notes with their keys
+ *   npm run hub -- moderation hide <flag-id> --reason text               hide the flagged text, deck name or handle
+ *   npm run hub -- moderation notes <event-id> [--seat s] [--grep text]  an event's deck names, archetypes and rules reports with their keys
  *   npm run hub -- moderation hide-note <event-id> <seat> <key> --reason text
  *   npm run hub -- moderation hide-deck-name <event-id> <seat> --reason text
  *   npm run hub -- moderation hide-handle|show-handle <handle> --reason text
@@ -266,7 +266,7 @@ async function main(): Promise<void> {
         const h = await hub();
         const rows = eventNotes(h, a ?? die('give an event id'), { seat: values.seat, grep: values.grep });
         for (const r of rows) console.log(`${r.seat.padEnd(14)} ${r.item.padEnd(22)} ${r.flagged.length ? `[${r.flagged.join(', ')}] ` : ''}${r.text.slice(0, 160)}`);
-        return void console.log(`${rows.length} note(s). Hide one: npm run hub -- moderation hide-note ${a} <seat> <key> --reason …`);
+        return void console.log(`${rows.length} text(s). Hide one: npm run hub -- moderation hide-note ${a} <seat> <key> --reason …`);
       }
       if (sub === 'hide-note') {
         const h = await hub();

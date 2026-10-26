@@ -64,7 +64,6 @@ export function renderDraft(ctx: Ctx, ev: EventData, seatName: string): string {
     <div class="pick-verdict">${verdict}${p.latencyMs != null ? `<span class="muted"> · ${secs(p.latencyMs)}</span>` : ''}</div>
   </header>
   <p class="pick-line">Took ${page.card(p.pick, 'strong')}${e.pickedGih != null ? ` <span class="${gihClass(e.pickedGih, baseline)} gih-inline">${pct(e.pickedGih)}</span>` : ''}</p>
-  ${p.note ? `<blockquote class="note">${esc(p.note)}</blockquote>` : p.by === 'agent' ? '<p class="muted small">No note.</p>' : ''}
   ${
     p.contents.length > 1
       ? `<details class="pack"${e.rated && !e.matchesBest ? ' open' : ''}><summary>Pack contents</summary>

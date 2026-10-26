@@ -6,7 +6,7 @@ import type { Ctx } from './context.js';
 import { isSettled, type EventData } from './data.js';
 import { deckRoles, pairNormOf, type DeckRoles } from './core-draft.js';
 import { costInfo } from './cost.js';
-import { autoNotes } from './highlights.js';
+import { autoHighlights } from './highlights.js';
 import { eventWinner, isLlmEvent, median, seatColors } from './metrics.js';
 import { finishOf, matchRecords, outcomesOf, rateEst, sidesOf, wilson, type OutcomeGame } from './outcomes.js';
 import { DEFAULT_RATING_OPTIONS, rateGames } from './rating.js';
@@ -366,10 +366,10 @@ export function buildModels(inp: ModelsInput): { files: Map<string, ModelFile>; 
       })
       .sort((a, b) => b.started_at - a.started_at || a.seat.localeCompare(b.seat));
 
-    // Notes: curated first, then automatic.
+    // Highlights (the `notes` key): curated first, then automatic.
     const curated = inp.curated.filter((h) => h.model_id === modelId);
     const notes = [...curated.slice(0, 3)];
-    if (notes.length < 3) notes.push(...autoNotes(finishedSeats, ids, 3 - notes.length, ctx.ratingsFor).filter((h) => !notes.some((x) => x.id === h.id)));
+    if (notes.length < 3) notes.push(...autoHighlights(finishedSeats, ids, 3 - notes.length, ctx.ratingsFor).filter((h) => !notes.some((x) => x.id === h.id)));
 
     const versions = [...new Set(ratings.map((r) => r.identity))].map((id) => {
       const info = ids.info.get(id);
@@ -498,7 +498,7 @@ export function setSummary(ctx: Ctx, code: string, ids: Identities): {
       const p1 = ev.picks.find((p) => p.seat === s.name && p.packNumber === 1 && p.pickNumber === 1 && p.by === 'agent');
       if (p1) {
         const id = ids.of(ev, s.name);
-        firstPicks.push({ event_id: ev.id, seat: s.name, identity: id.key, model_display: ids.info.get(id.key)?.model_display ?? null, pick: p1.pick, note: p1.note ?? null, colors: colors.get(s.name) ?? '' });
+        firstPicks.push({ event_id: ev.id, seat: s.name, identity: id.key, model_display: ids.info.get(id.key)?.model_display ?? null, pick: p1.pick, colors: colors.get(s.name) ?? '' });
       }
     }
   }

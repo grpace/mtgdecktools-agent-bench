@@ -267,7 +267,7 @@ test('open data from a fixture event: every table in CSV and Parquet matches its
   assert.equal(Number(p1.pack_size), 14);
   assert.equal(p1.pack_contents.length, 14, 'pack contents as a JSON list');
   assert.equal(p1.made_main_deck, true);
-  assert.match(p1.note, /\[email\]/, 'notes are kept, scrubbed');
+  assert.ok(!('note' in p1), 'picks carry the choice only');
 
   const games = await read('games');
   assert.equal(games.length, 2);
@@ -305,6 +305,8 @@ test('open data from a fixture event: every table in CSV and Parquet matches its
   assert.equal(log[0].seats[1].contributor_handle, undefined);
   assert.deepEqual(log[0].table, { kind: 'lobby', queue: 'fra-primer-manual' });
   assert.ok(log.some((x) => x.type === 'decision_offered' && /DECISION G1/.test(x.text)), 'the text agents saw stays in the log');
+  assert.ok(log.every((x) => x.type === 'rules_issue' || (!('note' in x) && !('analysis' in x))), 'free text only on rules reports: notes in older logs are dropped');
+  assert.match(log.find((x) => x.type === 'rules_issue').note, /\[path\]/, 'a rules report is kept, scrubbed');
   const texts = gunzipSync(readFileSync(join(open, `events/${ID}/decision-texts.jsonl.gz`))).toString('utf8').trim().split('\n').map((l) => JSON.parse(l));
   assert.deepEqual(texts.map((x) => x.stage).sort(), ['game', 'game', 'game', 'play_draw', 'sideboard']);
   assert.equal(texts.find((x) => x.decision_id === 'G7').game_index, 2);

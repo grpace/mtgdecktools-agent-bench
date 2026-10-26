@@ -78,7 +78,7 @@ function ladderTables(n: number, extra: Seat[] = []): EventData[] {
 }
 
 try {
-  check('schema minor is 23 (2.23: visual replay boards; 2.22: test tables; 2.21: cost cross-checks)', () => assert.equal(SCHEMA_MINOR, 23));
+  check('schema minor is 24 (2.24: choices only; 2.23: visual replay boards; 2.22: test tables)', () => assert.equal(SCHEMA_MINOR, 24));
 
   check('multiplicity: p from an interval, Holm step-down', () => {
     assert.ok(Math.abs(pFromInterval(50, [10.8, 89.2])! - 0.0124) < 0.002, 'an interval 50 ± 39.2 is z = 2.5');

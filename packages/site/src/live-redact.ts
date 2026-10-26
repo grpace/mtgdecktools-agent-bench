@@ -1,7 +1,7 @@
 /**
  * Live redaction: an event that is still running is exported under the same fairness policy as the Director's
  * spectator stream (packages/director/src/spectate-policy.ts, docs/SPECTATING.md). The hosted export refreshes
- * every two minutes while events run, so without this it would publish hands, notes and every pick live.
+ * every two minutes while events run, so without this it would publish hands, decisions and every pick live.
  *
  * Applied to the loaded EventData before anything is derived from it, so every file (index, event, draft, game,
  * set) only ever sees released information. Finished and aborted events are exported in full.
@@ -50,11 +50,11 @@ export function redactLive(ev: EventData, policy: SpectatePolicy): void {
   // The seed regenerates every pack.
   ev.seed = undefined;
 
-  // Decks: names kept aside for redacting notes, then hidden until the seat is done.
+  // Decks: names kept aside for redacting choices and rules reports, then hidden until the seat is done.
   const deckNames = new Map<string, string[]>();
   for (const [seat, d] of ev.decks) deckNames.set(seat, [...new Set([...d.main, ...d.sideboard])]);
 
-  // Sideboarding between games is private like the decklist: what went in and out (and the seat's note) waits until
+  // Sideboarding between games is private like the decklist: what went in and out waits until
   // the seat has no games left. Whether it changed anything (kept), who decided (by) and the main deck size are public.
   for (const sb of ev.sideboards ?? []) {
     if (seatDone(sb.seat)) continue;
@@ -63,18 +63,10 @@ export function redactLive(ev: EventData, policy: SpectatePolicy): void {
     sb.main = [];
     sb.sideboard = [];
     sb.basics = {};
-    sb.note = undefined;
     sb.withheld = true;
     withheld.sideboards++;
   }
-  // The play/draw decision is public (who chose, and what); its note has still-hidden card names blanked.
-  for (const pd of ev.playDraws ?? []) {
-    if (!pd.note || !pd.chooser || seatDone(pd.chooser)) continue;
-    const seen = new Set(ev.games.filter((g) => g.matchKey === pd.match).flatMap((g) => [...g.publicNames]));
-    const pair = pd.match.split(' vs ');
-    const hidden = [...new Set(pair.flatMap((s) => deckNames.get(s) ?? []))].filter((n) => !seen.has(n));
-    pd.note = redactCards(pd.note, hidden).text;
-  }
+  // The play/draw decision is public (who chose, and what).
   for (const seat of [...ev.decks.keys()]) {
     if (!seatDone(seat)) {
       ev.decks.delete(seat);
@@ -87,7 +79,8 @@ export function redactLive(ev: EventData, policy: SpectatePolicy): void {
     const turn = lastTurn(g);
     const hidden = hiddenNames(g, deckNames);
     const hiddenOk = (seat: string) => (policy.hidden === 'game' ? g.over : g.over && seatDone(seat));
-    const notesOk = (seat: string, t: number) =>
+    // When a decision's choice is released (the policy's `notes` setting, SPECTATE_NOTES).
+    const choiceOk = (seat: string, t: number) =>
       policy.notes === 'game' ? g.over : policy.notes === 'seat' ? hiddenOk(seat) : g.over || turn >= t + policy.notes.turns;
     for (const d of g.decisions) {
       if (hiddenOk(d.seat)) continue;
@@ -97,26 +90,23 @@ export function redactLive(ev: EventData, policy: SpectatePolicy): void {
       withheld.views++;
       const a = d.answer;
       if (!a) continue;
-      if (notesOk(d.seat, d.turn) && isHiddenChoice(d.kind, a.choice)) {
+      if (choiceOk(d.seat, d.turn) && isHiddenChoice(d.kind, a.choice)) {
         a.choice = 'A choice about hidden cards';
-        a.note = undefined;
         a.card = undefined;
-      } else if (notesOk(d.seat, d.turn)) {
+      } else if (choiceOk(d.seat, d.turn)) {
         a.choice = redactCards(a.choice, hidden).text;
-        if (a.note) a.note = redactCards(a.note, hidden).text;
         if (a.card && hidden.includes(a.card)) a.card = undefined;
       } else {
         a.choice = '';
-        a.note = undefined;
         a.card = undefined;
         a.reason = undefined;
-        a.withheld = 'note';
+        a.withheld = 'choice';
         withheld.decisions++;
       }
     }
     g.rulesIssues = g.rulesIssues.flatMap((r) => {
       if (hiddenOk(r.seat)) return [r];
-      if (!notesOk(r.seat, r.turn ?? 0)) return [];
+      if (!choiceOk(r.seat, r.turn ?? 0)) return [];
       const card = r.card && hidden.includes(r.card) ? null : r.card;
       return [{ ...r, card, note: redactCards(r.note, hidden).text, withheld: true }];
     });

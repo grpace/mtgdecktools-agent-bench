@@ -182,9 +182,9 @@ try {
     assert.deepEqual(g1!.play_draw, { on_play: 'o-1', chooser: null, choice: null, by: 'seed' });
     assert.equal(g1!.sideboarding, undefined, 'no sideboarding before game 1');
     assert.deepEqual(g1!.deck_sizes, { 'o-1': 40, 's-1': 40 });
-    assert.deepEqual(g2!.play_draw, { on_play: 's-1', chooser: 's-1', choice: 'play', by: 'agent', note: 'Beta Card 2 wants tempo', latency_ms: 900 });
+    assert.deepEqual(g2!.play_draw, { on_play: 's-1', chooser: 's-1', choice: 'play', by: 'agent', latency_ms: 900 }, 'a note in an older log is not exported');
     assert.deepEqual(g2!.sideboarding!['s-1'], {
-      by: 'agent', kept: false, in: [{ name: 'Beta Card 24', qty: 1 }], out: [{ name: 'Beta Card 1', qty: 1 }], main_count: 40, note: 'More removal for their fliers', latency_ms: 1200,
+      by: 'agent', kept: false, in: [{ name: 'Beta Card 24', qty: 1 }], out: [{ name: 'Beta Card 1', qty: 1 }], main_count: 40, latency_ms: 1200,
     });
     assert.deepEqual(g2!.sideboarding!['o-1'], { by: 'agent', kept: true, in: [], out: [], main_count: 40, latency_ms: 500 });
     assert.deepEqual(g3!.play_draw, { on_play: 's-1', chooser: 'o-1', choice: 'draw', by: 'agent' });
@@ -209,10 +209,10 @@ try {
     const s2 = file.games[1]!.sideboarding!['s-1']!;
     assert.deepEqual(s2, { by: 'agent', kept: false, in: [], out: [], main_count: 40, latency_ms: 1200, withheld: true });
     assert.equal(file.games[1]!.sideboarding!['o-1']!.kept, true);
-    assert.ok(ev.sideboards!.every((x) => x.main.length === 0 && x.sideboard.length === 0 && Object.keys(x.basics).length === 0 && x.note === undefined), 'nothing private left in memory');
+    assert.ok(ev.sideboards!.every((x) => x.main.length === 0 && x.sideboard.length === 0 && Object.keys(x.basics).length === 0), 'nothing private left in memory');
     assert.equal(file.withheld?.sideboards, 4);
     assert.deepEqual(file.games[2]!.play_draw, { on_play: 's-1', chooser: 'o-1', choice: 'draw', by: 'agent' }, 'who chose and what: public');
-    assert.equal(file.games[1]!.play_draw!.note, '[hidden card] wants tempo', 'a still-hidden card in the chooser\'s note is blanked');
+    assert.ok(!JSON.stringify(file).includes('wants tempo'), 'no note from an older log');
     assert.deepEqual(file.games[1]!.deck_sizes, { 'o-1': 40, 's-1': 40 });
     const gf = b.game(ev, ev.games[1]!);
     assert.ok(!JSON.stringify(gf).includes('Beta Card 24') && !JSON.stringify(file).includes('More removal'), 'no withheld card or note anywhere in the files');

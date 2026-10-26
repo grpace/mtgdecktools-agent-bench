@@ -1,5 +1,5 @@
 {
   "$schema": "./curated.schema.json",
-  "_comment": "Hand-curated highlights: moments worth showing, each pointing at one agent decision (event, seat, decision id) or draft pick (event, seat, pick label). The export resolves each to the agent's note (verbatim), its situation and the outcome (highlights.json, index.json → highlights for featured ones, model files → notes). Pick notes that explain themselves and use no internal terms. docs/SITE-DATA.md, Highlights. Curate from finished production tables.",
+  "_comment": "Hand-curated highlights: moments worth showing, each pointing at one agent decision (event, seat, decision id) or draft pick (event, seat, pick label). The export resolves each to the choice the agent made, its situation and the outcome (highlights.json, index.json → highlights for featured ones, model files → notes). The why says in one sentence what makes the moment worth seeing. docs/SITE-DATA.md, Highlights. Curate from finished production tables.",
   "highlights": []
 }

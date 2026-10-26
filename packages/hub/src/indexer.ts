@@ -66,7 +66,7 @@ export async function writeEventRows(tx: Tx, ev: EventData, ctx: Ctx, ids: Ident
       pickRows.push({
         event_id: ev.id, seat: s.name, pack_number: p.packNumber, pick_number: p.pickNumber,
         overall_pick: p.overallPick ?? (p.packNumber - 1) * 14 + p.pickNumber, contents: p.contents, pick: p.pick, by: p.by,
-        note: p.note ?? null, latency_ms: int(p.latencyMs),
+        latency_ms: int(p.latencyMs),
         model_p: real(pc?.expert?.p), model_rank: int(pc?.expert?.rank), ev_regret_pp: real(pc?.expert?.evRegretPp), in_lane: pc?.expert?.inLane ?? null,
         arch_regret_pp: real(pc?.arch?.regret), made_deck: deck ? main.has(p.pick) : null,
       });
@@ -112,7 +112,7 @@ export async function writeEventRows(tx: Tx, ev: EventData, ctx: Ctx, ids: Ident
       statRows.push({
         event_id: ev.id, game_index: g.index, seat, decisions: st.decisions, auto_passes: st.autoPasses, forced: st.forced, rejections: st.rejected,
         manual_payments: int(st.manualPayments), auto_tapper: int(st.autoTapper), payment_failures: int(st.paymentFailures),
-        median_latency_ms: int(st.medianLatencyMs), notes: st.notes,
+        median_latency_ms: int(st.medianLatencyMs),
       });
     }
   }

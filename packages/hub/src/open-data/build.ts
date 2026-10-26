@@ -33,7 +33,7 @@ import { redactLog, TEXT_RECORD_TYPES } from './redact.js';
 import { checkRows, OPEN_DATA_SCHEMA_VERSION, TABLES, type Row } from './tables.js';
 
 /** Bump when redaction or the decision-texts format changes: every cached log is rebuilt once. */
-export const LOG_VERSION = 2; // 2: the shared scrubber (API keys, JWTs, IPv6, more paths), 2026-10-22
+export const LOG_VERSION = 3; // 2: the shared scrubber (API keys, JWTs, IPv6, more paths), 2026-10-22; 3: choices only (no note or analysis outside rules reports)
 const SNAPSHOT_PREFIX = 'agent-bench-data-';
 
 export interface Retention {

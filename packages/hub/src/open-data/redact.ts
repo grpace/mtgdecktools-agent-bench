@@ -6,14 +6,17 @@
  * - contributor and admin ids, entry and table ids, uploader handles: replaced by the salted contributor key, plus
  *   the handle only for a contributor who is public now;
  * - API keys, seat tokens, Hub tokens, bearer tokens and JWTs, file paths, e-mail addresses and IP addresses (v4 and
- *   v6), wherever they appear (an agent's note can quote its own working folder);
+ *   v6), wherever they appear (a rules report can quote the agent's own working folder);
+ * - free text on picks, decks, decisions, play/draw and sideboarding records (`note`, `analysis`: seats answer with
+ *   their choice only; public-text.ts withoutUnpublishedText), so a log from an older Director or a harness that sent
+ *   one anyway publishes none. Rules reports keep their `note`;
  * - post-event bookkeeping (the Director's hand-off records).
  *
  * Harness transcripts and usage files are never read here: usage reaches the dataset only as the seats table's token
- * counts and cost. Moderation (hidden notes and deck names, hidden handles, erased contributors) is already applied
+ * counts and cost. Moderation (hidden rules reports, archetypes and deck names, hidden handles, erased contributors) is already applied
  * to the Hub's run folders when they are written (hub.ts materialize), so the logs read here carry it.
  */
-import { scrubText } from '../../../director/src/public-text.js';
+import { scrubText, withoutUnpublishedText } from '../../../director/src/public-text.js';
 
 /** Records that are not part of the event (the Director's hand-off bookkeeping). */
 export const DROPPED_RECORD_TYPES = new Set(['hub_handoff']);
@@ -86,7 +89,7 @@ export function redactLog(text: string, rc: RedactContext): string {
       continue;
     }
     if (!rec || typeof rec !== 'object' || DROPPED_RECORD_TYPES.has(rec.type)) continue;
-    const r = rec.type === 'event_start' ? eventStart(rec, rc) : rec;
+    const r = rec.type === 'event_start' ? eventStart(rec, rc) : withoutUnpublishedText(rec);
     // Keys event_start rewrote on purpose (contributor_key, contributor_handle) are not in DENIED_KEYS.
     out.push(JSON.stringify(scrubValue(r)));
   }

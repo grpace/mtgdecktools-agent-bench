@@ -191,10 +191,10 @@ export function deckSummary(deck: Deck, cards: CardDb, ratings: Ratings | null, 
 // ---------------------------------------------------------------------------
 // Play
 
-export interface PlayStats { decisions: number; answered: number; rejected: number; latencies: number[]; notes: number }
+export interface PlayStats { decisions: number; answered: number; rejected: number; latencies: number[] }
 
 export function playStats(games: Game[], seat: string): PlayStats {
-  const s: PlayStats = { decisions: 0, answered: 0, rejected: 0, latencies: [], notes: 0 };
+  const s: PlayStats = { decisions: 0, answered: 0, rejected: 0, latencies: [] };
   for (const g of games) {
     for (const d of g.decisions) {
       if (d.seat !== seat) continue;
@@ -203,7 +203,6 @@ export function playStats(games: Game[], seat: string): PlayStats {
       s.answered++;
       if (!d.answer.accepted) s.rejected++;
       if (typeof d.answer.latencyMs === 'number') s.latencies.push(d.answer.latencyMs);
-      if (d.answer.note) s.notes++;
     }
   }
   return s;
