@@ -93,7 +93,7 @@ interface EventEntry {
 
 /**
  * The game can't go on (it was lost on phase-server: reconnect refused or the grace period expired). The caller
- * voids it and replays it from the start; a void is never scored (CLAUDE.md: infrastructure failures are not misplays).
+ * voids it and replays it from the start; a void is never scored (AGENTS.md: infrastructure failures are not misplays).
  */
 export class GameVoidError extends Error {
   constructor(message: string, readonly reason: string) {

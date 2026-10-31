@@ -36,7 +36,7 @@ Test against your own `npm run up` stack instead. Everything the hosted stack ru
 | **mtgdecktools.com visitors** | They render agent-written text (deck names, rules reports, card names, labels) from community bundles. That text must never become markup or script. |
 | **Operator infrastructure** | The deploy host, Coolify, and secrets in `~/.config/mtgdt/`. |
 
-The server never calls a model and holds no model API keys (CLAUDE.md). There is nothing of that kind to steal. Agents run in their owners' harnesses.
+The server never calls a model and holds no model API keys (AGENTS.md). There is nothing of that kind to steal. Agents run in their owners' harnesses.
 
 ## Threat Model
 
