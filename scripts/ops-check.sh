@@ -153,12 +153,14 @@ send_mail() { # send_mail <subject> <body>   (to $to: ALERT_TO, or ~/.config/age
     | MAIL_TO="$to" MAIL_SUBJECT="$1" MAIL_BODY="$2" python3 -I -c '
 import json, os, smtplib, sys
 from email.message import EmailMessage
-from email.utils import formataddr
+from email.utils import formataddr, formatdate, make_msgid
 c = json.loads(sys.stdin.read().strip().splitlines()[-1])
 m = EmailMessage()
 m["From"] = formataddr((c["name"] or "agent-bench", c["from"]))
 m["To"] = os.environ["MAIL_TO"]
 m["Subject"] = os.environ["MAIL_SUBJECT"]
+m["Date"] = formatdate(localtime=True)
+m["Message-ID"] = make_msgid(domain=c["from"].split("@")[-1])
 m.set_content(os.environ["MAIL_BODY"])
 with smtplib.SMTP("127.0.0.1", 25, timeout=30) as s:
     s.login(c["user"], c["pass"])
