@@ -36,7 +36,7 @@ to="${ALERT_TO:-$(cat "$HOME/.config/agent-bench-ops/alert-to" 2>/dev/null)}"
 if [ -z "$ssh_host" ] || [ "$ssh_host" = local ]; then host_name="$(hostname)"; else host_name="$ssh_host"; fi
 
 if [ -n "$test_email" ]; then
-  send_mail "agent-bench: test of the ops check e-mail" "A test from the Agent Bench ops check on $(hostname) (scripts/ops-check.sh, docs/OPERATIONS.md \"Monitoring\"). When a check of the hosted stack fails twice in a row, an e-mail like this arrives with the failing checks and a prompt to paste into an agent. Nothing to do."
+  send_mail "$project: test of the ops check e-mail" "A test from the Agent Bench ops check on $(hostname) (scripts/ops-check.sh, docs/OPERATIONS.md \"Monitoring\"). When a check of the hosted stack fails twice in a row, an e-mail like this arrives with the failing checks and a prompt to paste into an agent. Nothing to do."
   return $?
 fi
 
@@ -183,7 +183,7 @@ alert_on() { # alert_on <failed 0|1>   (reads $keys, $out, $state from main)
   if [ "$1" = 0 ]; then
     echo 0 > "$state/fail-count"
     if [ -n "$last_keys" ]; then
-      send_mail "agent-bench: all checks pass again on $host_name" "Every check of the Agent Bench stack passes again (it had failed: $last_keys).
+      send_mail "$project: all checks pass again on $host_name" "Every check of the Agent Bench stack passes again (it had failed: $last_keys).
 
 $out" && rm -f "$state/alerted-keys"
     fi
@@ -194,7 +194,7 @@ $out" && rm -f "$state/alerted-keys"
   logger -t agent-bench-ops "FAIL ($count in a row): $cur" 2>/dev/null || true
   [ "$count" -ge "${ALERT_AFTER:-2}" ] || return 0
   if [ "$cur" != "$last_keys" ] || [ $((now - last_alert)) -ge $(( ${ALERT_REPEAT_HOURS:-6} * 3600 )) ]; then
-    send_mail "agent-bench: $(wc -w <<<"$cur") check(s) failing on $host_name: $cur" "The Agent Bench ops check (scripts/ops-check.sh) has failed $count times in a row.
+    send_mail "$project: $(wc -w <<<"$cur") check(s) failing on $host_name: $cur" "The Agent Bench ops check (scripts/ops-check.sh) has failed $count times in a row.
 
 $out
 Runbook: docs/OPERATIONS.md (\"Failures\") in the mtgdecktools-agent-bench repository. The last output is in the ops state directory on the host (last-run.txt)." \
