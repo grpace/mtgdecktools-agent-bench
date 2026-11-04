@@ -35,3 +35,13 @@ console.log('ok - directorVersion: DIRECTOR_TAG, else the deployed commit');
 assert.deepEqual(provisionalSets(Buffer.from(JSON.stringify({ fra: { code: 'FRA' } }))), []);
 assert.deepEqual(provisionalSets(Buffer.from(JSON.stringify({ trk: { code: 'TRK', provisional: true }, fra: { code: 'FRA' }, xyz: { provisional: 'yes' } }))), ['TRK']);
 console.log('ok - provisionalSets: pools marked provisional: true');
+
+// The Director only plays on the pinned build (phase.ts sameBuild): commits compare as prefixes, either way round.
+import('./phase.js').then(({ sameBuild }) => {
+  assert.equal(sameBuild('ad0de6a', 'ad0de6adf'), true);
+  assert.equal(sameBuild('ad0de6adf0', 'ad0de6a'), true);
+  assert.equal(sameBuild('ad0de6a', '4f73fb039'), false);
+  assert.equal(sameBuild('ad0de6a', undefined), false);
+  assert.equal(sameBuild(undefined, '4f73fb039'), true);
+  console.log('ok - sameBuild: the pinned build, by commit prefix');
+});

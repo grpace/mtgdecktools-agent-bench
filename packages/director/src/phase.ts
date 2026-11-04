@@ -12,9 +12,29 @@ const ACTION_TIMEOUT_MS = 4_000;
  * the pin in engine/phase.lock.json (updated by scripts/upgrade-phase.sh), not from code.
  * PHASE_PROTOCOL_VERSION overrides it (used when smoke-testing a candidate upgrade).
  */
-export const PROTOCOL_VERSION: number = Number(process.env.PHASE_PROTOCOL_VERSION) || JSON.parse(
+const LOCK = JSON.parse(
   readFileSync(process.env.PHASE_LOCK ?? fileURLToPath(new URL('../../../engine/phase.lock.json', import.meta.url)), 'utf8'),
-).protocol_version;
+) as { protocol_version: number; build_commit?: string };
+
+/**
+ * Candidate mode: PHASE_PROTOCOL_VERSION is set, so this Director talks to a build other than the pin (an upgrade's
+ * smoke event, or a locally built engine). The build check is skipped and provenance says so (provenance.ts).
+ */
+export const CANDIDATE_PROTOCOL: number | undefined = Number(process.env.PHASE_PROTOCOL_VERSION) || undefined;
+export const PROTOCOL_VERSION: number = CANDIDATE_PROTOCOL ?? LOCK.protocol_version;
+/** The pinned engine build (engine/phase.lock.json build_commit). */
+export const PINNED_BUILD: string | undefined = LOCK.build_commit;
+
+/**
+ * Whether phase-server's build is the pinned one. Commits are compared as prefixes: the lock keeps 7 hex digits, a
+ * ServerHello may send more. Events record the lock's build as theirs (provenance.ts), so outside candidate mode a
+ * different build must never play.
+ */
+export function sameBuild(pinned: string | undefined, served: string | undefined): boolean {
+  if (!pinned || !served) return !pinned;
+  const a = pinned.toLowerCase(), b = served.toLowerCase();
+  return a.startsWith(b) || b.startsWith(a);
+}
 
 export const LIMITED_FORMAT = {
   format: 'Limited', starting_life: 20, min_players: 2, max_players: 2,
@@ -107,6 +127,10 @@ export class PhaseSeat extends EventEmitter {
         if (msg.type === 'ServerHello') {
           if (msg.data.protocol_version !== PROTOCOL_VERSION) {
             reject(new Error(`phase-server speaks protocol ${msg.data.protocol_version} (build ${msg.data.build_commit}), but engine/phase.lock.json pins ${PROTOCOL_VERSION}. Run scripts/upgrade-phase.sh to move to the new build.`));
+            return;
+          }
+          if (CANDIDATE_PROTOCOL == null && !sameBuild(LOCK.build_commit, msg.data.build_commit)) {
+            reject(new Error(`phase-server is build ${msg.data.build_commit} (${msg.data.server_version}), but engine/phase.lock.json pins build ${LOCK.build_commit}: events would record the wrong engine. Start the pinned image, or set PHASE_PROTOCOL_VERSION to test a candidate build.`));
             return;
           }
           this.send('ClientHello', { client_version: 'mtgdt-director/0.1', build_commit: '', protocol_version: PROTOCOL_VERSION });

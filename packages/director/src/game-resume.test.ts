@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import type { AddressInfo } from 'node:net';
 import { WebSocketServer } from 'ws';
 import { Game, GameVoidError } from './game.js';
-import { PROTOCOL_VERSION } from './phase.js';
+import { PINNED_BUILD, PROTOCOL_VERSION } from './phase.js';
 import { AgentSeat } from './seat.js';
 
 let passed = 0;
@@ -22,7 +22,7 @@ function fakeEngine(refuse: number) {
   const wss = new WebSocketServer({ port: 0, host: '127.0.0.1' });
   const tries: string[] = [];
   wss.on('connection', (ws) => {
-    ws.send(JSON.stringify({ type: 'ServerHello', data: { protocol_version: PROTOCOL_VERSION, build_commit: 'test' } }));
+    ws.send(JSON.stringify({ type: 'ServerHello', data: { protocol_version: PROTOCOL_VERSION, build_commit: PINNED_BUILD } }));
     ws.on('message', (raw) => {
       const msg = JSON.parse(String(raw));
       if (msg.type !== 'Reconnect') return;
@@ -62,7 +62,7 @@ await test('the engine is not up yet when the Director resumes: the reconnect is
   const again = new WebSocketServer({ port, host: '127.0.0.1' });
   let refused = 0;
   again.on('connection', (ws) => {
-    ws.send(JSON.stringify({ type: 'ServerHello', data: { protocol_version: PROTOCOL_VERSION, build_commit: 'test' } }));
+    ws.send(JSON.stringify({ type: 'ServerHello', data: { protocol_version: PROTOCOL_VERSION, build_commit: PINNED_BUILD } }));
     ws.on('message', (raw) => {
       const msg = JSON.parse(String(raw));
       if (msg.type !== 'Reconnect') return;

@@ -101,6 +101,9 @@ export function provenance(cardData?: CardDataProvenance): Record<string, unknow
   try {
     const lock = JSON.parse(readFileSync(new URL('../../../engine/phase.lock.json', import.meta.url), 'utf8'));
     engine = { server_version: lock.server_version, build_commit: lock.build_commit, protocol_version: lock.protocol_version, digest: lock.digest };
+    // Candidate mode (phase.ts): the engine that plays isn't the pin, so the pin's fields don't describe it.
+    const candidate = Number(process.env.PHASE_PROTOCOL_VERSION) || undefined;
+    if (candidate != null) engine = { ...engine, candidate_protocol_version: candidate };
   } catch {
     // lock file missing: leave engine empty
   }
