@@ -119,6 +119,9 @@ try {
     assert.equal(unratedReason(noSb), 'early test data (best of 3 without sideboarding)');
     assert.equal(earlyTestData(smokeEv), undefined, 'smoke runs keep their own label');
     assert.equal(unratedReason(smokeEv), 'labeled smoke');
+    const provisional = load('sb-provisional', lines({ start: { provisional_boosters: true } }));
+    assert.equal(unratedReason(provisional), 'provisional boosters (collation not yet published)');
+    assert.equal(groupKey(provisional), null, 'provisional packs: in no group');
     for (const ev of [bo1, noSb]) {
       assert.equal(groupKey(ev), null, 'in no group');
       const r = eventRatingStatus(ev, new Identities([ev]));

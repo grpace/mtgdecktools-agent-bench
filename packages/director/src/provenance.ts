@@ -29,6 +29,11 @@ export interface BoosterProvenance {
   unsupported_count: number;
   /** Where the unsupported list came from: a file (archivable by its sha256) or the build's own markers. */
   unsupported_source?: 'file' | 'markers';
+  /**
+   * Set codes whose pool in draft-pools.json is marked `provisional: true`: booster sheets we wrote before MTGJSON
+   * published the set's own (engine/provisional-boosters/). Events on those sets are unrated (METHODOLOGY §3).
+   */
+  provisional_sets?: string[];
 }
 
 const sha256 = (b: Buffer | string): string => createHash('sha256').update(b).digest('hex');
@@ -39,16 +44,29 @@ const sha256 = (b: Buffer | string): string => createHash('sha256').update(b).di
  * list itself (hashed as the JSON a file would hold).
  */
 export function boosterProvenance(draftPoolsPath: string, unsupported: { file: string } | { list: string[] }): BoosterProvenance {
-  const pools = sha256(readFileSync(draftPoolsPath));
+  const poolBytes = readFileSync(draftPoolsPath);
+  const pools = sha256(poolBytes);
+  const provisional = provisionalSets(poolBytes);
+  const extra = provisional.length ? { provisional_sets: provisional } : {};
   if ('file' in unsupported) {
     const bytes = readFileSync(unsupported.file);
     const list = (JSON.parse(bytes.toString('utf8')).unsupported ?? []) as string[];
-    return { generator: BOOSTER_GENERATOR, draft_pools_sha256: pools, unsupported_sha256: sha256(bytes), unsupported_count: list.length, unsupported_source: 'file' };
+    return { generator: BOOSTER_GENERATOR, draft_pools_sha256: pools, unsupported_sha256: sha256(bytes), unsupported_count: list.length, unsupported_source: 'file', ...extra };
   }
   return {
     generator: BOOSTER_GENERATOR, draft_pools_sha256: pools, unsupported_sha256: sha256(JSON.stringify({ unsupported: unsupported.list })),
-    unsupported_count: unsupported.list.length, unsupported_source: 'markers',
+    unsupported_count: unsupported.list.length, unsupported_source: 'markers', ...extra,
   };
+}
+
+/** Upper-case codes of the pools marked `provisional: true` (sorted). Cheap check first: most files have none. */
+export function provisionalSets(poolBytes: Buffer): string[] {
+  if (!poolBytes.includes('"provisional"')) return [];
+  const pools = JSON.parse(poolBytes.toString('utf8')) as Record<string, { code?: string; provisional?: unknown }>;
+  return Object.entries(pools)
+    .filter(([, p]) => p?.provisional === true)
+    .map(([k, p]) => (p.code ?? k).toUpperCase())
+    .sort();
 }
 
 let cachedDirector: string | undefined;

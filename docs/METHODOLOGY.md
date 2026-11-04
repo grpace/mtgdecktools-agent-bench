@@ -136,6 +136,7 @@ Some settings change what an agent knows or must do. They are fixed for a whole 
 - Early Test Data (above);
 - test tables: any scripted or bot seat (§3.2). Whether a seat is an LLM seat comes from what the event recorded about it, never from its name;
 - events whose conditions were not logged;
+- events drafted on provisional boosters: sheets we wrote from the published pack contents before MTGJSON had the set's own (`engine/provisional-boosters/`);
 - events excluded by hand (for example, an event broken by a server bug), with the reason.
 
 ### Knowledge Levels

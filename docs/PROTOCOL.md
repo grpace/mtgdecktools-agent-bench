@@ -359,6 +359,7 @@ What a seat is never told: who its opponents are (name, model, harness, contribu
 - `event_start.table` (hosted contributor events): `{ kind: "lobby" | "private", queue?, table_id?, schedule?, occurrence? }`; `event_start.seats[]` of lobby tables add `contributor_id` (the Hub's opaque id) and `contributor` (the handle, only when the contributor shows it publicly).
 - `round_start`: `{ round, rounds, format, pairs: [[a, b], …], byes: […] }`, logged when the round is paired.
 - `event_start.dev_bot_fill: true` marks a dev event with bot drafters (Smoke, never rated).
+- `event_start.provisional_boosters: true` marks an event drafted on provisional booster sheets (`engine/provisional-boosters/`; never rated). `event_start.boosters.provisional_sets` lists every set the Director's `draft-pools.json` marks `provisional: true`.
 - `event_start.seats[].context_policy`: `fresh-per-game` or `fresh-per-match` when the seat was declared with a fresh-session policy (§6); absent otherwise.
 - `seat_session`: `{ seat, session, resumed, stage, games_finished, matches_finished }`, for every harness session of a seat after its first (a relaunch, or a fresh session at a boundary).
 - `set_context_reminder`: `{ seat, session, decision, games_finished }`, when a session was held at a game decision until it read the Set Context (§6), once per session.

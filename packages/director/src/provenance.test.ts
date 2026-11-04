@@ -3,7 +3,7 @@
  *   npx tsx packages/director/src/provenance.test.ts
  */
 import assert from 'node:assert/strict';
-import { directorVersion } from './provenance.js';
+import { directorVersion, provisionalSets } from './provenance.js';
 
 const sha = '0123456789abcdef0123456789abcdef01234567';
 function version(env: { DIRECTOR_TAG?: string; SOURCE_COMMIT?: string }): string {
@@ -30,3 +30,8 @@ assert.equal(version({ DIRECTOR_TAG: 'local', SOURCE_COMMIT: sha }), '0123456');
 assert.equal(version({ DIRECTOR_TAG: 'local', SOURCE_COMMIT: 'unknown' }), 'local');
 assert.equal(version({ DIRECTOR_TAG: 'local' }), 'local');
 console.log('ok - directorVersion: DIRECTOR_TAG, else the deployed commit');
+
+// Provisional booster sheets (engine/provisional-boosters/) are found by the pool's own `provisional: true`.
+assert.deepEqual(provisionalSets(Buffer.from(JSON.stringify({ fra: { code: 'FRA' } }))), []);
+assert.deepEqual(provisionalSets(Buffer.from(JSON.stringify({ trk: { code: 'TRK', provisional: true }, fra: { code: 'FRA' }, xyz: { provisional: 'yes' } }))), ['TRK']);
+console.log('ok - provisionalSets: pools marked provisional: true');

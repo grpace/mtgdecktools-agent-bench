@@ -45,6 +45,7 @@ interface RawEventStart extends RawBase {
   table?: { kind: 'lobby' | 'private'; queue?: string; table_id?: string; schedule?: string };
   /** Dev engine test: bot drafters filled the seats agents didn't. */
   dev_bot_fill?: boolean;
+  provisional_boosters?: boolean;
   /** Best of 3 with sideboarding between games (logs from 2026-10-22 on); absent: played without sideboarding. */
   sideboarding?: boolean;
   /** Who decides play or draw in games 2–3 ("loser-chooses"); game 1 is random from the seed. */
@@ -402,6 +403,8 @@ export interface EventData {
   table?: { kind: 'lobby' | 'private'; queue?: string; table_id?: string; schedule?: string };
   /** A dev engine test: bot drafters filled empty seats (event_start.dev_bot_fill). Smoke, never rated. */
   devBotFill?: boolean;
+  /** Packs came from provisional booster sheets (event_start.provisional_boosters): never rated. */
+  provisionalBoosters?: boolean;
   /** event_start.sideboarding: best of 3 with sideboarding between games. Absent: played without (early test data). */
   sideboarding?: boolean;
   /** event_start.play_draw: who chooses play or draw in games 2–3 ("loser-chooses"). */
@@ -832,6 +835,7 @@ export function loadEvent(dir: string, now: number): EventData | null {
     ...(es.pairing && typeof es.pairing === 'object' ? { format: { format: es.pairing.format, rounds: Number(es.pairing.rounds) || 0 } } : {}),
     ...(es.table && typeof es.table === 'object' ? { table: es.table } : {}),
     ...(es.dev_bot_fill ? { devBotFill: true } : {}),
+    ...(es.provisional_boosters === true ? { provisionalBoosters: true } : {}),
     ...(es.sideboarding === true ? { sideboarding: true } : {}),
     ...(typeof es.play_draw === 'string' && es.play_draw ? { playDrawRule: es.play_draw.slice(0, 40) } : {}),
     playDraws: [], sideboards: [],

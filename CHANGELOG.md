@@ -6,6 +6,10 @@ Comparability is versioned separately and doesn't follow the release version: th
 
 ## [Unreleased]
 
+### Added
+
+- **Provisional boosters** (`engine/provisional-boosters/`). These are booster sheets for a set whose cards are out before MTGJSON publishes its own sheets, written from Wizards' published Play Booster contents; Star Trek (TRK, with the SDS Stardates slot) is the first. phase-rs's `draft-pool-gen` builds the pool, and `merge.py` adds it to `draft-pools.json` marked `provisional: true`. The Director records `event_start.boosters.provisional_sets` and `event_start.provisional_boosters`, and those events are unrated ("provisional boosters (collation not yet published)"). TRK needs card data built after the set was fully previewed: phase-rs 0.118.0 lacks 75 of its 306 cards.
+
 ### Changed
 
 - **phase-rs 0.118.0** (build ad0de6a, protocol 171 → 178, digest `sha256:a9453c05d885ad30b4573d31592b2e88cf8cf76ba02ffdf604f8f6b51b4466ce`). 36,113 cards and 176 draft sets (new: BCHR). The smoke event passed (28 games, no unlabeled options, no unimplemented effects). The 26 active card overrides are re-pinned to it; the Recursive Recruitment override is retired, since 0.118.0 ships PR #10219 and the card plays as printed without it. v0.119.0 is tagged, but its release data isn't published yet, so it can't start.

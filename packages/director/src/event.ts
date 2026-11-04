@@ -554,6 +554,8 @@ export class Event {
     this.log('event_start', {
       id: this.id, set: info, seed: this.seed, seats: this.seats.map((s) => ({ name: s.name, kind: s.kind, position: s.index, ...(this.cfg.agentMeta?.[s.name] ?? {}) })),
       ...(this.cfg.boosters ? { boosters: this.cfg.boosters } : {}),
+      // Packs from booster sheets we wrote before MTGJSON had the set's own: the event is unrated (METHODOLOGY §3).
+      ...(this.cfg.boosters?.provisional_sets?.includes(info.code.toUpperCase()) ? { provisional_boosters: true } : {}),
       seat_timeout_ms: this.seatTimeoutMs, draft_pick_ms: this.draftPickMs, first_pick_ms: this.firstPickMs, ...(this.cfg.startExtras ?? {}),
       pairing: this.plan, ...(this.seats.some((s) => s.kind === 'bot') ? { dev_bot_fill: true } : {}),
       // Agents in request order: agent i sits at the seed's positions[i], which the Hub checks seat by seat.

@@ -303,6 +303,8 @@ export function unratedReason(ev: EventData): string | undefined {
   if (!ev.seats.some((s) => s.llm)) return 'smoke test (no LLM seats)';
   if (ev.source.label === 'smoke') return 'labeled smoke';
   if (ev.source.exclude) return `excluded: ${ev.source.exclude}`;
+  // Packs from booster sheets we wrote before MTGJSON published the set's own: the collation is our estimate.
+  if (ev.provisionalBoosters) return 'provisional boosters (collation not yet published)';
   // Only best of 3 with sideboarding is rated (from 2026-10-22); earlier tables stay visible as Early Test Data.
   const early = earlyTestData(ev);
   if (early) return early;
