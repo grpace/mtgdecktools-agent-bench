@@ -78,8 +78,11 @@ test('a forged first pick replays as a draft but fails pack regeneration', { ski
 test('pack regeneration: missing booster data or a different seed is unverifiable, not a failure', { skip: skip || (!haveBoosterData && 'no data/draft-pools.json') }, () => {
   const events: Rec[] = filesOf(run!).get('events.jsonl')!.toString('utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
   const logged = regenInputFromLog(events)!;
-  // Logs from before event_start.boosters (the legacy case this test is about); newer logs are checked below.
-  const inp = { ...logged, boosters: undefined };
+  // Logs that don't name their booster data (the legacy case this test is about); newer logs are checked below. Keep
+  // the generator: without it regeneration runs boosters-v1, and a v2 run differs from v1 after any swap on a sheet
+  // without duplicates (v2 counts the replacement as taken, which moves the slot's next draw).
+  const generator = logged.boosters?.generator;
+  const inp = { ...logged, boosters: generator ? { generator } : undefined };
   assert.equal(regeneratePacks(inp, {}).status, 'unverifiable');
   const noList = regeneratePacks(inp, { defaultDraftPools: boosters.defaultDraftPools });
   assert.ok(['verified', 'partial'].includes(noList.status), noList.message);
@@ -88,7 +91,7 @@ test('pack regeneration: missing booster data or a different seed is unverifiabl
   assert.equal(other.status, 'unverifiable');
   assert.ok(other.missing?.includes('event_start.boosters.draft_pools_sha256'));
   // With the booster data named by sha256 (what the Director should log), a difference is a mismatch.
-  const named = regeneratePacks({ ...inp, seed: `${inp.seed}-x`, boosters: { draft_pools_sha256: noList.draft_pools_sha256 } }, { defaultDraftPools: boosters.defaultDraftPools });
+  const named = regeneratePacks({ ...inp, seed: `${inp.seed}-x`, boosters: { ...inp.boosters, draft_pools_sha256: noList.draft_pools_sha256 } }, { defaultDraftPools: boosters.defaultDraftPools });
   assert.equal(named.status, 'mismatch');
   if (logged.boosters) {
     // A log that names its booster data (generator, both sha256s) regenerates exactly with the same files.
