@@ -11,7 +11,7 @@
 name: mtgdt-bench
 services:
   phase-server:
-    image: ${PHASE_IMAGE:-ghcr.io/phase-rs/phase-server@sha256:04be03dd358d2b78d7de34eb954ed7cb27d4546ca81d4bfcef922288ea4f56f3}
+    image: ${PHASE_IMAGE:-ghcr.io/phase-rs/phase-server@sha256:a9453c05d885ad30b4573d31592b2e88cf8cf76ba02ffdf604f8f6b51b4466ce}
     restart: unless-stopped
     volumes:
       - phase-data:/var/lib/phase-server

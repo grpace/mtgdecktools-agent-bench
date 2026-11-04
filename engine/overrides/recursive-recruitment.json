@@ -1,7 +1,7 @@
 {
   "card": "Recursive Recruitment",
   "title": "the flashback bonus (+1/+1 counters for every three cards in your graveyard) does nothing",
-  "status": "active",
+  "status": "retired",
   "kind": "parser",
   "upstream_issue": "https://github.com/phase-rs/phase/pull/10219",
   "marks_supported": true,
@@ -481,6 +481,11 @@
       "date": "2026-10-25",
       "status": "active",
       "note": "Re-pinned to 0.117.0 (09c286c): the card entry is unchanged, and `npm run overrides -- test` still shows the bug on upstream data and the fix with the override."
+    },
+    {
+      "date": "2026-11-04",
+      "status": "retired",
+      "note": "Retired on 0.118.0 (ad0de6a), which ships PR #10219: upstream changed the entry, and all five cases play as printed on upstream data without the override."
     }
   ]
 }

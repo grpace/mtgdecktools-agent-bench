@@ -1,32 +1,32 @@
 {
  "schema": "deps-manifest/1",
  "_comment": "What versions of everything we're on. Written by scripts/deps.py (npm run deps -- manifest|update); don't edit by hand. Guide: docs/UPGRADING.md.",
- "updated_at": "2026-10-25T21:33:13Z",
+ "updated_at": "2026-11-04T07:56:06Z",
  "phase_rs": {
   "_comment": "The pin itself is engine/phase.lock.json (image digest, server version, build, protocol). Update with `npm run deps -- update phase`.",
   "lock_file": "engine/phase.lock.json",
-  "lock_sha256": "ce70d8c6a89f531b7f9477f1985a0bc03457e2c93b4e1f0adb3f298ed18369b2",
-  "server_version": "0.117.0",
-  "protocol_version": 171,
+  "lock_sha256": "40036caea2e1b46025ea9b9d5d7ad471c82ea1f8649abfbe58734f5e50772520",
+  "server_version": "0.118.0",
+  "protocol_version": 178,
   "data": {
    "card_data": {
     "file": "data/card-data.json",
-    "sha256": "84d5fd2af84e2f125b740eeb05637785b2e8df26d34e41a2cd628697dae30513",
-    "bytes": 100070783,
-    "cards": 36037
+    "sha256": "538b1378b7ecdc0a8c983757c864e90c0aaf77f5920fc902c6532436ec5e7f57",
+    "bytes": 100274114,
+    "cards": 36113
    },
    "booster_data": {
     "file": "data/draft-pools.json",
-    "sha256": "dbcf9b7ebd35a02bdcb660d3f150644f7468853de1d9ef49c80b1849410c8aa7",
-    "bytes": 45787396,
-    "sets": 175
+    "sha256": "ef25399a607d3c461be339e12a2b455322047f2133d1470712216a536e2ccf20",
+    "bytes": 45856646,
+    "sets": 176
    },
    "unsupported": {
     "file": "data/unsupported-cards.json",
-    "sha256": "2d133b9a58169700252588a8b24bcbe12ffca34c5e861c1d6d688cfa6e35beec",
-    "bytes": 84914,
-    "count": 4015,
-    "generated": "2026-10-25",
+    "sha256": "aee3b8b8294f8dd62e772d49ed83ce1e9727962c97b7832aa2d556465bbc27dd",
+    "bytes": 84960,
+    "count": 4013,
+    "generated": "2026-11-04",
     "sources": "this build's card-data markers + https://data.phase-rs.dev/coverage-data.json"
    }
   },
@@ -57,6 +57,7 @@
    "ATQ",
    "AVR",
    "BBD",
+   "BCHR",
    "BFZ",
    "BLB",
    "BNG",
@@ -225,11 +226,22 @@
     "verified_at": "2026-10-22",
     "card_data_sha256": "c4cfb737d0c0b1b135d3a353d71a95606f6ee147727bc11c3d16b82ece33da41",
     "replaced_at": "2026-10-25"
+   },
+   {
+    "digest": "sha256:04be03dd358d2b78d7de34eb954ed7cb27d4546ca81d4bfcef922288ea4f56f3",
+    "server_version": "0.117.0",
+    "build_commit": "09c286c",
+    "protocol_version": 171,
+    "verified_at": "2026-10-25",
+    "card_data_sha256": "84d5fd2af84e2f125b740eeb05637785b2e8df26d34e41a2cd628697dae30513",
+    "replaced_at": "2026-11-04"
    }
   ],
   "archived": [
    "55db4dd480f16d35a74199421b0cb73f93ffeb67b503c1c26efebce086e86ba6.json",
-   "831aa384ed2458b5f2c6efebd41f3edfd1dfb7281c85c4e09c3a0404b22ceefd.json"
+   "831aa384ed2458b5f2c6efebd41f3edfd1dfb7281c85c4e09c3a0404b22ceefd.json",
+   "dbcf9b7ebd35a02bdcb660d3f150644f7468853de1d9ef49c80b1849410c8aa7.json",
+   "329aaea53a8fd2fee3863abaf5658e435a8c126ede7ae5b1845d0a3c5ee222e7.json"
   ]
  },
  "17lands": {

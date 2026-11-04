@@ -6,9 +6,9 @@
   "upstream_issue": null,
   "marks_supported": true,
   "applies_to": {
-    "server_version": "0.117.0",
-    "build_commit": "09c286c",
-    "card_data_sha256": "84d5fd2af84e2f125b740eeb05637785b2e8df26d34e41a2cd628697dae30513",
+    "server_version": "0.118.0",
+    "build_commit": "ad0de6a",
+    "card_data_sha256": "538b1378b7ecdc0a8c983757c864e90c0aaf77f5920fc902c6532436ec5e7f57",
     "entry_sha256": "3d39a82aa7b93091a04d6e6cb301ab92af3f4d9f1c7f3babab1dc7317b5c5c02"
   },
   "rules": {
@@ -663,6 +663,11 @@
       "date": "2026-10-25",
       "status": "active",
       "note": "Written against Oracle text and CR 606.3/611.2c/701.71a; tested on 0.117.0 (09c286c): upstream resolves the spell without empowering or granting anything; with the override, the token's loyalty abilities can be activated on the opponent's turn and in your combat, a Jace cast after it resolved can activate in combat, once per turn still holds, the permission ends at end of turn and doesn't reach the opponent's Jaces."
+    },
+    {
+      "date": "2026-11-04",
+      "status": "active",
+      "note": "Re-pinned to 0.118.0 (ad0de6a): the card entry is unchanged, and `npm run overrides -- test` still shows the bug on upstream data and the fix with the override."
     }
   ]
 }

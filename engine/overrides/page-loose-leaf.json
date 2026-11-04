@@ -6,9 +6,9 @@
   "upstream_issue": "https://github.com/phase-rs/phase/issues/9600",
   "marks_supported": true,
   "applies_to": {
-    "server_version": "0.117.0",
-    "build_commit": "09c286c",
-    "card_data_sha256": "84d5fd2af84e2f125b740eeb05637785b2e8df26d34e41a2cd628697dae30513",
+    "server_version": "0.118.0",
+    "build_commit": "ad0de6a",
+    "card_data_sha256": "538b1378b7ecdc0a8c983757c864e90c0aaf77f5920fc902c6532436ec5e7f57",
     "entry_sha256": "ff88588d3dd22b8c6406dfa7ab6a97b5ec130d355955ec933f453f7f342dbf4d"
   },
   "rules": {
@@ -718,6 +718,11 @@
       "date": "2026-10-25",
       "status": "active",
       "note": "Re-pinned to 0.117.0 (09c286c): the card entry is unchanged, and `npm run overrides -- test` still shows the bug on upstream data and the fix with the override."
+    },
+    {
+      "date": "2026-11-04",
+      "status": "active",
+      "note": "Re-pinned to 0.118.0 (ad0de6a): the card entry is unchanged, and `npm run overrides -- test` still shows the bug on upstream data and the fix with the override."
     }
   ]
 }

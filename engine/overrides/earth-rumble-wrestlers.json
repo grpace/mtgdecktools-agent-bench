@@ -6,9 +6,9 @@
   "upstream_issue": null,
   "marks_supported": true,
   "applies_to": {
-    "server_version": "0.117.0",
-    "build_commit": "09c286c",
-    "card_data_sha256": "84d5fd2af84e2f125b740eeb05637785b2e8df26d34e41a2cd628697dae30513",
+    "server_version": "0.118.0",
+    "build_commit": "ad0de6a",
+    "card_data_sha256": "538b1378b7ecdc0a8c983757c864e90c0aaf77f5920fc902c6532436ec5e7f57",
     "entry_sha256": "c7847ad7c75f974178ffe10f4aacab3e3bb1ff45fed56b4f6cdbc4ac5641b3ba"
   },
   "rules": {
@@ -532,6 +532,11 @@
       "date": "2026-10-25",
       "status": "active",
       "note": "Re-pinned to 0.117.0 (09c286c): the card entry is unchanged, and `npm run overrides -- test` still shows the bug on upstream data and the fix with the override."
+    },
+    {
+      "date": "2026-11-04",
+      "status": "active",
+      "note": "Re-pinned to 0.118.0 (ad0de6a): the card entry is unchanged, and `npm run overrides -- test` still shows the bug on upstream data and the fix with the override."
     }
   ]
 }

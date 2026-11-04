@@ -19,7 +19,7 @@ What version of each file we're on (17Lands snapshot, source files, sha256) is r
 17Lands publishes public files for the sets it tracked on MTG Arena. The rest (paper-only sets, and Arena sets from before 17Lands' public datasets) have no public file; they are listed in `deps/manifest.json` → `17lands.no_public_data` and re-probed by every `npm run deps -- check`, which also reports any set that newly appears.
 
 <!-- coverage:start (generated from deps/manifest.json by `npm run deps -- manifest`; don't edit by hand) -->
-Of the 175 sets with phase-rs booster data, **32 have 17Lands data** (last probed 2026-10-22). Model and norms: ✓ built, – skipped (reason in the manifest).
+Of the 176 sets with phase-rs booster data, **32 have 17Lands data** (last probed 2026-10-22). Model and norms: ✓ built, – skipped (reason in the manifest).
 
 | Set | Name | 17Lands | Games | Drafts | Rated cards | Game dates | Pick model | Deck norms |
 | --- | --- | --- | ---: | ---: | ---: | --- | :---: | :---: |

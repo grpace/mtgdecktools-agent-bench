@@ -6,9 +6,9 @@
   "upstream_issue": null,
   "marks_supported": true,
   "applies_to": {
-    "server_version": "0.117.0",
-    "build_commit": "09c286c",
-    "card_data_sha256": "84d5fd2af84e2f125b740eeb05637785b2e8df26d34e41a2cd628697dae30513",
+    "server_version": "0.118.0",
+    "build_commit": "ad0de6a",
+    "card_data_sha256": "538b1378b7ecdc0a8c983757c864e90c0aaf77f5920fc902c6532436ec5e7f57",
     "entry_sha256": "56839595a175cd63a5b19d43c547a10dc903c245adbb465bfd6efc8e8a9f38a3"
   },
   "rules": {
@@ -416,6 +416,11 @@
       "date": "2026-10-25",
       "status": "active",
       "note": "Written against Oracle text and CR 704.5j/611.2c; tested on 0.117.0 (09c286c): upstream puts one of the two legends into the graveyard as soon as Hall copies a legendary creature; with the override both stay, two legends cast later that turn both stay, the legend rule returns at the next turn, and the opponent's permanents are unaffected."
+    },
+    {
+      "date": "2026-11-04",
+      "status": "active",
+      "note": "Re-pinned to 0.118.0 (ad0de6a): the card entry is unchanged, and `npm run overrides -- test` still shows the bug on upstream data and the fix with the override."
     }
   ]
 }

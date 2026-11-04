@@ -198,7 +198,7 @@ Every card the eight featured sets swap out of packs on phase-rs 0.117.0, and wh
 | Sphinx's Approach (C) | Fixed | The "four cards named Sphinx's Approach" clause was unparsed and the "may" was offered with any count; now gated on four copies, exactly four exiled | none (same misparse on Dragon's Approach: issue #8356) |
 | Fblthp, Impossibly Lost (U) | Fixed | Trigger mode unknown; now the batched "opponent dealt combat damage during your turn" trigger | none |
 | Essence Burn (U) | Fixed | Die-replacement unparsed and the target filter wrong; mirrors the open PR | PR #10032 open → drop when merged and released |
-| Recursive Recruitment (U) | Fixed | "A counter for every three cards" unparsed; mirrors the upstream PR | PR #10219 merged, in 0.118.0 → retire at that upgrade |
+| Recursive Recruitment (U) | Upstream | "A counter for every three cards" was unparsed; our override is retired | PR #10219, fixed in 0.118.0 |
 | Warrior's Blades (U) | Fixed | The equip discount per +1/+1 counter on its target was dropped | none |
 | Violent Echoes (U) | Upstream | "Empower Jace X, where X is that excess damage" unparsed | PR #10206, fixed in 0.117.0 |
 | Way of the Mind Sculptor (U) | Engine | No trigger condition can read how many loyalty counters the triggering activation removed (the event carries no cost; the stack object's removed-counter ledger isn't credited for a fixed [−N] and only the ability's own effects read it) | none; engine patch 0001 |
