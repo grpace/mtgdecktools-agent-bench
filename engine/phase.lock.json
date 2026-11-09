@@ -1,11 +1,11 @@
 {
   "image": "ghcr.io/phase-rs/phase-server",
-  "digest": "sha256:a9453c05d885ad30b4573d31592b2e88cf8cf76ba02ffdf604f8f6b51b4466ce",
-  "server_version": "0.118.0",
-  "build_commit": "ad0de6a",
-  "protocol_version": 178,
-  "cards": 36113,
+  "digest": "sha256:aa6e1db60fa9515b200c334215e920b906fa059643d42597bca7976d28b8d765",
+  "server_version": "0.121.0",
+  "build_commit": "3ac3e11",
+  "protocol_version": 248,
+  "cards": 36280,
   "draft_sets": 176,
-  "verified_at": "2026-11-04",
+  "verified_at": "2026-11-09",
   "verified_by": "scripts/upgrade-phase.sh smoke event"
 }
