@@ -21,11 +21,12 @@ const IDENTITY_RE = /^[^\u0000-\u001f\u007f<>"'`\\]{0,100}$/;
 export const LIMITS = {
   note: 4_000,
   cardName: 200,
-  text: 200_000,
+  /** A legal "choose up to N" search lists every subset: one real offer had 3,302 options and 533 KB of text. */
+  text: 2_000_000,
   label: 200,
   turn: 10_000,
   count: 100_000,
-  options: 2_000,
+  options: 20_000,
   cardsPlayed: 1_000,
   /** Cards in one deck list (main or sideboard): a pool is 42–45 cards plus basics. */
   deckCards: 500,
