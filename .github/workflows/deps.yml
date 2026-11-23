@@ -306,7 +306,13 @@ jobs:
           # The token reaches git through a credential helper reading the environment: never in argv or .git/config.
           authed() { git -c credential.helper= -c 'credential.helper=!f() { test "$1" = get && echo username=x-access-token && echo "password=$GH_TOKEN"; }; f' "$@"; }
           branch="deps/phase-$VERSION"
-          if authed ls-remote --exit-code --heads origin "$branch" >/dev/null; then echo "$branch already exists."; exit 0; fi
+          if authed ls-remote --exit-code --heads origin "$branch" >/dev/null; then
+            # A closed pull request stays closed; a branch whose pull request was never opened gets one now.
+            if [ "$(gh pr list --head "$branch" --state all --json number --jq length)" != "0" ]; then echo "$branch already has a pull request."; exit 0; fi
+            gh pr create --base main --head "$branch" --title "chore(engine): phase-rs $VERSION" --body-file "$CHANGE/pr-body.md"
+            gh workflow run ci.yml --ref "$branch"
+            exit 0
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "$branch"

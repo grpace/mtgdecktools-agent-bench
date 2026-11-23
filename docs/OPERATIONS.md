@@ -89,7 +89,7 @@ A deploy from `deploy.sh`, from Coolify or from a bare push is complete, because
 
 **Alerts.** `deploy/deploy.sh` installs the script on the host with a 5-minute cron line (`SSH_HOST=local … ops-check.sh --server --alert`), adding it if it's missing and never touching other cron lines. With `--alert` it e-mails `ALERT_TO` (or the address in `~/.config/agent-bench-ops/alert-to` on the host; the address is kept out of the repository) through the host's local mail server. It alerts after two failing runs in a row (so a deploy's restart doesn't), again every 6 hours while checks keep failing or when another check fails, and once when everything passes again. The subject starts with the instance's Coolify project (`PROJECT`, for example `agent-bench-prod:`), so alerts from two instances on one host can be told apart. The e-mail lists the failing checks, the whole output and a prompt to paste into an agent. Log: `journalctl -t agent-bench-ops`. Test the path with `ops-check.sh --test-email`. From a workstation, `scripts/ops-check.sh --server` runs the same checks over SSH.
 
-**External uptime.** `.github/workflows/uptime.yml` checks the production Director's and Hub's `/health` every 10 minutes from GitHub's runners, so a dead host is noticed even when its own cron can't run.
+**External uptime.** `.github/workflows/uptime.yml` checks the production Director's and Hub's `/health` hourly from GitHub's runners, so a dead host is noticed even when its own cron can't run.
 
 Other read-only views: `GET /api/capacity` (load, queue, drain), `GET /api/lobby` (queues and recent tables), `admin_curl https://<director>/api/admin/status` (live events and games), `npm run hub -- submissions --status held` (the review queue), `npm run hub -- open-data status`.
 

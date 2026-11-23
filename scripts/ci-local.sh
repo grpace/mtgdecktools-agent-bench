@@ -172,6 +172,8 @@ job_integration() {
   done
   "$engine" cp "$phase:/var/lib/phase-server/card-data.json" data/
   "$engine" cp "$phase:/var/lib/phase-server/draft-pools.json" data/
+  # The Director and the Hub checks must share one unsupported-card list, or pack regeneration falsely fails.
+  python3 -I scripts/refresh-phase-data.py data
   for _ in $(seq 1 60); do "$engine" exec "$pg" pg_isready -U hub -d hub >/dev/null 2>&1 && break; sleep 1; done
   "$engine" exec "$pg" psql -U hub -d hub -qc 'create database hubtest' >/dev/null
   for _ in $(seq 1 60); do (exec 3<>"/dev/tcp/127.0.0.1/$phase_port") 2>/dev/null && break; sleep 1; done

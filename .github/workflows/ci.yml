@@ -138,6 +138,8 @@ jobs:
           done
           docker cp "$PHASE_CONTAINER:/var/lib/phase-server/card-data.json" data/
           docker cp "$PHASE_CONTAINER:/var/lib/phase-server/draft-pools.json" data/
+          # The Director and the Hub checks must share one unsupported-card list, or pack regeneration falsely fails.
+          python3 -I scripts/refresh-phase-data.py data
           ls -la data
       - name: Card overrides (scripted games on throwaway phase-servers; docs/CARD-OVERRIDES.md)
         run: CONTAINER_ENGINE=docker npm run overrides -- test
