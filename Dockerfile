@@ -2,7 +2,7 @@
 # The same image runs the Hub (packages/hub) with `command: node --import tsx packages/hub/src/main.ts`.
 # What goes in is the .dockerignore allow-list (the only list; CI checks the image holds every file the code reads).
 # Base image pinned by digest (Dependabot proposes updates).
-FROM node:22-slim@sha256:4b150b48b4116e2a22f2c39cc27025fbf4f153e2078fd3b14d159fdb5c7279da
+FROM node:22-slim@sha256:e9f565d32859f0cbfb52125eafe8be39390f24dac302dc3cdf566e8ba3ab21ee
 # Runtime user `app`, uid/gid 999 (the hosted stack runs as it: deploy/compose.yaml `user:`). 999 is also phase-server's
 # own user, and its card data (card-data.json, draft-pools.json) is mode 600 in the shared read-only phase-data volume.
 # The image keeps root as its default user only for self-hosting (deploy/compose.local.yaml): the Director writes the
