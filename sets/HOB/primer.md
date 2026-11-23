@@ -52,7 +52,7 @@ Each supported lane: **dual**, then **gold signpost**. Count enablers vs payoffs
 * **RW Dwarves / Storied** — dual [[Iron Hills]]; signpost [[Thorin Oakenshield]]
   * **Deck shape:** Equipment + Dwarf legends; high creature count for carriers. Storied turns on from normal deck construction. Best curve: turn-one Dwarf → turn-two [[Dwarven Mattock]] or [[Goblin Plate Mail]]. **Limit [[Iron Hills]] to one copy** when running one-drops.
   * **Equipment package:** [[Goblin Plate Mail]], [[Dwarven Mattock]], [[Ragged Short Spear]], [[Well-Worn Spatula]]. [[Dwarven Shortsword]]—one copy usually enough. [[Sting, Bilbo's Sword]] / [[Orcrist, Goblin-cleaver]] lose to cheaper Equipment.
-  * **Support:** [[Iron Hills Blacksmith]], [[Bothersome Noisemaker]], [[Glóin the Mighty]], [[Bifur, Melodic Rider]], [[Dori, Bearer of Friends]]. Rares: [[Dáin Ironfoot]], [[Dwalin, Weaponmaster]], [[Dáin's Company]]. [[Dáin, Lord of the Iron Hills]] is overpicked—needs ~6–8 Dwarves; prefer [[Dáin Ironfoot]] when the pool is already Dwarf-heavy.
+  * **Support:** [[Iron Hills Blacksmith]], [[Bothersome Noisemaker]], [[Glóin the Mighty]], [[Bifur, Melodic Rider]], [[Dori, Bearer of Friends]]. Rares: [[Dáin Ironfoot]], [[Dwalin, Weaponmaster]], [[Dáin's Company]]. [[Dáin, Lord of the Iron Hills]] does not care about Dwarves: it is a 2-mana vigilance body whose attack tax needs storied (three or more artifacts, legendaries, and/or Sagas), so value it by your storied count.
   * **Density:** [[Dwarven Mauler]] wants ~4–5 Equipment. [[An Unexpected Party]] for Dwarf tokens + anthem. Keep enough bodies to hold gear. Do not splash blue—blue high-rarity cards do not carry RW.
 
 * **BG Wolves / Ferocious** — dual [[Mirkwood]]; signpost [[The Chief Warg]]
@@ -109,7 +109,7 @@ Each supported lane: **dual**, then **gold signpost**. Count enablers vs payoffs
 * Auto-playing gold **signposts** ([[Bolg of the North]], [[Thorin Oakenshield]], [[Silvan Reveler]], [[The Chief Warg]]) over cheaper on-lane cards—only [[Bard the Bowman]] consistently earns its slot; [[Thorin Oakenshield]] is an equip carrier, [[Silvan Reveler]] needs landfall density.
 * Slotting **[[Gandalf, Wandering Wizard]]** in blue decks; passing **[[Gandalf, Spark Starter]]** in BR when curve is low.
 * **[[Woodland Weavemaster]] in BG** or in GU without Elf density—it belongs in landfall-heavy GU with ~6+ strong Elves, or nowhere.
-* Overpaying for **[[Dáin, Lord of the Iron Hills]]** without ~6–8 Dwarves already in the 40.
+* Overpaying for **[[Dáin, Lord of the Iron Hills]]** without enough artifacts, legendaries, and Sagas to turn on storied.
 * **Expensive Equipment** ([[Sting, Bilbo's Sword]], [[Orcrist, Goblin-cleaver]]) over [[Dwarven Mattock]] / [[Crude Bent Blade]] / [[Goblin Plate Mail]].
 * **[[Desert Were-Worm]]** and other high-curve traps with no early board.
 * Slow **control-blue** plans without Recruit bodies or lifelink to close after stabilizing.

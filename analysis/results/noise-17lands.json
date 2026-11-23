@@ -100,13 +100,13 @@
   "method": "Arena pairs players by record, so outcomes within a deck are not exchangeable (game 1 / game 2 covariance is ~0 or negative) and whole-deck win-rate variance is compressed: deck_logit_sd_mom is a lower bound. quality_logit_sd_* = spread of deck strength explained by the quality score (raw, and holding player skill fixed)."
  },
  "FRA": {
-  "on_play_wr": 0.5803,
-  "on_draw_wr": 0.5329,
-  "play_advantage_elo": 16.7,
-  "cov_game1_game2": -0.00034,
-  "deck_logit_sd_mom": 0.232,
-  "quality_logit_sd_raw": 0.186,
-  "quality_logit_sd_adj": 0.104,
+  "on_play_wr": 0.5788,
+  "on_draw_wr": 0.5291,
+  "play_advantage_elo": 17.5,
+  "cov_game1_game2": -0.00049,
+  "deck_logit_sd_mom": 0.216,
+  "quality_logit_sd_raw": 0.171,
+  "quality_logit_sd_adj": 0.107,
   "method": "Arena pairs players by record, so outcomes within a deck are not exchangeable (game 1 / game 2 covariance is ~0 or negative) and whole-deck win-rate variance is compressed: deck_logit_sd_mom is a lower bound. quality_logit_sd_* = spread of deck strength explained by the quality score (raw, and holding player skill fixed)."
  },
  "HOB": {

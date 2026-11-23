@@ -34,7 +34,7 @@
 2. **Teamwork:** Tap creatures with total power N (summoning sickness OK). Modal spells often **choose both modes** with Teamwork. Few per pool—a handful, not a full engine. [[Captain America, Living Legend]] untaps after Teamwork taps; black 2/1 Villain tokens help pay costs. High Teamwork numbers (3–4) are hard on curve—treat as bonus.
 3. **Plan:** Enchantments that gain counters from triggers, then sacrifice for a payoff. Most need heavy dedicated support across several turns; cut when setup outruns your pool.
 4. **Connive:** Draw, discard, maybe +1/+1 counter—even if the creature dies, you still draw and discard (no counter). Strong for UB draw-two and BG yard filling. [[Moonstone, Harsh Mistress]] replays discarded cards in connive shells. Pairs with [[Misty Knight, Hero for Hire]] and landcyclers for late draws.
-5. **Double-faced characters:** Cast the front for less or pay the full back-face cost—**build for the front face.**
+5. **Double-faced characters:** You always cast the front face; a sorcery-speed activated ability transforms it later (e.g. [[Bruce Banner // The Incredible Hulk]] pays {2}{R}{R}{G}{G} to flip)—**build for the front face** and treat the transform cost as a late-game mana sink.
 6. **Worthy:** Legendary, red and/or white, not a Villain. [[Mjölnir, Hammer of Thor]] checks on equip.
 7. **Harness:** [[The Mind Stone]]—build-around; needs support.
 8. **Boast:** Villain combat (e.g. [[Baron Helmut Zemo]] in BR).
@@ -47,7 +47,7 @@ Each lane lists its **signpost uncommon** first. Commit to the pair whose pool h
 * **UW Teamwork — [[Captain America, Living Legend]]**
   * **Plan:** Tempo and flyers; Teamwork and tap-untap synergies when the pool has spells. **White-blue is a premier lane**—strong card quality, removal, flyers, and mana sinks even with only a few Teamwork spells.
   * **Signpost:** [[Captain America, Living Legend]]—3/4 vigilance; untaps creatures you tap for Teamwork or gives pseudo-vigilance when attacking; pairs with [[S.H.I.E.L.D. Helicarrier]] crew. Solid role player, not the main reason UW wins.
-  * **Standouts:** [[Justice, Vance Astrovik]] (elite gold payoff), [[Agent Maria Hill]] (draws when tapped for Teamwork—excellent one-drop when you have any Teamwork; run multiples if in pool), [[S.H.I.E.L.D. Deployment Drone]] (top blue common—flying artifact body plus connive), [[Giant-Sized Flying Ant]] (flash flyer; tap or untap permanents—overperforms in races).
+  * **Standouts:** [[Justice, Vance Astrovik]] (elite gold payoff), [[Agent Maria Hill]] (draws when tapped for Teamwork—excellent one-drop when you have any Teamwork; run multiples if in pool), [[S.H.I.E.L.D. Deployment Drone]] (top blue common—2/2 flying artifact body plus a 1/1 Soldier token), [[Giant-Sized Flying Ant]] (flash flyer; tap or untap permanents—overperforms in races).
   * **Payoffs:** [[Okoye, Dora Milaje Leader]] (two 1/1s, token first strike). [[Borough Backup]] (two 3/2 Hero tokens plus landcycling).
   * **Support:** [[Falcon, Winged Wonder]] (surveil on attack breaks stalls), [[Atlantis Attacks]], [[We Say Thee Nay!]] (premium two-drop counter), [[Helicarrier Strike]], [[Kree Commandos]] (flying prowess), [[Raft Security Officer]] (tap interaction that scales—counts toward removal target). [[H.E.R.B.I.E. Scout Unit]] is a strong four-drop flyer and two-for-one in go-wide flyer shells.
 

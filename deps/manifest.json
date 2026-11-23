@@ -1,7 +1,7 @@
 {
  "schema": "deps-manifest/1",
  "_comment": "What versions of everything we're on. Written by scripts/deps.py (npm run deps -- manifest|update); don't edit by hand. Guide: docs/UPGRADING.md.",
- "updated_at": "2026-11-04T07:56:06Z",
+ "updated_at": "2026-11-23T19:31:28Z",
  "phase_rs": {
   "_comment": "The pin itself is engine/phase.lock.json (image digest, server version, build, protocol). Update with `npm run deps -- update phase`.",
   "lock_file": "engine/phase.lock.json",
@@ -261,7 +261,7 @@
    "min_expert_drafts": 1000,
    "min_decks_buildeval": 5000
   },
-  "checked_at": "2026-10-22T03:32:45Z",
+  "checked_at": "2026-11-23T19:27:14Z",
   "sets": {
    "AFR": {
     "name": "Adventures in the Forgotten Realms",
@@ -870,42 +870,68 @@
     "name": "Reality Fracture",
     "code": "FRA",
     "format": "PremierDraft",
-    "snapshot": "FRA.PremierDraft@2026-10-19T16:20:26Z",
+    "snapshot": "FRA.PremierDraft@2026-11-14T13:27:53Z",
     "files": {
      "game_data": {
       "url": "https://17lands-public.s3.amazonaws.com/analysis_data/game_data/game_data_public.FRA.PremierDraft.csv.gz",
-      "etag": "454df37989dfa31c3c1f9f139ba0800d-3",
-      "last_modified": "Mon, 19 Oct 2026 16:20:14 GMT",
-      "bytes": 24570968,
-      "rows": 297964
+      "etag": "a58044b3d584eb33ab20e2a6a6925c4a-5",
+      "last_modified": "Sat, 14 Nov 2026 13:27:38 GMT",
+      "bytes": 35693717,
+      "rows": 431627
      },
      "draft_data": {
       "url": "https://17lands-public.s3.amazonaws.com/analysis_data/draft_data/draft_data_public.FRA.PremierDraft.csv.gz",
-      "etag": "2ab6de12ad35693a60cb9b9a8aab2304-11",
-      "last_modified": "Mon, 19 Oct 2026 16:20:26 GMT",
-      "bytes": 86041756,
-      "rows": 2374082
+      "etag": "25d679d015c75f2ff4ca9e8ca45dea7e-15",
+      "last_modified": "Sat, 14 Nov 2026 13:27:53 GMT",
+      "bytes": 124398275,
+      "rows": 3000041
      }
     },
     "date_range": [
      "2026-09-29 16:22:24",
-     "2026-10-16 23:59:51"
+     "2026-11-01 23:59:51"
     ],
-    "games": 297964,
-    "drafts": 56527,
+    "games": 431627,
+    "drafts": 71431,
     "cards": 295,
-    "rated_cards": 284,
-    "sampled": false,
+    "rated_cards": 286,
+    "sampled": true,
     "generator": "scripts/build-17lands-ratings.py v2",
-    "derived_at": "2026-10-22T03:20:14Z",
+    "derived_at": "2026-11-23T19:28:31Z",
     "outputs": {
-     "sets/FRA/17lands.json": "8d43f3d9c3df280f5a32ef1b22ac5c098382bb6f6fc806de9be90fac6380f4c7",
-     "sets/FRA/ratings.tsv": "a7325b286b0bd482a00d13f71e77a81d6ee44b42c33170c46c6f209f3dd082c2",
-     "sets/FRA/17lands-archetypes.json": "cd61e40d109970a629e57276fbf53c570166c2ea87efe7c3dd57876ef9479645",
-     "analysis/models/FRA.json": "653ff4447c88d96920b5b1e2e6b6bd9b959748bfc0b694f89fde064c31a96fc5",
-     "analysis/results/validation-FRA.json": "9e8e7fa6f568eccf8482c87d9500ee6d50f462d47529ff3b5218d1e1782c951f",
-     "sets/FRA/deck-norms.json": "0287c7a86af2a7ae32f81738d34f3660bdca2669dc3efda04718fe20a771f908",
-     "analysis/results/build-quality-FRA.json": "af77eba2a4ba5bead03f1843ac4263da6f7608db13321df9ec1ecd9329bb74ae"
+     "sets/FRA/17lands.json": "8765980377f534d87cf8b84a1d34dca28c0fa5453370db0e1ce42168ddb59855",
+     "sets/FRA/ratings.tsv": "65d629a1f939cb2065d5e106fe12f81916cf6c49aa3c881558be3e18c7df1237",
+     "sets/FRA/17lands-archetypes.json": "bed5b4d2fc7d339204317e91051ccbe18c7af3b9e39884610873ae1dd91fe8b3",
+     "analysis/models/FRA.json": "45fd8cbc2eec25b27f318dfe6ce085e46f28b3f59c0325154b0c4eca3c9e9d9f",
+     "analysis/results/validation-FRA.json": "5beab57cf359c42f03d84e94cfbe73b3e381bc7abb6f0d0f66e35985dc958df4",
+     "sets/FRA/deck-norms.json": "ea4a8ea1f418d0aa46c5acc33ba75bda7e6ca325bfe77fabe0095e91e30671e3",
+     "analysis/results/build-quality-FRA.json": "102d18ce9d2332deff9a04c36b6fd19c598969933439b4c9ca375f5083fb33cc"
+    },
+    "analysis": {
+     "archetypes": {
+      "status": "ok",
+      "games": 431627,
+      "buckets": 25,
+      "cards": 295,
+      "seconds": 4
+     },
+     "model": {
+      "status": "ok",
+      "expert_drafts": 13442,
+      "drafts_in_file": 81677,
+      "holdout_top1": 0.6327,
+      "holdout_nll": 0.9808,
+      "gih_overall_top1": 0.4693,
+      "seconds": 93
+     },
+     "norms": {
+      "status": "ok",
+      "verdict": "validated",
+      "auc_model": 0.5513,
+      "auc_overall_gih": 0.5478,
+      "games_eval": 34277,
+      "seconds": 35
+     }
     }
    },
    "HOB": {
@@ -2195,6 +2221,7 @@
    "ATQ",
    "AVR",
    "BBD",
+   "BCHR",
    "BFZ",
    "BNG",
    "BOK",
@@ -2322,21 +2349,21 @@
   "source_repo": "Magic-Deck-Builder (private), src/setContexts/<CODE>.ts",
   "published_url": "https://www.mtgdecktools.com/agent-bench/set-contexts/{code}.md",
   "source_commit": "4e2f07d6d9f64c87ef0578d7005095d3a7214829 2026-10-25",
-  "exported_at": "2026-10-25T21:33:12Z",
+  "exported_at": "2026-11-23T19:31:27Z",
   "sets": {
    "FRA": {
     "file": "sets/FRA/primer.md",
-    "sha256": "6bc5db928a2df6af25b612b316262398d26622276ccd5ff39d6c79080495d8cb",
+    "sha256": "fe3d4e2390bc3ca0c9e1b00abf08e9b329e4af9aa0f9c92f478478633a56c5bb",
     "source_file": "FRA.ts"
    },
    "HOB": {
     "file": "sets/HOB/primer.md",
-    "sha256": "5ceb4af493d086c2d7511497c2ccfdcf60893b8192845fec474b54bed4c76ff0",
+    "sha256": "b424ae0b30739017581c09bb42bdb8cbce8ba7e4e22e62dad1fdf7346f407fcf",
     "source_file": "HOB.ts"
    },
    "MSH": {
     "file": "sets/MSH/primer.md",
-    "sha256": "5fa610fa7c6a92f941d958fe3746ef2aead61b17fe43c760bfbf0b2b06633424",
+    "sha256": "107b0765ab98a330713c84ac4204446da2dfe47de60284a7396025894b3e2dd1",
     "source_file": "MSH.ts"
    },
    "SOS": {
@@ -2356,7 +2383,7 @@
    },
    "TLA": {
     "file": "sets/TLA/primer.md",
-    "sha256": "82fdc36846b6ee7c7fb6fc01e3d8b3240f95c12f6ce6afd459e9f0892b0614aa",
+    "sha256": "595fd0b07419dc13585a152168e00a6cfc6fd78f4d8814025ee11c069c48b325",
     "source_file": "ATLA.ts"
    },
    "EOE": {

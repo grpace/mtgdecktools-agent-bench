@@ -30,7 +30,7 @@ This guide provides context for building optimal 40-card decks in the *Avatar: T
 
 ### 0.5. Bending Mechanics Power Assessment
 All four are stronger than they appear:
-* **Airbending**: Extremely flexible. Resets earthbended lands, counters aura removal, and provides tempo. Skill-testing.
+* **Airbending**: Extremely flexible. Saves your permanents from aura removal, rebuys your own enter effects, and provides tempo. It targets nonland permanents only, so it cannot reset an earthbended land. Skill-testing.
 * **Waterbending**: Strong mana sink, works well at instant speed. Fits control/tempo.
 * **Earthbending**: Very skill-testing (go wide vs. go tall). Earthbending curve-outs are very strong.
 * **Firebending**: The finickiest. Requires good attacks and mana sinks. Snowballs when it works but doesn't affect the board directly.
@@ -72,7 +72,7 @@ All four are stronger than they appear:
     * **Defensive:** Remove a key attacker.
     * **Value (Offensive):** Target your *own* creature with a powerful ETB (e.g., [[Cat-Gator]]) to reuse its effect.
     * **Value (Defensive):** Target your *own* permanent that is targeted by removal (especially Auras like [[Path to Redemption]]) to save it.
-    * **Earthbending Interaction:** Can reset earthbended lands by removing the counters.
+    * **Earthbending Interaction:** None. Airbending targets nonland permanents only, so it cannot reset an earthbended land.
 
 * **Deckbuilding Priority:** High. **Note:** Airbending makes aura-based removal potentially worse.
 
@@ -146,7 +146,7 @@ High-priority cards, ranked by power and versatility. (Card text omitted, strate
 
 1.  **[[Airbending Lesson]]:** Powerful tempo spell. Bouncing an opponent's creature (forcing the {2} cost) or saving/reusing your own is high value. It replaces itself (draws a card) *and* is a Lesson. Extremely flexible and card-advantage positive. Prioritize highly.
 2.  **[[Kyoshi Warriors]]:** Creates two bodies (and two Allies) on one card. Excellent for go-wide, sacrifice fodder, and paying for waterbend costs. Great rate.
-3.  **[[Glider Kids]]:** Good stats (2/3 flyer for 2), good types (Human Pilot Ally), and provides value (scry 1). Can grow with ally synergies.
+3.  **[[Glider Kids]]:** Good stats (2/3 flyer for 3), good types (Human Pilot Ally), and provides value (scry 1). Can grow with ally synergies.
 4.  **[[Path to Redemption]]:** Cheap, efficient removal. **Important:** Aura-based removal is weaker in this format. Opponents can airbend their creature away, or still use it for sacrifice/waterbending. Solid, but has downsides.
 5.  **[[Razor Rings]]:** Excellent 2-mana instant combat trick/removal hybrid.
 
@@ -159,7 +159,7 @@ High-priority cards, ranked by power and versatility. (Card text omitted, strate
 
 1.  **[[Firebending Lesson]]:** Highly versatile. A cheap (1 mana) instant-speed removal/trick that's also a Lesson. Can be kicked for 5 mana to deal 5 damage. Premium.
 2.  **[[Lightning Strike]]:** Premium common removal (2 mana, 3 damage).
-3.  **[[Treetop Freedom Fighters]]:** Two mana for two bodies (2/1 haste Ally + 1/1 Ally). Synergistic, good types, and good early pressure.
+3.  **[[Treetop Freedom Fighters]]:** Three mana for two bodies (2/1 haste Ally + 1/1 Ally). Synergistic, good types, and good early pressure.
 
 ### 2.4. Green
 
@@ -276,7 +276,7 @@ Potentially strong cards that are easy to overlook.
     * **[[Bumi, King of Three Trials]]:** Top-end threat (6-mana 7/7) that also provides card selection (scrybend 3) if you have Lessons in grave.
     * [[Flopsie, Bumi's Buddy]], [[Badgermole]], [[Saber-Tooth Moose-Lion]], any Bombs (e.g., [[The Legend of Kyoshi]], [[Bumi, Unleashed]]).
 * **Mana Base Note:** When splashing, state clearly if it's a 3-color build or a 2-color (UG) base with a splash. In this Prince format, **UG is one of the best shells for 3–5 color “good stuff” decks** because of its natural access to ramp and fixing—lean into this when your bombs pull you in multiple colors.
-* **Gold:** **[[Guru Pathik]]** (Simic hybrid): Powerful 2-mana 2/4. ETB finds a Lesson/Saga/Shrine. Buffs creatures when you cast those spells. Fits in many blue/green decks.
+* **Gold:** **[[Guru Pathik]]** (Simic hybrid): Powerful 4-mana 2/4 (castable with {G}{G}, {U}{U}, or {G}{U}). ETB finds a Lesson/Saga/Shrine. Buffs creatures when you cast those spells. Fits in many blue/green decks.
 
 ### 4.8. BR (Black-Red): Firebending Aggro
 
@@ -317,7 +317,7 @@ Potentially strong cards that are easy to overlook.
 ### 4.12. 5-Color Shrines
 
 * **Strategy:** A niche "for fun" archetype, not a top-tier strategy. Built around "Shrine" enchantments (all are legendary).
-* **Note:** This is very hard to build. All Shrines cost 4 mana. It's a late-format dream, not a reliable strategy.
+* **Note:** This is very hard to build. Shrines cost one to four mana, and each is legendary. It's a late-format dream, not a reliable strategy.
 * **Key Cards:** [[Aang's Journey]] (finds Shrines/lands), [[Guru Pathik]] (finds Shrines), [[White Lotus Hideout]] (helps cast Shrines), [[Kyoshi Island Plaza]] (Shrine that fixes).
 
 ---

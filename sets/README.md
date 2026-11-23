@@ -19,11 +19,11 @@ What version of each file we're on (17Lands snapshot, source files, sha256) is r
 17Lands publishes public files for the sets it tracked on MTG Arena. The rest (paper-only sets, and Arena sets from before 17Lands' public datasets) have no public file; they are listed in `deps/manifest.json` → `17lands.no_public_data` and re-probed by every `npm run deps -- check`, which also reports any set that newly appears.
 
 <!-- coverage:start (generated from deps/manifest.json by `npm run deps -- manifest`; don't edit by hand) -->
-Of the 176 sets with phase-rs booster data, **32 have 17Lands data** (last probed 2026-10-22). Model and norms: ✓ built, – skipped (reason in the manifest).
+Of the 176 sets with phase-rs booster data, **32 have 17Lands data** (last probed 2026-11-23). Model and norms: ✓ built, – skipped (reason in the manifest).
 
 | Set | Name | 17Lands | Games | Drafts | Rated cards | Game dates | Pick model | Deck norms |
 | --- | --- | --- | ---: | ---: | ---: | --- | :---: | :---: |
-| FRA | Reality Fracture | FRA PremierDraft | 297,964 | 56,527 | 284/295 | 2026-09-29 to 2026-10-16 | ✓ | ✓ |
+| FRA | Reality Fracture | FRA PremierDraft | 431,627 | 71,431 | 286/295 | 2026-09-29 to 2026-11-01 | ✓ | ✓ |
 | HOB | The Hobbit | HOB PremierDraft | 323,114 | 58,017 | 190/193 | 2026-08-11 to 2026-09-22 | ✓ | ✓ |
 | MSH | Marvel Super Heroes | MSH PremierDraft | 377,514 | 68,633 | 300/339 | 2026-06-23 to 2026-07-24 | ✓ | ✓ |
 | SOS | Secrets of Strixhaven | SOS PremierDraft | 582,914 | 71,430 | 334/346 | 2026-04-21 to 2026-06-02 | ✓ | ✓ |
