@@ -17,7 +17,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
-    "hyparquet": "1.32.0",
+    "hyparquet": "1.33.1",
     "tsx": "^4.23.15",
     "typescript": "^5.9.0"
   }
