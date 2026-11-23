@@ -104,6 +104,13 @@ for (const [what, files, re] of [
   });
 }
 
+test('content limits accept a legal large search offer, and still refuse one past the limit', () => {
+  const offer = (options: number, text: number) => log(start(), { t: 2, type: 'decision_offered', game: 'g', seat: 'a', id: 'G1', turn: 1, options: Array(options).fill('Select: none'), text: 't'.repeat(text) });
+  assert.deepEqual(sanityErrors(offer(3_302, 532_794)), []);
+  assert.ok(sanityErrors(offer(LIMITS.options + 1, 1)).some((e) => /options must/.test(e)));
+  assert.ok(sanityErrors(offer(1, LIMITS.text + 1)).some((e) => /text is longer/.test(e)));
+});
+
 test('content limits refuse: duplicate or non-numeric standings', () => {
   const files = log(start());
   files.set('summary.json', Buffer.from(JSON.stringify({ standings: [{ name: 'a', matchWins: 1, gameWins: 2 }, { name: 'a', matchWins: '<b>9</b>' }] })));
